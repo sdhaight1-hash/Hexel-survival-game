@@ -1,9 +1,14 @@
 # Hexel material format v2 — P0 prototype and proposed production contract
 
 **Status:** proposed production format; no v2 asset compiler or JSON loader exists yet.
-The playable P0 scene uses deterministic original procedural **reference artwork**
-in `src/materials_p0.rs` with the renderer in `src/render.rs`. The existing
-55 legacy atlas crops remain unchanged and remain outside production approval.
+The playable P0 scene uses **source-art-derived visual prototypes** in
+`src/materials_p0.rs` with the renderer in `src/render.rs`. It decodes
+five of our original high-resolution PNG crops (soil, granite, shale,
+forest floor and native copper), seam-blends the source surfaces into
+256px tiles, then composes grass and ore masks for the preview.
+
+All 55 legacy atlas crops remain unchanged. These new tiles are generated
+at startup, not a new permanent material format or approved final artwork.
 
 ## Why not hex-shaped texture files?
 
@@ -47,8 +52,8 @@ The top uses a soil-and-grass cap composite; the side uses soil with an
 **upper rim** grass-to-dirt transition; the bottom remains soil.
 Underlying gallery cells stay soil, not ore-bearing rock throughout the
 column. This is a gallery, **not a mineable resource deposit or registered
-ecology**. Visuals are baked from independent procedural masks into 12
-fixed-resolution layers **only for P0** so the GPU shader stays minimal.
+ecology**. Visuals are baked from source artwork and independent ground-cover/ore masks
+into 12 fixed-resolution layers **only for P0** so the GPU shader stays minimal.
 
 ### Inspecting at runtime
 
@@ -63,12 +68,17 @@ Esc: release or recapture cursor
 The F7 density comparison applies to the **checker diagnostic**, not to
 the baked grass-rim texture, because blindly repeating the whole grass-rim
 image vertically would add a second false grass layer halfway down the side.
-P0 source art remains 128×128 with a 128 texel/m initial physical scale.
+P0 source art is now retained at its original higher resolution and sampled
+into 256×256 RGBA gallery tiles at a 256-texel/m working scale. This is a
+preview density, **not** a global production standard. The checker still
+cycles 64 / 128 / 256 texels per metre.
 
-**Acceptance tests:** valid 128² RGBA layers, correct material selection by
-face, denser masks in order, top-only grass rim with plain bottom rows,
-copper composite over two distinguishable hosts, and side U density of
-approximately 73.9 pixels per 0.577m side. GPU appearance must be checked
+**Acceptance tests:** valid source PNG decoding and 256² RGBA layers,
+approximate base-tile seam continuity, correct material selection by face,
+denser masks in order, top-only grass rim with plain bottom rows,
+copper composite over two distinguishable hosts with most underlying
+host-rock pixels intact, and side U density of approximately 147.8 pixels
+per 0.577m side. GPU appearance must be checked
 on the user's native Windows device; automated tests cannot prove aesthetics.
 
 ## Proposed v2 production material recipe

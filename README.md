@@ -10,9 +10,12 @@ It supports walking, mouse-look, sprinting, sneaking, gravity and jumping.
 
 The landscape is deliberately simple **demo terrain**, *not* planet generation.
 The player is **1⅔ m tall**, so a 1 m-high hexel is exactly **3/5 of
-character height**. The current scene draws real 32×32 soil and granite
-textures on hex-shaped caps and all six prism sides. See
-[First-person scale and textures](docs/first-person-textures.md) for details.
+character height**. The current P0 gallery derives **256px visual previews from our original
+high-resolution soil, granite, shale, forest-floor and copper artwork**,
+with hex-specific face UVs and grass/ore compositing. See
+[P0 material gallery](docs/p0-material-gallery.md) for current controls,
+and [first-person scale](docs/first-person-textures.md) for the prototype
+dimensions.
 No cross-chunk streaming, toroidal movement, digging/building, saves, ecology,
 climate, caves, finite water or diffusion inference exists in this slice.
 
@@ -92,9 +95,12 @@ None of these planetary systems is claimed to work in this first chunk.
 
 The 16³ demo currently includes a **temporary reference strip** with bare,
 very sparse, sparse and fully grassy soil, plus granite and shale both with
-and without a shared copper overlay. These original 128px procedural reference
-textures show how independent face roles and physical-metre UVs work; none
-of the 55 legacy art assets has been replaced or certified production-ready.
+and without a shared copper overlay. The P0 gallery now builds 256px visual
+prototypes from the **original high-resolution soil, granite, shale, forest
+floor and copper textures**, with seam reduction and independent grass
+and ore overlays. Physical-metre UVs and distinct hexel face roles remain
+unchanged. None of the 55 legacy art files has been overwritten or certified
+production-ready.
 
 - `F6`: toggle a checker grid for spotting stretching and face seams.
 - `F7`: cycle **checker diagnostic** at 64 / 128 / 256 texels per metre.

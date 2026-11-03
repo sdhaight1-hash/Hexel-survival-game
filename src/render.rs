@@ -139,9 +139,11 @@ impl Renderer {
                 resource: camera_buffer.as_entire_binding(),
             }],
         });
-        // P0 procedural 128² RGBA layers: original independent soil, grass,
-        // rock and ore components baked for this small test-only gallery.
-        let material_layers = materials_p0::generate_textures();
+        // P0 art-derived 256px RGBA layers: high-resolution source geology
+        // with independent grass cover and extracted copper inclusions.
+        // The original 55 textures remain intact as source assets.
+        let material_layers = materials_p0::generate_textures()
+            .map_err(|error| format!("Could not prepare P0 art-derived materials: {error}"))?;
         let material_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Hexel materials"),
             size: wgpu::Extent3d {

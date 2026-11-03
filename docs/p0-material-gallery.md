@@ -12,8 +12,17 @@ with copper, shale, and shale with the *same* copper inclusion mask.
 
 The gallery is fixed display geometry in `World::demo`. No actual mining,
 ore inventory, plant growth, saved edits or ecological generation is added.
-Every generated P0 texture is an **original procedural comparison swatch**,
-not final artwork and not a rebranding of the existing 55 images.
+P0 now uses the **original high-resolution soil, granite, shale, forest-floor
+and native-copper crops already committed to GitHub** instead of simplistic
+procedural rocks. Cropped source detail is seam-reduced into 256px materials
+at startup, while grass-cover masks and copper-to-host composites are
+baked deterministically. The original source PNGs are never overwritten.
+
+This is still a **quality-refinement prototype**, not a finished licensed,
+seam-certified production tile set. The forest-floor luminance is tinted for
+a ground-cover sample, not a real grass species model. Copper-rich pixels
+are isolated from the original ore art and blended over each host rock.
+No ore quantity or geological placement is implied.
 
 See [material format v2](material-format-v2.md) for detailed face mapping,
 test coverage, its limitations and the planned asset production contract.
