@@ -73,6 +73,16 @@ At game launch, the console reports **native BC7** or **CPU decode to RGBA
 fallback**, and which GPU memory reduction is achieved on that adapter.
 The visual F6 UV checker and F7 diagnostic remain unchanged.
 
+## P1 offline production source baker
+
+A separate [P1 material pipeline](p1-material-pipeline.md) now supports
+registered *new* variable-resolution RGBA8 inputs (including rectangular
+tiles). The `material-baker` tool performs BC7 encoding, independent
+software decode/quality checks, and exports stable ID-named blocks plus a
+JSON index to `target/materials-v2`. It is **not loaded by the P0 game**:
+the existing embedded 12-layer P0 pack and native BC7/CPU fallback remain
+untouched. No P1 production sources are approved yet.
+
 ## Design limits and next texture-compression work
 
 - This only compresses **sRGB color/albedo** gallery layers; later roughness,
