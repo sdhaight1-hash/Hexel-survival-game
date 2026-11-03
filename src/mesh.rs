@@ -97,7 +97,10 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     )
                 });
                 let uv = |pos| cap_uv(pos, center);
-                if !world.get(CellPos::new(cell.q, cell.r, cell.y + 1)).is_solid() {
+                if !world
+                    .get(CellPos::new(cell.q, cell.r, cell.y + 1))
+                    .is_solid()
+                {
                     let cap = Vec3::new(center.x, top, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -111,7 +114,10 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                         );
                     }
                 }
-                if !world.get(CellPos::new(cell.q, cell.r, cell.y - 1)).is_solid() {
+                if !world
+                    .get(CellPos::new(cell.q, cell.r, cell.y - 1))
+                    .is_solid()
+                {
                     let cap = Vec3::new(center.x, bottom, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -126,7 +132,10 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     }
                 }
                 for (side, &(dq, dr)) in SIDE_NEIGHBORS.iter().enumerate() {
-                    if world.get(CellPos::new(cell.q + dq, cell.r + dr, cell.y)).is_solid() {
+                    if world
+                        .get(CellPos::new(cell.q + dq, cell.r + dr, cell.y))
+                        .is_solid()
+                    {
                         continue;
                     }
                     let j = (side + 1) % 6;

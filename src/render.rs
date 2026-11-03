@@ -1,7 +1,10 @@
 //! Thin wgpu view of the simulation-owned chunk and first-person camera.
 //! No terrain, movement or world-state logic lives inside this module.
 
-use crate::{materials, mesh::{build_chunk_mesh, Vertex}};
+use crate::{
+    materials,
+    mesh::{build_chunk_mesh, Vertex},
+};
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
 use hexel_survival_game::{
