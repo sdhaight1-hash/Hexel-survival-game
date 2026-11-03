@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "notes": "Preview-only references. Face artwork is not approved; transparent cover and ore overlay assets do not yet exist.",
+  "materials": [
+    {
+      "id": "soil.low_fertility",
+      "kind": "soil",
+      "status": "legacy-preview",
+      "faces": {
+        "top": "soil/low_fertility_soil_32.png",
+        "side": "soil/medium_fertility_soil_32.png",
+        "bottom": "soil/medium_fertility_soil_32.png"
+      }
+    },
+    {
+      "id": "soil.medium_fertility",
+      "kind": "soil",
+      "status": "legacy-preview",
+      "faces": {
+        "top": "soil/medium_fertility_soil_32.png",
+        "side": "soil/medium_fertility_soil_32.png",
+        "bottom": "soil/medium_fertility_soil_32.png"
+      }
+    },
+    {
+      "id": "rock.granite",
+      "kind": "rock",
+      "status": "legacy-preview",
+      "faces": {
+        "top": "rock/metamorphic_igneous/granite_32.png",
+        "side": "rock/metamorphic_igneous/granite_32.png",
+        "bottom": "rock/metamorphic_igneous/granite_32.png"
+      }
+    }
+  ],
+  "cover_previews": [
+    {
+      "id": "cover.forest_floor",
+      "status": "legacy-preview",
+      "texture": "soil/forest_floor_32.png",
+      "notes": "Opaque reference swatch; not a transparent production overlay."
+    }
+  ]
+}
