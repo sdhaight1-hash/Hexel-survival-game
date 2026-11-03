@@ -152,10 +152,23 @@ impl World {
         let mut chunk = Chunk::default();
         for q in 0..CHUNK_SIDE {
             for r in 0..CHUNK_SIDE {
-                let top = demo_surface(seed, q, r);
+                // P0 gallery cells are deliberately flat and identified by
+                // material_lab, never by geology or an ore-generation rule.
+                let fixture = crate::material_lab::sample(q, r);
+                let top = if fixture.is_some() {
+                    crate::material_lab::surface_y(r)
+                } else {
+                    demo_surface(seed, q, r)
+                };
                 for y in 0..=top {
                     let block = if y == top {
-                        Block::Grass
+                        match fixture {
+                            Some(crate::material_lab::LabSample::Soil(
+                                crate::material_contract::CoverDensity::Bare,
+                            )) => Block::Soil,
+                            Some(crate::material_lab::LabSample::Rock { .. }) => Block::Rock,
+                            _ => Block::Grass,
+                        }
                     } else if y >= top - 2 {
                         Block::Soil
                     } else {
@@ -278,6 +291,21 @@ mod tests {
             }
         }
         assert_eq!(a.get(CellPos::new(-1, 0, 1)), Block::Air);
+    }
+
+    #[test]
+    fn p0_reference_strip_has_raised_exposed_faces_and_real_soil_below() {
+        let world = World::demo(42);
+        for q in 2..=14 {
+            let y = crate::material_lab::surface_y(10);
+            assert!(world.get(CellPos::new(q, 10, y)).is_solid());
+            assert_eq!(world.get(CellPos::new(q, 10, y + 1)), Block::Air);
+            assert_eq!(world.get(CellPos::new(q, 10, y - 1)), Block::Soil);
+        }
+        assert_eq!(world.get(CellPos::new(2, 10, 3)), Block::Soil);
+        assert_eq!(world.get(CellPos::new(9, 10, 3)), Block::Grass);
+        assert_eq!(world.get(CellPos::new(12, 10, 3)), Block::Rock);
+        assert_eq!(world.get(CellPos::new(14, 10, 3)), Block::Rock);
     }
 
     #[test]

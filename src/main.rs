@@ -1,6 +1,6 @@
 //! One native 16×16×16 chunk viewed through a first-person camera.
 
-mod materials;
+mod materials_p0;
 mod mesh;
 mod render;
 
@@ -117,6 +117,8 @@ impl ApplicationHandler for Game {
                 );
                 println!("Esc release/recapture mouse | Click window to recapture.");
                 println!("Chunk edges are temporary barriers; torus wrapping is NOT implemented.");
+                println!("P0 material gallery faces your initial spawn at r=9..12.");
+                println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");
@@ -160,6 +162,28 @@ impl ApplicationHandler for Game {
                             }
                         }
                         return;
+                    }
+                    if event.state == ElementState::Pressed && !event.repeat {
+                        if let Some(renderer) = self.renderer.as_mut() {
+                            match key {
+                                KeyCode::F6 => {
+                                    let active = renderer.toggle_checker();
+                                    println!(
+                                        "P0 UV checker: {}",
+                                        if active { "ON" } else { "OFF" }
+                                    );
+                                    return;
+                                }
+                                KeyCode::F7 => {
+                                    println!(
+                                        "P0 checker scale: {} texels/metre",
+                                        renderer.cycle_density()
+                                    );
+                                    return;
+                                }
+                                _ => {}
+                            }
+                        }
                     }
                     if event.state == ElementState::Pressed {
                         self.pressed.insert(key);

@@ -2,7 +2,7 @@
 //! No terrain, movement or world-state logic lives inside this module.
 
 use crate::{
-    materials,
+    materials_p0,
     mesh::{build_chunk_mesh, Vertex},
 };
 use bytemuck::{Pod, Zeroable};
@@ -19,6 +19,7 @@ use winit::{dpi::PhysicalSize, window::Window};
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct CameraUniform {
     view_proj: [[f32; 4]; 4],
+    options: [f32; 4],
 }
 
 #[repr(C)]
@@ -48,6 +49,8 @@ pub struct Renderer {
     crosshair_pipeline: wgpu::RenderPipeline,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    debug_checker: bool,
+    texels_per_metre: u32,
     material_bind_group: wgpu::BindGroup,
     _material_texture: wgpu::Texture,
     terrain_buffer: wgpu::Buffer,
@@ -111,6 +114,7 @@ impl Renderer {
             label: Some("Camera matrix"),
             contents: bytemuck::bytes_of(&CameraUniform {
                 view_proj: Mat4::IDENTITY.to_cols_array_2d(),
+                options: [0.0, 1.0, 0.0, 0.0],
             }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
@@ -118,7 +122,7 @@ impl Renderer {
             label: Some("Camera binding layout"),
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
+                visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
@@ -135,14 +139,15 @@ impl Renderer {
                 resource: camera_buffer.as_entire_binding(),
             }],
         });
-        // Four 32×32 RGBA material images, uploaded as a 2D texture array.
-        // Embedded assets keep cargo-run and portable release builds identical.
+        // P0 procedural 128² RGBA layers: original independent soil, grass,
+        // rock and ore components baked for this small test-only gallery.
+        let material_layers = materials_p0::generate_textures();
         let material_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Hexel materials"),
             size: wgpu::Extent3d {
-                width: materials::TEXTURE_SIZE,
-                height: materials::TEXTURE_SIZE,
-                depth_or_array_layers: materials::TEXTURES.len() as u32,
+                width: materials_p0::TEXTURE_SIZE,
+                height: materials_p0::TEXTURE_SIZE,
+                depth_or_array_layers: material_layers.len() as u32,
             },
             mip_level_count: 1,
             sample_count: 1,
@@ -151,9 +156,7 @@ impl Renderer {
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
         });
-        for (layer, bytes) in materials::TEXTURES.iter().enumerate() {
-            let rgba = materials::decoded_rgba(bytes)
-                .map_err(|err| format!("Invalid material image at layer {layer}: {err}"))?;
+        for (layer, rgba) in material_layers.iter().enumerate() {
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: &material_texture,
@@ -168,12 +171,12 @@ impl Renderer {
                 &rgba,
                 wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(materials::TEXTURE_SIZE * 4),
-                    rows_per_image: Some(materials::TEXTURE_SIZE),
+                    bytes_per_row: Some(materials_p0::TEXTURE_SIZE * 4),
+                    rows_per_image: Some(materials_p0::TEXTURE_SIZE),
                 },
                 wgpu::Extent3d {
-                    width: materials::TEXTURE_SIZE,
-                    height: materials::TEXTURE_SIZE,
+                    width: materials_p0::TEXTURE_SIZE,
+                    height: materials_p0::TEXTURE_SIZE,
                     depth_or_array_layers: 1,
                 },
             );
@@ -183,9 +186,9 @@ impl Renderer {
             ..Default::default()
         });
         let material_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            label: Some("Nearest-neighbor 32px materials"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            label: Some("P0 physically tiled nearest-neighbor materials"),
+            address_mode_u: wgpu::AddressMode::Repeat,
+            address_mode_v: wgpu::AddressMode::Repeat,
             mag_filter: wgpu::FilterMode::Nearest,
             min_filter: wgpu::FilterMode::Nearest,
             mipmap_filter: wgpu::FilterMode::Nearest,
@@ -369,6 +372,8 @@ impl Renderer {
             crosshair_pipeline,
             camera_buffer,
             camera_bind_group,
+            debug_checker: false,
+            texels_per_metre: 128,
             material_bind_group,
             _material_texture: material_texture,
             terrain_buffer,
@@ -392,6 +397,22 @@ impl Renderer {
         self.depth_view = view;
     }
 
+    /// Show a high-contrast 16px-grid on every cap and prism side.
+    pub fn toggle_checker(&mut self) -> bool {
+        self.debug_checker = !self.debug_checker;
+        self.debug_checker
+    }
+
+    /// Compare physical texture scale of the diagnostic grid only.
+    pub fn cycle_density(&mut self) -> u32 {
+        self.texels_per_metre = match self.texels_per_metre {
+            64 => 128,
+            128 => 256,
+            _ => 64,
+        };
+        self.texels_per_metre
+    }
+
     pub fn draw(&mut self, player: &Player) -> Result<(), wgpu::SurfaceError> {
         let aspect = self.config.width as f32 / self.config.height as f32;
         let view_proj = Mat4::perspective_rh(70.0_f32.to_radians(), aspect, 0.05, 200.0)
@@ -401,6 +422,12 @@ impl Renderer {
             0,
             bytemuck::bytes_of(&CameraUniform {
                 view_proj: view_proj.to_cols_array_2d(),
+                options: [
+                    if self.debug_checker { 1.0 } else { 0.0 },
+                    self.texels_per_metre as f32 / materials_p0::REFERENCE_TEXELS_PER_METRE,
+                    0.0,
+                    0.0,
+                ],
             }),
         );
         let frame = self.surface.get_current_texture()?;
