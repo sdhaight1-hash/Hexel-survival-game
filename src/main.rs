@@ -168,11 +168,17 @@ impl ApplicationHandler for Game {
                             match key {
                                 KeyCode::F6 => {
                                     let active = renderer.toggle_checker();
-                                    println!("P0 UV checker: {}", if active { "ON" } else { "OFF" });
+                                    println!(
+                                        "P0 UV checker: {}",
+                                        if active { "ON" } else { "OFF" }
+                                    );
                                     return;
                                 }
                                 KeyCode::F7 => {
-                                    println!("P0 checker scale: {} texels/metre", renderer.cycle_density());
+                                    println!(
+                                        "P0 checker scale: {} texels/metre",
+                                        renderer.cycle_density()
+                                    );
                                     return;
                                 }
                                 _ => {}

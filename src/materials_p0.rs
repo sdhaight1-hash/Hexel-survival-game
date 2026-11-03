@@ -43,10 +43,22 @@ pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
     if let Some(fixture) = sample(cell.q, cell.r).filter(|_| cell.y == surface_y(cell.r)) {
         return match fixture {
             LabSample::Soil(cover) => soil_face(cover, is_top, is_side),
-            LabSample::Rock { host: RockHost::Granite, show_copper: true } => Material::GraniteCopper,
-            LabSample::Rock { host: RockHost::Granite, show_copper: false } => Material::Granite,
-            LabSample::Rock { host: RockHost::Shale, show_copper: true } => Material::ShaleCopper,
-            LabSample::Rock { host: RockHost::Shale, show_copper: false } => Material::Shale,
+            LabSample::Rock {
+                host: RockHost::Granite,
+                show_copper: true,
+            } => Material::GraniteCopper,
+            LabSample::Rock {
+                host: RockHost::Granite,
+                show_copper: false,
+            } => Material::Granite,
+            LabSample::Rock {
+                host: RockHost::Shale,
+                show_copper: true,
+            } => Material::ShaleCopper,
+            LabSample::Rock {
+                host: RockHost::Shale,
+                show_copper: false,
+            } => Material::Shale,
         };
     }
     match block {
@@ -100,9 +112,7 @@ fn noise(x: f32, y: f32, grid: i32, seed: u32) -> f32 {
     let mut ty = py.fract();
     tx = tx * tx * (3.0 - 2.0 * tx);
     ty = ty * ty * (3.0 - 2.0 * ty);
-    let v = |dx: i32, dy: i32| {
-        random((ix + dx).rem_euclid(grid), (iy + dy).rem_euclid(grid), seed)
-    };
+    let v = |dx: i32, dy: i32| random((ix + dx).rem_euclid(grid), (iy + dy).rem_euclid(grid), seed);
     let a = v(0, 0) * (1.0 - tx) + v(1, 0) * tx;
     let b = v(0, 1) * (1.0 - tx) + v(1, 1) * tx;
     a * (1.0 - ty) + b * ty
@@ -142,8 +152,7 @@ fn soil_pixel(x: u32, y: u32) -> [u8; 4] {
 fn granite_pixel(x: u32, y: u32) -> [u8; 4] {
     let u = x as f32 / TEXTURE_SIZE as f32;
     let v = y as f32 / TEXTURE_SIZE as f32;
-    let n = (noise(u, v, 9, 31) - 0.5) * 48.0
-        + (noise(u, v, 39, 32) - 0.5) * 36.0;
+    let n = (noise(u, v, 9, 31) - 0.5) * 48.0 + (noise(u, v, 39, 32) - 0.5) * 36.0;
     let fleck = random(x as i32 / 2, y as i32 / 2, 33);
     if fleck > 0.88 {
         color(155.0 + n, 143.0 + n, 129.0 + n)
@@ -167,17 +176,15 @@ fn composite(base: &mut [u8], x: u32, y: u32, pigment: [u8; 3], opacity: f32) {
     let i = ((y * TEXTURE_SIZE + x) * 4) as usize;
     let a = opacity.clamp(0.0, 1.0);
     for c in 0..3 {
-        base[i + c] = (base[i + c] as f32 * (1.0 - a) + pigment[c] as f32 * a)
-            .round() as u8;
+        base[i + c] = (base[i + c] as f32 * (1.0 - a) + pigment[c] as f32 * a).round() as u8;
     }
 }
 
 fn grass_alpha(x: u32, y: u32, density: CoverDensity) -> f32 {
     let u = x as f32 / TEXTURE_SIZE as f32;
     let v = y as f32 / TEXTURE_SIZE as f32;
-    let field = 0.6 * noise(u, v, 9, 51)
-        + 0.3 * noise(u, v, 31, 52)
-        + 0.1 * random(x as i32, y as i32, 53);
+    let field =
+        0.6 * noise(u, v, 9, 51) + 0.3 * noise(u, v, 31, 52) + 0.1 * random(x as i32, y as i32, 53);
     let threshold = match density {
         CoverDensity::Bare => return 0.0,
         CoverDensity::VerySparse => 0.65,
@@ -200,7 +207,13 @@ fn grass_top(soil: &[u8], density: CoverDensity) -> Vec<u8> {
     let mut output = soil.to_vec();
     for y in 0..TEXTURE_SIZE {
         for x in 0..TEXTURE_SIZE {
-            composite(&mut output, x, y, grass_pigment(x, y), grass_alpha(x, y, density));
+            composite(
+                &mut output,
+                x,
+                y,
+                grass_pigment(x, y),
+                grass_alpha(x, y, density),
+            );
         }
     }
     output
@@ -226,13 +239,11 @@ fn grass_side(soil: &[u8], density: CoverDensity) -> Vec<u8> {
 fn copper_alpha(x: u32, y: u32) -> f32 {
     let u = x as f32 / TEXTURE_SIZE as f32;
     let v = y as f32 / TEXTURE_SIZE as f32;
-    let vein = (std::f32::consts::TAU
-        * (u * 3.0 - v * 2.0 + 0.10 * noise(u, v, 6, 61)))
+    let vein = (std::f32::consts::TAU * (u * 3.0 - v * 2.0 + 0.10 * noise(u, v, 6, 61)))
         .sin()
         .abs();
     let pocket = noise(u, v, 12, 62);
-    ((0.16 - vein) * 5.0).clamp(0.0, 0.9) * 0.75
-        + ((pocket - 0.69) * 3.0).clamp(0.0, 0.65)
+    ((0.16 - vein) * 5.0).clamp(0.0, 0.9) * 0.75 + ((pocket - 0.69) * 3.0).clamp(0.0, 0.65)
 }
 
 fn ore_composite(rock: &[u8]) -> Vec<u8> {
@@ -289,16 +300,30 @@ mod tests {
     fn all_p0_textures_have_exactly_one_rgba_layer_each() {
         let layers = generate_textures();
         assert_eq!(layers.len(), LAYER_COUNT);
-        assert!(layers.iter().all(|pixels| pixels.len() == (TEXTURE_SIZE * TEXTURE_SIZE * 4) as usize));
+        assert!(layers
+            .iter()
+            .all(|pixels| pixels.len() == (TEXTURE_SIZE * TEXTURE_SIZE * 4) as usize));
     }
 
     #[test]
     fn bottom_never_receives_grass_but_side_does() {
         let cell = CellPos::new(9, 10, 3);
-        assert_eq!(for_face(Block::Grass, cell, HexFace::Top), Material::SoilTopFull);
-        assert_eq!(for_face(Block::Grass, cell, HexFace::Side(0)), Material::SoilSideFull);
-        assert_eq!(for_face(Block::Grass, cell, HexFace::Side(5)), Material::SoilSideFull);
-        assert_eq!(for_face(Block::Grass, cell, HexFace::Bottom), Material::SoilBare);
+        assert_eq!(
+            for_face(Block::Grass, cell, HexFace::Top),
+            Material::SoilTopFull
+        );
+        assert_eq!(
+            for_face(Block::Grass, cell, HexFace::Side(0)),
+            Material::SoilSideFull
+        );
+        assert_eq!(
+            for_face(Block::Grass, cell, HexFace::Side(5)),
+            Material::SoilSideFull
+        );
+        assert_eq!(
+            for_face(Block::Grass, cell, HexFace::Bottom),
+            Material::SoilBare
+        );
     }
 
     #[test]
@@ -311,7 +336,10 @@ mod tests {
         assert_ne!(g, s);
         assert_ne!(cg, cs);
         let changed = |a: &[u8], b: &[u8]| {
-            a.chunks_exact(4).zip(b.chunks_exact(4)).filter(|(x, y)| x != y).count()
+            a.chunks_exact(4)
+                .zip(b.chunks_exact(4))
+                .filter(|(x, y)| x != y)
+                .count()
         };
         assert!(changed(g, cg) > 100);
         assert!(changed(s, cs) > 100);
@@ -334,6 +362,9 @@ mod tests {
         let side = &layers[Material::SoilSideFull as usize];
         let row_bytes = (TEXTURE_SIZE * 4) as usize;
         assert_ne!(&base[..row_bytes], &side[..row_bytes]);
-        assert_eq!(&base[side.len() - row_bytes..], &side[side.len() - row_bytes..]);
+        assert_eq!(
+            &base[side.len() - row_bytes..],
+            &side[side.len() - row_bytes..]
+        );
     }
 }

@@ -2,9 +2,9 @@
 //! This derived geometry does not own world/material resource state.
 
 use crate::materials_p0::{self, Material};
-use hexel_survival_game::material_contract::HexFace;
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
+use hexel_survival_game::material_contract::HexFace;
 use hexel_survival_game::world::{Block, CellPos, ChunkPos, World, CHUNK_SIDE, HEX_RADIUS};
 
 #[repr(C)]
