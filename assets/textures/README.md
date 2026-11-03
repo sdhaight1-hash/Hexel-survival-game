@@ -18,4 +18,7 @@ Each material has:
 A machine-readable listing is available in `manifest.json`.
 
 ## Note
-These files were prepared locally from the generated atlas sheets. They have **not** been committed to GitHub in this environment.
+These atlas-derived textures are already committed, but are **legacy reference/previews**,
+not finished top/side/bottom art or transparent vegetation/ore overlays.
+See [material authoring contract](../../docs/material-authoring-contract.md)
+and the sample face catalog in `assets/materials/catalog.v1.json`.
