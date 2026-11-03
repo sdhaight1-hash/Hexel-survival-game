@@ -13,14 +13,25 @@ systems before the first playable test.
 **Acceptance:** `cargo fmt --all -- --check` and `cargo test --all-targets`
 pass on GitHub Actions. This is *not* a playable-world milestone.
 
-## M1 — Topology and minimal game handoff
+## M1 — First playable chunk and game handoff
+
+- [x] Add one 16 × 16 × 16 hex-prism chunk and deterministic, bounded demo terrain.
+- [x] Add native first-person wgpu rendering and Minecraft-style movement.
+- [x] Keep world coordinates, player simulation, and derived rendering separate.
+- [ ] Manually verify desktop graphics and input on a target machine.
+- [ ] Add editable blocks, persistence, and neighboring chunk streaming.
+
+The current demo **does not** establish toroidal hex-lattice wrapping or a
+complete M1 game-state integration; those remain below.
+
+### Remaining M1 work
 
 - [ ] Decide exact playable grid geometry, physical scale and two hex-lattice
       seam translations; tests prove reciprocal adjacency across seams.
 - [ ] Add a minimal baked material + foliage + prefab fixture from the existing
       authoring code; write the authoring Z to world Y conversion explicitly.
-- [ ] Reuse or adapt only required pieces from the existing hexel prototype to
-      display one bounded world with first-person editing.
+- [ ] Extend the bounded first-person demo to support block editing and
+      persistent authoritative chunk changes.
 - [ ] Save a modified cell and harvested tree, unload/reload and prove
       non-regeneration with automated tests.
 
