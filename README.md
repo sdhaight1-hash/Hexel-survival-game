@@ -10,9 +10,12 @@ It supports walking, mouse-look, sprinting, sneaking, gravity and jumping.
 
 The landscape is deliberately simple **demo terrain**, *not* planet generation.
 The player is **1⅔ m tall**, so a 1 m-high hexel is exactly **3/5 of
-character height**. The current scene draws real 32×32 soil and granite
-textures on hex-shaped caps and all six prism sides. See
-[First-person scale and textures](docs/first-person-textures.md) for details.
+character height**. The current P0 gallery derives **256px visual previews from our original
+high-resolution soil, granite, shale, forest-floor and copper artwork**,
+with hex-specific face UVs and grass/ore compositing. See
+[P0 material gallery](docs/p0-material-gallery.md) for current controls,
+and [first-person scale](docs/first-person-textures.md) for the prototype
+dimensions.
 No cross-chunk streaming, toroidal movement, digging/building, saves, ecology,
 climate, caves, finite water or diffusion inference exists in this slice.
 

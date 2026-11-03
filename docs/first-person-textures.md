@@ -1,3 +1,10 @@
+> **Historical first textured demo (pre-P0 quality refinement).**
+> This document describes the initial 32px rendering experiment, not the
+> current source-art-derived 256px gallery. For the current scene, use
+> [P0 material gallery](p0-material-gallery.md) and
+> [material format v2](material-format-v2.md). The retained examples are
+> engineering history, not approved production textures.
+
 # First-person scale and hexel material preview
 
 The first 16×16×16 chunk remains a **local visual prototype**, not the
