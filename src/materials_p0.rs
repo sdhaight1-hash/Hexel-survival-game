@@ -9,7 +9,7 @@
 
 use hexel_survival_game::{
     material_contract::{CoverDensity, HexFace},
-    material_lab::{sample, LabSample, RockHost},
+    material_lab::{sample, surface_y, LabSample, RockHost},
     world::{Block, CellPos},
 };
 
@@ -38,7 +38,9 @@ pub const LAYER_COUNT: usize = 12;
 pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
     let is_top = face == HexFace::Top;
     let is_side = matches!(face, HexFace::Side(0..=5));
-    if let Some(fixture) = sample(cell.q, cell.r) {
+    // Only the top displayed cell gets a surface-cover or ore swatch.
+    // Underlying cells retain their real demo soil/rock appearance.
+    if let Some(fixture) = sample(cell.q, cell.r).filter(|_| cell.y == surface_y(cell.r)) {
         return match fixture {
             LabSample::Soil(cover) => soil_face(cover, is_top, is_side),
             LabSample::Rock { host: RockHost::Granite, show_copper: true } => Material::GraniteCopper,
@@ -292,7 +294,7 @@ mod tests {
 
     #[test]
     fn bottom_never_receives_grass_but_side_does() {
-        let cell = CellPos::new(9, 10, 2);
+        let cell = CellPos::new(9, 10, 3);
         assert_eq!(for_face(Block::Grass, cell, HexFace::Top), Material::SoilTopFull);
         assert_eq!(for_face(Block::Grass, cell, HexFace::Side(0)), Material::SoilSideFull);
         assert_eq!(for_face(Block::Grass, cell, HexFace::Side(5)), Material::SoilSideFull);

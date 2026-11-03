@@ -16,6 +16,11 @@ pub enum LabSample {
 
 /// A flat reference strip facing the existing first-person spawn, r=9..12.
 /// The rock display is an artistic composite, *not* finite mineable ore.
+pub fn surface_y(r: i32) -> i32 {
+    // Slightly raised middle row exposes all six-facing grass/ore materials.
+    if r == 10 { 3 } else { 2 }
+}
+
 pub fn sample(q: i32, r: i32) -> Option<LabSample> {
     if !(9..=12).contains(&r) {
         return None;

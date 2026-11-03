@@ -403,7 +403,7 @@ impl Renderer {
         self.debug_checker
     }
 
-    /// Compare physical texture density using the same original 128px source.
+    /// Compare physical texture scale of the diagnostic grid only.
     pub fn cycle_density(&mut self) -> u32 {
         self.texels_per_metre = match self.texels_per_metre {
             64 => 128,

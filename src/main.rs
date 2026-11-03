@@ -118,7 +118,7 @@ impl ApplicationHandler for Game {
                 println!("Esc release/recapture mouse | Click window to recapture.");
                 println!("Chunk edges are temporary barriers; torus wrapping is NOT implemented.");
                 println!("P0 material gallery faces your initial spawn at r=9..12.");
-                println!("F6: toggle six-face UV checker | F7: cycle 64 / 128 / 256 texels per metre.");
+                println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");
@@ -172,7 +172,7 @@ impl ApplicationHandler for Game {
                                     return;
                                 }
                                 KeyCode::F7 => {
-                                    println!("P0 source scale: {} texels/metre", renderer.cycle_density());
+                                    println!("P0 checker scale: {} texels/metre", renderer.cycle_density());
                                     return;
                                 }
                                 _ => {}

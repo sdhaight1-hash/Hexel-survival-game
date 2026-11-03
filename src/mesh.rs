@@ -132,7 +132,7 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     let b = Vec3::new(ring[j].x, bottom, ring[j].z);
                     let c = Vec3::new(ring[j].x, top, ring[j].z);
                     let d = Vec3::new(ring[side].x, top, ring[side].z);
-                    let shade = 0.82 + side as f32 * 0.025;
+                    let shade = 0.88 + side as f32 * 0.018;
                     let material = materials_p0::for_face(block, cell, HexFace::Side(side as u8));
                     let tint = [shade, shade, shade];
                     // One side is 0.577m wide x 1m tall. Use metres
@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn preview_materials_vary_by_face_role_and_host() {
-        let soil = CellPos::new(9, 10, 2);
+        let soil = CellPos::new(9, 10, 3);
         assert_eq!(
             materials_p0::for_face(Block::Grass, soil, HexFace::Top),
             Material::SoilTopFull
@@ -206,7 +206,7 @@ mod tests {
             materials_p0::for_face(Block::Grass, soil, HexFace::Bottom),
             Material::SoilBare
         );
-        let ore = CellPos::new(14, 10, 2);
+        let ore = CellPos::new(14, 10, 3);
         assert_eq!(
             materials_p0::for_face(Block::Rock, ore, HexFace::Top),
             Material::ShaleCopper

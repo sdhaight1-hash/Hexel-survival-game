@@ -155,7 +155,11 @@ impl World {
                 // P0 gallery cells are deliberately flat and identified by
                 // material_lab, never by geology or an ore-generation rule.
                 let fixture = crate::material_lab::sample(q, r);
-                let top = if fixture.is_some() { 2 } else { demo_surface(seed, q, r) };
+                let top = if fixture.is_some() {
+                    crate::material_lab::surface_y(r)
+                } else {
+                    demo_surface(seed, q, r)
+                };
                 for y in 0..=top {
                     let block = if y == top {
                         match fixture {
