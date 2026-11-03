@@ -1,0 +1,827 @@
+[
+  {
+    "name": "bony_soil",
+    "category": "soil",
+    "source_atlas": "hexel_soil_texture_atlas.png",
+    "crop_path": "assets/textures/soil/bony_soil.png",
+    "tile32_path": "assets/textures/soil/bony_soil_32.png",
+    "crop_size": [
+      420,
+      410
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "barren_soil",
+    "category": "soil",
+    "source_atlas": "hexel_soil_texture_atlas.png",
+    "crop_path": "assets/textures/soil/barren_soil.png",
+    "tile32_path": "assets/textures/soil/barren_soil_32.png",
+    "crop_size": [
+      420,
+      410
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "low_fertility_soil",
+    "category": "soil",
+    "source_atlas": "hexel_soil_texture_atlas.png",
+    "crop_path": "assets/textures/soil/low_fertility_soil.png",
+    "tile32_path": "assets/textures/soil/low_fertility_soil_32.png",
+    "crop_size": [
+      421,
+      410
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "medium_fertility_soil",
+    "category": "soil",
+    "source_atlas": "hexel_soil_texture_atlas.png",
+    "crop_path": "assets/textures/soil/medium_fertility_soil.png",
+    "tile32_path": "assets/textures/soil/medium_fertility_soil_32.png",
+    "crop_size": [
+      420,
+      412
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "high_fertility_soil",
+    "category": "soil",
+    "source_atlas": "hexel_soil_texture_atlas.png",
+    "crop_path": "assets/textures/soil/high_fertility_soil.png",
+    "tile32_path": "assets/textures/soil/high_fertility_soil_32.png",
+    "crop_size": [
+      420,
+      412
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "forest_floor",
+    "category": "soil",
+    "source_atlas": "hexel_soil_texture_atlas.png",
+    "crop_path": "assets/textures/soil/forest_floor.png",
+    "tile32_path": "assets/textures/soil/forest_floor_32.png",
+    "crop_size": [
+      421,
+      412
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "bauxite",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/bauxite.png",
+    "tile32_path": "assets/textures/rock/sedimentary/bauxite_32.png",
+    "crop_size": [
+      321,
+      405
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "chalk",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/chalk.png",
+    "tile32_path": "assets/textures/rock/sedimentary/chalk_32.png",
+    "crop_size": [
+      322,
+      405
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "chert",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/chert.png",
+    "tile32_path": "assets/textures/rock/sedimentary/chert_32.png",
+    "crop_size": [
+      322,
+      405
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "claystone",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/claystone.png",
+    "tile32_path": "assets/textures/rock/sedimentary/claystone_32.png",
+    "crop_size": [
+      321,
+      405
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "conglomerate",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/conglomerate.png",
+    "tile32_path": "assets/textures/rock/sedimentary/conglomerate_32.png",
+    "crop_size": [
+      321,
+      406
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "limestone",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/limestone.png",
+    "tile32_path": "assets/textures/rock/sedimentary/limestone_32.png",
+    "crop_size": [
+      322,
+      406
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "sandstone",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/sandstone.png",
+    "tile32_path": "assets/textures/rock/sedimentary/sandstone_32.png",
+    "crop_size": [
+      322,
+      406
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "shale",
+    "category": "rock/sedimentary",
+    "source_atlas": "sedimentary_rocks_texture_atlas.png",
+    "crop_path": "assets/textures/rock/sedimentary/shale.png",
+    "tile32_path": "assets/textures/rock/sedimentary/shale_32.png",
+    "crop_size": [
+      321,
+      406
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "phyllite",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/phyllite.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/phyllite_32.png",
+    "crop_size": [
+      364,
+      336
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "slate",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/slate.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/slate_32.png",
+    "crop_size": [
+      364,
+      336
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "green_marble",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/green_marble.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/green_marble_32.png",
+    "crop_size": [
+      365,
+      336
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "red_marble",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/red_marble.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/red_marble_32.png",
+    "crop_size": [
+      364,
+      324
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "white_marble",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/white_marble.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/white_marble_32.png",
+    "crop_size": [
+      364,
+      324
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "andesite",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/andesite.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/andesite_32.png",
+    "crop_size": [
+      365,
+      324
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "granite",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/granite.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/granite_32.png",
+    "crop_size": [
+      364,
+      342
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "kimberlite",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/kimberlite.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/kimberlite_32.png",
+    "crop_size": [
+      364,
+      342
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "peridotite",
+    "category": "rock/metamorphic_igneous",
+    "source_atlas": "metamorphic_and_igneous_rock_atlas.png",
+    "crop_path": "assets/textures/rock/metamorphic_igneous/peridotite.png",
+    "tile32_path": "assets/textures/rock/metamorphic_igneous/peridotite_32.png",
+    "crop_size": [
+      365,
+      342
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "basalt",
+    "category": "rock/special_volcanic",
+    "source_atlas": "special_volcanic_rock_textures.png",
+    "crop_path": "assets/textures/rock/special_volcanic/basalt.png",
+    "tile32_path": "assets/textures/rock/special_volcanic/basalt_32.png",
+    "crop_size": [
+      422,
+      408
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "obsidian",
+    "category": "rock/special_volcanic",
+    "source_atlas": "special_volcanic_rock_textures.png",
+    "crop_path": "assets/textures/rock/special_volcanic/obsidian.png",
+    "tile32_path": "assets/textures/rock/special_volcanic/obsidian_32.png",
+    "crop_size": [
+      422,
+      408
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "scoria",
+    "category": "rock/special_volcanic",
+    "source_atlas": "special_volcanic_rock_textures.png",
+    "crop_path": "assets/textures/rock/special_volcanic/scoria.png",
+    "tile32_path": "assets/textures/rock/special_volcanic/scoria_32.png",
+    "crop_size": [
+      422,
+      408
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "travertine",
+    "category": "rock/special_volcanic",
+    "source_atlas": "special_volcanic_rock_textures.png",
+    "crop_path": "assets/textures/rock/special_volcanic/travertine.png",
+    "tile32_path": "assets/textures/rock/special_volcanic/travertine_32.png",
+    "crop_size": [
+      422,
+      417
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "tuff",
+    "category": "rock/special_volcanic",
+    "source_atlas": "special_volcanic_rock_textures.png",
+    "crop_path": "assets/textures/rock/special_volcanic/tuff.png",
+    "tile32_path": "assets/textures/rock/special_volcanic/tuff_32.png",
+    "crop_size": [
+      422,
+      417
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "suevite",
+    "category": "rock/special_volcanic",
+    "source_atlas": "special_volcanic_rock_textures.png",
+    "crop_path": "assets/textures/rock/special_volcanic/suevite.png",
+    "tile32_path": "assets/textures/rock/special_volcanic/suevite_32.png",
+    "crop_size": [
+      422,
+      417
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "native_copper",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/native_copper.png",
+    "tile32_path": "assets/textures/ore/native_copper_32.png",
+    "crop_size": [
+      271,
+      239
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "malachite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/malachite.png",
+    "tile32_path": "assets/textures/ore/malachite_32.png",
+    "crop_size": [
+      269,
+      239
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "cassiterite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/cassiterite.png",
+    "tile32_path": "assets/textures/ore/cassiterite_32.png",
+    "crop_size": [
+      270,
+      239
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "galena",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/galena.png",
+    "tile32_path": "assets/textures/ore/galena_32.png",
+    "crop_size": [
+      272,
+      239
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "native_gold",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/native_gold.png",
+    "tile32_path": "assets/textures/ore/native_gold_32.png",
+    "crop_size": [
+      271,
+      232
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "native_silver",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/native_silver.png",
+    "tile32_path": "assets/textures/ore/native_silver_32.png",
+    "crop_size": [
+      269,
+      232
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "sphalerite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/sphalerite.png",
+    "tile32_path": "assets/textures/ore/sphalerite_32.png",
+    "crop_size": [
+      270,
+      232
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "bismuthinite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/bismuthinite.png",
+    "tile32_path": "assets/textures/ore/bismuthinite_32.png",
+    "crop_size": [
+      272,
+      232
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "hematite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/hematite.png",
+    "tile32_path": "assets/textures/ore/hematite_32.png",
+    "crop_size": [
+      271,
+      229
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "limonite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/limonite.png",
+    "tile32_path": "assets/textures/ore/limonite_32.png",
+    "crop_size": [
+      269,
+      229
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "magnetite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/magnetite.png",
+    "tile32_path": "assets/textures/ore/magnetite_32.png",
+    "crop_size": [
+      270,
+      229
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "meteoric_iron",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/meteoric_iron.png",
+    "tile32_path": "assets/textures/ore/meteoric_iron_32.png",
+    "crop_size": [
+      272,
+      229
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "ilmenite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/ilmenite.png",
+    "tile32_path": "assets/textures/ore/ilmenite_32.png",
+    "crop_size": [
+      271,
+      245
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "pentlandite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/pentlandite.png",
+    "tile32_path": "assets/textures/ore/pentlandite_32.png",
+    "crop_size": [
+      269,
+      245
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "chromite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/chromite.png",
+    "tile32_path": "assets/textures/ore/chromite_32.png",
+    "crop_size": [
+      270,
+      245
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "rhodochrosite",
+    "category": "ore",
+    "source_atlas": "metal_ore_texture_atlas.png",
+    "crop_path": "assets/textures/ore/rhodochrosite.png",
+    "tile32_path": "assets/textures/ore/rhodochrosite_32.png",
+    "crop_size": [
+      272,
+      245
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "lignite",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/lignite.png",
+    "tile32_path": "assets/textures/mineral/lignite_32.png",
+    "crop_size": [
+      315,
+      333
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "bituminous_coal",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/bituminous_coal.png",
+    "tile32_path": "assets/textures/mineral/bituminous_coal_32.png",
+    "crop_size": [
+      308,
+      333
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "anthracite",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/anthracite.png",
+    "tile32_path": "assets/textures/mineral/anthracite_32.png",
+    "crop_size": [
+      308,
+      333
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "halite",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/halite.png",
+    "tile32_path": "assets/textures/mineral/halite_32.png",
+    "crop_size": [
+      308,
+      333
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "sulfur",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/sulfur.png",
+    "tile32_path": "assets/textures/mineral/sulfur_32.png",
+    "crop_size": [
+      309,
+      333
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "borax",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/borax.png",
+    "tile32_path": "assets/textures/mineral/borax_32.png",
+    "crop_size": [
+      315,
+      334
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "alum",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/alum.png",
+    "tile32_path": "assets/textures/mineral/alum_32.png",
+    "crop_size": [
+      308,
+      334
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "cinnabar",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/cinnabar.png",
+    "tile32_path": "assets/textures/mineral/cinnabar_32.png",
+    "crop_size": [
+      308,
+      334
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "lapis_lazuli",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/lapis_lazuli.png",
+    "tile32_path": "assets/textures/mineral/lapis_lazuli_32.png",
+    "crop_size": [
+      308,
+      334
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  },
+  {
+    "name": "quartz",
+    "category": "mineral",
+    "source_atlas": "hexel_mineral_texture_atlas.png",
+    "crop_path": "assets/textures/mineral/quartz.png",
+    "tile32_path": "assets/textures/mineral/quartz_32.png",
+    "crop_size": [
+      309,
+      334
+    ],
+    "tile32_size": [
+      32,
+      32
+    ]
+  }
+]
