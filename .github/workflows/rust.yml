@@ -17,5 +17,7 @@ jobs:
           components: rustfmt
       - name: Check formatting
         run: cargo fmt --all -- --check
+      - name: Validate texture catalog
+        run: python3 scripts/validate_material_catalog.py
       - name: Run unit tests
         run: cargo test --all-targets

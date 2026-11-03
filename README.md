@@ -99,6 +99,11 @@ GitHub Actions runs those checks on pushes and pull requests. Headless tests
 cover data layout, coordinate round trips, determinism, movement, boundaries,
 jumping and geometry sanity; they cannot certify in-person GPU/gameplay quality.
 
+All new terrain, ore, soil-cover and grass texture work follows the
+[material and vegetation contract](docs/material-authoring-contract.md). The
+legacy demo art is not yet a production-ready face set. Run
+`python3 scripts/validate_material_catalog.py` to verify registered assets.
+
 Read [World generation](docs/world-generation.md),
 [Integration boundaries](docs/integration.md),
 [Decisions](docs/decisions.md) and
