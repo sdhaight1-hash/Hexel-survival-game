@@ -19,6 +19,18 @@ dimensions.
 No cross-chunk streaming, toroidal movement, digging/building, saves, ecology,
 climate, caves, finite water or diffusion inference exists in this slice.
 
+## Visual direction and asset standards
+
+**Canonical reference for all future art and rendering work:**
+[Hexel Survival Art Direction & Style Guide](assets/STYLE_GUIDE.md).
+It reconciles Hytale-like gameplay readability, the older full-3D foliage
+concept, Vintage Story-like geological/ecological depth and the user's
+Luis Royo-influenced painterly atmosphere. It specifies hexel face/overlay
+rules, ore recognition, grass/flora design, palette and lighting direction,
+compression/performance expectations, and in-game approval checks.
+**Future renderer features are described as goals, not shipped features.**
+Contributors and coding assistants should read the guide before visual changes.
+
 ## Launch
 
 Requires [Rust](https://www.rust-lang.org/tools/install) and a working graphics
