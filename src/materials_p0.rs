@@ -92,7 +92,6 @@ fn soil_face(density: CoverDensity, top: bool, side: bool) -> Material {
     }
 }
 
-
 const SEAM_OVERLAP: usize = 40;
 const N: usize = TEXTURE_SIZE as usize;
 
@@ -109,11 +108,10 @@ impl SourceImage {
             .read_info()
             .map_err(|e| format!("Could not read reference PNG: {e}"))?;
         let mut data = vec![0; reader.output_buffer_size()];
-        let info = reader.next_frame(&mut data)
+        let info = reader
+            .next_frame(&mut data)
             .map_err(|e| format!("Could not decode reference PNG: {e}"))?;
-        if info.color_type != png::ColorType::Rgba
-            || info.bit_depth != png::BitDepth::Eight
-        {
+        if info.color_type != png::ColorType::Rgba || info.bit_depth != png::BitDepth::Eight {
             return Err("Reference textures must be 8-bit RGBA PNGs".into());
         }
         data.truncate(info.buffer_size());
@@ -135,10 +133,8 @@ impl SourceImage {
 
     /// Bilinear sample of an original ore image (without tiling its backdrop).
     fn sample_relative(&self, u: f32, v: f32) -> [f32; 3] {
-        let x = (8.0 + u * (self.width - 17) as f32)
-            .clamp(0.0, (self.width - 1) as f32);
-        let y = (8.0 + v * (self.height - 17) as f32)
-            .clamp(0.0, (self.height - 1) as f32);
+        let x = (8.0 + u * (self.width - 17) as f32).clamp(0.0, (self.width - 1) as f32);
+        let y = (8.0 + v * (self.height - 17) as f32).clamp(0.0, (self.height - 1) as f32);
         let x0 = x.floor() as usize;
         let y0 = y.floor() as usize;
         let x1 = (x0 + 1).min(self.width - 1);
@@ -257,17 +253,15 @@ fn composite(base: &mut [u8], x: u32, y: u32, pigment: [u8; 3], opacity: f32) {
     let i = ((y * TEXTURE_SIZE + x) * 4) as usize;
     let a = opacity.clamp(0.0, 1.0);
     for c in 0..3 {
-        base[i + c] =
-            (base[i + c] as f32 * (1.0 - a) + pigment[c] as f32 * a).round() as u8;
+        base[i + c] = (base[i + c] as f32 * (1.0 - a) + pigment[c] as f32 * a).round() as u8;
     }
 }
 
 fn grass_alpha(x: u32, y: u32, density: CoverDensity) -> f32 {
     let u = x as f32 / TEXTURE_SIZE as f32;
     let v = y as f32 / TEXTURE_SIZE as f32;
-    let field = 0.55 * noise(u, v, 11, 71)
-        + 0.25 * noise(u, v, 37, 72)
-        + 0.20 * noise(u, v, 73, 73);
+    let field =
+        0.55 * noise(u, v, 11, 71) + 0.25 * noise(u, v, 37, 72) + 0.20 * noise(u, v, 73, 73);
     let threshold = match density {
         CoverDensity::Bare => return 0.0,
         CoverDensity::VerySparse => 0.73,
@@ -281,9 +275,7 @@ fn grass_pigment(forest: &[u8], x: u32, y: u32) -> [u8; 3] {
     // Reuse genuine forest-floor microstructure to break up the synthetic
     // green. This is a tinted *preview*, not species-specific grass artwork.
     let i = ((y * TEXTURE_SIZE + x) * 4) as usize;
-    let light = 0.29 * forest[i] as f32
-        + 0.59 * forest[i + 1] as f32
-        + 0.12 * forest[i + 2] as f32;
+    let light = 0.29 * forest[i] as f32 + 0.59 * forest[i + 1] as f32 + 0.12 * forest[i + 2] as f32;
     let organic = (light - 50.0) * 0.32;
     let u = x as f32 / TEXTURE_SIZE as f32;
     let v = y as f32 / TEXTURE_SIZE as f32;
@@ -348,8 +340,7 @@ fn ore_composite(rock: &[u8], source: &SourceImage) -> Vec<u8> {
             // Do not leave a rectangular brown border around the ore.
             let edge_x = x.min(TEXTURE_SIZE - 1 - x) as f32;
             let edge_y = y.min(TEXTURE_SIZE - 1 - y) as f32;
-            let fade = (edge_x / 23.0).clamp(0.0, 1.0)
-                * (edge_y / 23.0).clamp(0.0, 1.0);
+            let fade = (edge_x / 23.0).clamp(0.0, 1.0) * (edge_y / 23.0).clamp(0.0, 1.0);
             let pigment = [copper[0] as u8, copper[1] as u8, copper[2] as u8];
             composite(&mut output, x, y, pigment, selective_alpha * fade * 0.95);
         }
@@ -383,13 +374,9 @@ pub fn generate_textures() -> Result<Vec<Vec<u8>>, String> {
         "../assets/textures/rock/sedimentary/shale.png"
     ))?
     .seamless_tile()?;
-    let forest = SourceImage::from_png(include_bytes!(
-        "../assets/textures/soil/forest_floor.png"
-    ))?
-    .seamless_tile()?;
-    let copper = SourceImage::from_png(include_bytes!(
-        "../assets/textures/ore/native_copper.png"
-    ))?;
+    let forest = SourceImage::from_png(include_bytes!("../assets/textures/soil/forest_floor.png"))?
+        .seamless_tile()?;
+    let copper = SourceImage::from_png(include_bytes!("../assets/textures/ore/native_copper.png"))?;
 
     let result = vec![
         soil.clone(),
