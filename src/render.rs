@@ -4,6 +4,7 @@
 use crate::{
     materials_p0,
     mesh::{build_chunk_mesh, Vertex},
+    texture_pack::TexturePack,
 };
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
@@ -11,7 +12,7 @@ use hexel_survival_game::{
     player::Player,
     world::{ChunkPos, World},
 };
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -79,11 +80,21 @@ impl Renderer {
             })
             .await
             .ok_or_else(|| "No compatible graphics adapter detected".to_string())?;
+        // Only request BC compression when the actual adapter exposes it.
+        // BC7 is GPU-decoded in hardware, while unsupported GPUs get a
+        // single CPU BC7 -> RGBA decode during initialization.
+        let supports_bc7 = adapter
+            .features()
+            .contains(wgpu::Features::TEXTURE_COMPRESSION_BC);
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("Hexel Survival device"),
-                    required_features: wgpu::Features::empty(),
+                    required_features: if supports_bc7 {
+                        wgpu::Features::TEXTURE_COMPRESSION_BC
+                    } else {
+                        wgpu::Features::empty()
+                    },
                     required_limits: wgpu::Limits::default(),
                     memory_hints: wgpu::MemoryHints::Performance,
                 },
@@ -139,26 +150,67 @@ impl Renderer {
                 resource: camera_buffer.as_entire_binding(),
             }],
         });
-        // P0 art-derived 256px RGBA layers: high-resolution source geology
-        // with independent grass cover and extracted copper inclusions.
-        // The original 55 textures remain intact as source assets.
-        let material_layers = materials_p0::generate_textures()
-            .map_err(|error| format!("Could not prepare P0 art-derived materials: {error}"))?;
+        // Compression happened in build.rs: startup never encodes texture
+        // blocks or resamples the original high-resolution source PNGs.
+        let packed = TexturePack::embedded()
+            .map_err(|e| format!("Invalid embedded material BC7 pack: {e}"))?;
+        if (packed.width, packed.height, packed.layers)
+            != (
+                materials_p0::TEXTURE_SIZE,
+                materials_p0::TEXTURE_SIZE,
+                materials_p0::LAYER_COUNT,
+            )
+        {
+            return Err("P0 material pack dimensions/layer count do not match the mesh".into());
+        }
+        let texture_format = if supports_bc7 {
+            wgpu::TextureFormat::Bc7RgbaUnormSrgb
+        } else {
+            wgpu::TextureFormat::Rgba8UnormSrgb
+        };
+        println!(
+            "Material textures: {} path; {:.2} MiB BC7 vs {:.2} MiB RGBA ({} GPU memory reduction)",
+            if supports_bc7 {
+                "hardware BC7"
+            } else {
+                "CPU BC7 decode -> RGBA fallback"
+            },
+            packed.bc7_bytes() as f64 / 1_048_576.0,
+            packed.rgba_bytes() as f64 / 1_048_576.0,
+            if supports_bc7 {
+                "75%"
+            } else {
+                "0% on this adapter"
+            },
+        );
         let material_texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Hexel materials"),
+            label: Some(if supports_bc7 {
+                "Hexel BC7 materials"
+            } else {
+                "Hexel RGBA fallback materials"
+            }),
             size: wgpu::Extent3d {
-                width: materials_p0::TEXTURE_SIZE,
-                height: materials_p0::TEXTURE_SIZE,
-                depth_or_array_layers: material_layers.len() as u32,
+                width: packed.width,
+                height: packed.height,
+                depth_or_array_layers: packed.layers as u32,
             },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            format: texture_format,
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
         });
-        for (layer, rgba) in material_layers.iter().enumerate() {
+        for layer in 0..packed.layers {
+            let pixels: Cow<'_, [u8]> = if supports_bc7 {
+                Cow::Borrowed(packed.bc7_layer(layer))
+            } else {
+                Cow::Owned(
+                    packed
+                        .decode_layer(layer)
+                        .map_err(|e| format!("BC7 fallback decode layer {layer}: {e}"))?,
+                )
+            };
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: &material_texture,
@@ -170,15 +222,23 @@ impl Renderer {
                     },
                     aspect: wgpu::TextureAspect::All,
                 },
-                &rgba,
+                &pixels,
                 wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(materials_p0::TEXTURE_SIZE * 4),
-                    rows_per_image: Some(materials_p0::TEXTURE_SIZE),
+                    bytes_per_row: Some(if supports_bc7 {
+                        (packed.width / 4) * 16 // 4x4 BC7 blocks, 16 bytes per block
+                    } else {
+                        packed.width * 4
+                    }),
+                    rows_per_image: Some(if supports_bc7 {
+                        packed.height / 4
+                    } else {
+                        packed.height
+                    }),
                 },
                 wgpu::Extent3d {
-                    width: materials_p0::TEXTURE_SIZE,
-                    height: materials_p0::TEXTURE_SIZE,
+                    width: packed.width,
+                    height: packed.height,
                     depth_or_array_layers: 1,
                 },
             );

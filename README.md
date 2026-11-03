@@ -91,6 +91,20 @@ base chunks. Water must be globally conserved across simulation scales.
 
 None of these planetary systems is claimed to work in this first chunk.
 
+## Compressed texture pipeline
+
+The original high-resolution geology source art now gets processed **at
+build time**, not every launch. An embedded **BC7** texture pack uses only
+**0.75 MiB** of GPU memory for all 12 current 256px gallery layers on
+adapters supporting native BC compression (versus **3 MiB** uncompressed).
+The GPU decompresses BC7 automatically during sampling. Unsupported
+adapters use a **one-time CPU BC7 decoder** and the ordinary RGBA8 path,
+so the game remains playable without BC texture support.
+
+The console reports the selected mode. There is no additional install or
+asset-baking command: `cargo run --release` runs the offline bake as
+needed through Cargo. See [compression pipeline](docs/texture-compression.md).
+
 ## P0 in-game material gallery
 
 The 16³ demo currently includes a **temporary reference strip** with bare,

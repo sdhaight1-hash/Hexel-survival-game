@@ -3,6 +3,8 @@
 mod materials_p0;
 mod mesh;
 mod render;
+mod texture_codec;
+mod texture_pack;
 
 use hexel_survival_game::{
     player::{MoveInput, Player},
