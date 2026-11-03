@@ -8,7 +8,7 @@ systems before the first playable test.
 - [x] Document current topology, generation ownership and major open decisions.
 - [x] Add a dependency-free Rust library and CI formatting/test workflow.
 - [x] Add unit tests for periodic rectangular-raster indexing and tile edges.
-- [ ] Confirm checks complete on GitHub Actions.
+- [x] Confirm formatting and tests pass on GitHub Actions.
 
 **Acceptance:** `cargo fmt --all -- --check` and `cargo test --all-targets`
 pass on GitHub Actions. This is *not* a playable-world milestone.
