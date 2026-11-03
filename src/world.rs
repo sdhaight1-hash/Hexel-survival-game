@@ -152,10 +152,19 @@ impl World {
         let mut chunk = Chunk::default();
         for q in 0..CHUNK_SIDE {
             for r in 0..CHUNK_SIDE {
-                let top = demo_surface(seed, q, r);
+                // P0 gallery cells are deliberately flat and identified by
+                // material_lab, never by geology or an ore-generation rule.
+                let fixture = crate::material_lab::sample(q, r);
+                let top = if fixture.is_some() { 2 } else { demo_surface(seed, q, r) };
                 for y in 0..=top {
                     let block = if y == top {
-                        Block::Grass
+                        match fixture {
+                            Some(crate::material_lab::LabSample::Soil(
+                                crate::material_contract::CoverDensity::Bare,
+                            )) => Block::Soil,
+                            Some(crate::material_lab::LabSample::Rock { .. }) => Block::Rock,
+                            _ => Block::Grass,
+                        }
                     } else if y >= top - 2 {
                         Block::Soil
                     } else {
