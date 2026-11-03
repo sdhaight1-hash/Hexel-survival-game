@@ -1,5 +1,7 @@
 struct Camera {
     view_proj: mat4x4<f32>,
+    // x: checker debug toggle; y: texel density relative to 128px/m
+    options: vec4<f32>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var material_tiles: texture_2d_array<f32>;
@@ -26,6 +28,9 @@ struct VertexOut {
     return out;
 }
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
-    let albedo = textureSample(material_tiles, tile_sampler, v.uv, i32(v.material));
+    // All vertex UVs are in physical metres. Material images currently
+    // contain one repeat per metre at the 128px/m benchmark.
+    let layer = select(v.material, 11u, camera.options.x > 0.5);
+    let albedo = textureSample(material_tiles, tile_sampler, v.uv * camera.options.y, i32(layer));
     return vec4<f32>(albedo.rgb * v.color, 1.0);
 }
