@@ -23,3 +23,5 @@ jobs:
         run: python3 scripts/validate_flora_registry.py
       - name: Run unit tests
         run: cargo test --all-targets
+      - name: Validate production material v2 registry
+        run: cargo run --quiet --bin material-baker -- validate

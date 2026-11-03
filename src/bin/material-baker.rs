@@ -342,7 +342,7 @@ fn bake(catalog: &Catalog, root: &Path, out: &Path) -> Result<usize> {
             repeat_metres: src.repeat_metres,
             wrap: src.wrap.clone(),
             compressed_bytes: blocks.len(),
-            rgb_psnr_db: (psnr * 100.0).round() / 100.0,
+            rgb_psnr_db: (psnr.min(99.0) * 100.0).round() / 100.0,
         });
     }
     let index = BakeIndex {
@@ -395,6 +395,66 @@ mod tests {
         assert_eq!(reference_id(&entry("granite", "rock/metamorphic_igneous")).0, "rock.granite");
         assert!(!id_valid("rock.Granite"));
         assert!(!safe_relative("assets/production/../textures/ore.png", "assets/production/"));
+    }
+
+    #[test]
+    fn offline_baker_accepts_mixed_rectangular_and_square_resolution_assets() {
+        let root = std::env::temp_dir().join(format!(
+            "hexel-v2-baker-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let source_dir = root.join("assets/production/test");
+        fs::create_dir_all(&source_dir).unwrap();
+        let mut items = Vec::new();
+        for (id, width, height) in [("test.small", 64, 128), ("test.large", 256, 256)] {
+            let name = format!("{id}.png");
+            let bytes: Vec<u8> = (0..height).flat_map(|y| {
+                (0..width).flat_map(move |x| {
+                    // Smooth gradients compress well and retain distinguishable texels.
+                    let red = (x * 130 / width + 55) as u8;
+                    let green = (y * 120 / height + 60) as u8;
+                    [red, green, 90, 255]
+                })
+            }).collect();
+            let path = source_dir.join(&name);
+            let mut png = png::Encoder::new(File::create(&path).unwrap(), width, height);
+            png.set_color(png::ColorType::Rgba);
+            png.set_depth(png::BitDepth::Eight);
+            png.write_header().unwrap().write_image_data(&bytes).unwrap();
+            items.push(TextureAsset {
+                id: id.to_owned(),
+                path: format!("assets/production/test/{name}"),
+                usage: "albedo".to_string(),
+                color_space: "srgb".to_string(),
+                repeat_metres: if width == 64 { [0.5, 1.0] } else { [1.0, 1.0] },
+                wrap: "repeat".to_owned(),
+            });
+        }
+        let catalog = Catalog {
+            schema_version: 2,
+            notes: "Synthetic compression test".to_owned(),
+            materials: Vec::new(),
+            texture_assets: items,
+        };
+        let out = root.join("target/v2-baked");
+        let result = bake(&catalog, &root, &out);
+        assert!(result.is_ok(), "{result:?}");
+        assert_eq!(result.unwrap(), 2);
+        let index: serde_json::Value =
+            serde_json::from_slice(&fs::read(out.join("index.json")).unwrap()).unwrap();
+        assert_eq!(index["textures"][0]["id"], "test.large");
+        assert_eq!(index["textures"][1]["id"], "test.small");
+        assert_eq!(index["textures"][0]["width"], 256);
+        assert_eq!(index["textures"][1]["height"], 128);
+        assert_eq!(index["textures"][0]["repeat_metres"][0], 1.0);
+        assert_eq!(index["textures"][1]["repeat_metres"][0], 0.5);
+        assert_eq!(fs::metadata(out.join("test.large.bc7")).unwrap().len(), 65536);
+        assert_eq!(fs::metadata(out.join("test.small.bc7")).unwrap().len(), 8192);
+        fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]
