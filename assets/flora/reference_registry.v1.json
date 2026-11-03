@@ -1,0 +1,5536 @@
+{
+  "schema_version": 1,
+  "registry_revision": "research-bootstrap-2026-11-03",
+  "description": "208 version-qualified name-level research records, NOT world generation species configuration.",
+  "approval_policy": "No record is approved for gameplay spawning. Unknown/null means unknown, not unrestricted. Source relative elevation is NOT the Hexel world elevation system.",
+  "unit_contract": {
+    "temperature_c": "mean annual degrees Celsius",
+    "rainfall_fraction": "normalized 0..1; historic 0..255 converted by /255 when supplied",
+    "forestation_fraction": "normalized 0..1",
+    "source_elevation_fraction": "reference-game relative elevation; do not use directly for Hexel Y"
+  },
+  "counts_by_source": {
+    "tree.vanilla": 32,
+    "fruit_tree.vanilla": 12,
+    "berry.vanilla": 10,
+    "flower.vanilla": 30,
+    "crop.vanilla": 18,
+    "fungus.vanilla": 45,
+    "tree_shrub.wildcraft": 51,
+    "shrub.florasphere_historical": 10
+  },
+  "records": [
+    {
+      "id": "flora.vanilla.tree.acacia_normal_dead",
+      "display_name": "Acacia",
+      "variant": "Normal, Dead",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.acacia_prickly_moses",
+      "display_name": "Acacia",
+      "variant": "Prickly Moses",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.bald_cypress_normal_swamp",
+      "display_name": "Bald cypress",
+      "variant": "Normal, Swamp",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.bamboo_green",
+      "display_name": "Bamboo",
+      "variant": "Green",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.bamboo_brown",
+      "display_name": "Bamboo",
+      "variant": "Brown",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.birch_silver_1",
+      "display_name": "Birch",
+      "variant": "Silver 1",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7",
+        "elevation_warning": "Reference-game relative height, NOT approved for Hexel Survival Y or elevation."
+      },
+      "worldgen": {
+        "temperature_c": [
+          3,
+          16
+        ],
+        "rainfall_fraction": [
+          0.37254901960784315,
+          1
+        ],
+        "forestation_fraction": [
+          0.0392156862745098,
+          1
+        ],
+        "source_elevation_fraction": [
+          0,
+          0.65
+        ]
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.birch_silver_2",
+      "display_name": "Birch",
+      "variant": "Silver 2",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.birch_himalayan",
+      "display_name": "Birch",
+      "variant": "Himalayan",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.birch_river",
+      "display_name": "Birch",
+      "variant": "River",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.birch_dwarf",
+      "display_name": "Birch",
+      "variant": "Dwarf",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.crimson_king_maple",
+      "display_name": "Crimson King maple",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.ebony",
+      "display_name": "Ebony",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.mediterranean_cypress",
+      "display_name": "Mediterranean cypress",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.kapok_normal_dead",
+      "display_name": "Kapok",
+      "variant": "Normal, Dead",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.kapok_viney",
+      "display_name": "Kapok",
+      "variant": "Viney",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.kapok_large_1_large_2",
+      "display_name": "Kapok",
+      "variant": "Large 1, Large 2",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7",
+        "elevation_warning": "Reference-game relative height, NOT approved for Hexel Survival Y or elevation."
+      },
+      "worldgen": {
+        "temperature_c": [
+          27,
+          40
+        ],
+        "rainfall_fraction": [
+          0.7254901960784313,
+          1
+        ],
+        "forestation_fraction": [
+          0.47058823529411764,
+          1
+        ],
+        "source_elevation_fraction": [
+          0,
+          0.9
+        ]
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.kapok_shrub",
+      "display_name": "Kapok",
+      "variant": "Shrub",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.larch_normal",
+      "display_name": "Larch",
+      "variant": "Normal",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.larch_deep_forest",
+      "display_name": "Larch",
+      "variant": "Deep forest",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.maple_norway",
+      "display_name": "Maple",
+      "variant": "Norway",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.maple_mountain",
+      "display_name": "Maple",
+      "variant": "Mountain",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.maple_japanese",
+      "display_name": "Maple",
+      "variant": "Japanese",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.maple_sugar",
+      "display_name": "Maple",
+      "variant": "Sugar",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.maple_small_sugar",
+      "display_name": "Maple",
+      "variant": "Small Sugar",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.oak_normal_old_large_old_shrub",
+      "display_name": "Oak",
+      "variant": "Normal, Old, Large old, Shrub",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.pine_mountain",
+      "display_name": "Pine",
+      "variant": "Mountain",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.pine_scots",
+      "display_name": "Pine",
+      "variant": "Scots",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.pine_fir",
+      "display_name": "Pine",
+      "variant": "Fir",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.pine_bristlecone",
+      "display_name": "Pine",
+      "variant": "Bristlecone",
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.purpleheart",
+      "display_name": "Purpleheart",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.redwood",
+      "display_name": "Redwood",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7",
+        "elevation_warning": "Reference-game relative height, NOT approved for Hexel Survival Y or elevation."
+      },
+      "worldgen": {
+        "temperature_c": [
+          14,
+          18
+        ],
+        "rainfall_fraction": [
+          0.7058823529411765,
+          1
+        ],
+        "forestation_fraction": [
+          0.19607843137254902,
+          1
+        ],
+        "source_elevation_fraction": [
+          0.4,
+          1
+        ]
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.tree.walnut",
+      "display_name": "Walnut",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Tree",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.red_apple",
+      "display_name": "Red apple",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": [
+          -9,
+          18
+        ],
+        "rainfall_fraction": [
+          0.5,
+          0.9
+        ],
+        "forestation_fraction": [
+          0.3,
+          0.8
+        ],
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.pink_apple",
+      "display_name": "Pink apple",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.yellow_apple",
+      "display_name": "Yellow apple",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.peach",
+      "display_name": "Peach",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.pear",
+      "display_name": "Pear",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.cherry",
+      "display_name": "Cherry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.orange",
+      "display_name": "Orange",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": [
+          25,
+          30
+        ],
+        "rainfall_fraction": [
+          0.45,
+          1
+        ],
+        "forestation_fraction": [
+          0.3,
+          0.8
+        ],
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.olive",
+      "display_name": "Olive",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.mango",
+      "display_name": "Mango",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.breadfruit",
+      "display_name": "Breadfruit",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.lychee",
+      "display_name": "Lychee",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fruit_tree.pomegranate",
+      "display_name": "Pomegranate",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fruit_tree",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Fruit_tree",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.beautyberry",
+      "display_name": "Beautyberry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.blueberry",
+      "display_name": "Blueberry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": [
+          -2,
+          18
+        ],
+        "rainfall_fraction": [
+          0.3,
+          0.7
+        ],
+        "forestation_fraction": [
+          0.5,
+          1
+        ],
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.cloudberry",
+      "display_name": "Cloudberry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": [
+          -20,
+          -3
+        ],
+        "rainfall_fraction": [
+          0.5,
+          1
+        ],
+        "forestation_fraction": [
+          0,
+          0.7
+        ],
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.cranberry",
+      "display_name": "Cranberry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.blackberry",
+      "display_name": "Blackberry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.blackcurrant",
+      "display_name": "Blackcurrant",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.raspberry",
+      "display_name": "Raspberry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.redcurrant",
+      "display_name": "Redcurrant",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.whitecurrant",
+      "display_name": "Whitecurrant",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.berry.strawberry",
+      "display_name": "Strawberry",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "berry",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Berry",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.bluebell",
+      "display_name": "Bluebell",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.catmint",
+      "display_name": "Catmint",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.cornflower",
+      "display_name": "Cornflower",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.cow_parsley",
+      "display_name": "Cow parsley",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.cow_parsley_forest",
+      "display_name": "Cow parsley (forest)",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "source_inconsistent",
+        "as_of": "2026-11-03",
+        "source_game_version": null,
+        "review_warning": "Reference rain min=0.5 exceeds max=0.1; both omitted; requires game asset inspection."
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.daffodil",
+      "display_name": "Daffodil",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.dwarf_furze",
+      "display_name": "Dwarf furze",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.edelweiss",
+      "display_name": "Edelweiss",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null,
+        "elevation_warning": "Reference-game relative height, NOT approved for Hexel Survival Y or elevation."
+      },
+      "worldgen": {
+        "temperature_c": [
+          -1,
+          12
+        ],
+        "rainfall_fraction": [
+          0.3,
+          0.8
+        ],
+        "forestation_fraction": [
+          0,
+          0.7
+        ],
+        "source_elevation_fraction": [
+          0.65,
+          1
+        ]
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.forget_me_not",
+      "display_name": "Forget me not",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.forget_me_not_forest",
+      "display_name": "Forget me not (forest)",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.ghost_pipe_pink",
+      "display_name": "Ghost pipe (pink)",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.ghost_pipe_red",
+      "display_name": "Ghost pipe (red)",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.ghost_pipe_white",
+      "display_name": "Ghost pipe (white)",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.golden_poppy",
+      "display_name": "Golden poppy",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.heather",
+      "display_name": "Heather",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.horsetail",
+      "display_name": "Horsetail",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.horsetail_forest",
+      "display_name": "Horsetail (forest)",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.lily_of_the_valley",
+      "display_name": "Lily of the valley",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.blue_lupine",
+      "display_name": "Blue lupine",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.orange_lupine",
+      "display_name": "Orange lupine",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.purple_lupine",
+      "display_name": "Purple lupine",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.red_lupine",
+      "display_name": "Red lupine",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.white_lupine",
+      "display_name": "White lupine",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.orange_mallow",
+      "display_name": "Orange mallow",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.mugwort",
+      "display_name": "Mugwort",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.brown_rafflesia",
+      "display_name": "Brown rafflesia",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.red_rafflesia",
+      "display_name": "Red rafflesia",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.redtop_grass",
+      "display_name": "Redtop grass",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": [
+          0,
+          20
+        ],
+        "rainfall_fraction": [
+          0.42,
+          1
+        ],
+        "forestation_fraction": [
+          0,
+          0.2
+        ],
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.wild_daisy",
+      "display_name": "Wild daisy",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.flower.woad",
+      "display_name": "Woad",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "flower",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Flower",
+        "evidence_status": "wiki_snapshot",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.carrot",
+      "display_name": "Carrot",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.flax",
+      "display_name": "Flax",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.onion",
+      "display_name": "Onion",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.spelt",
+      "display_name": "Spelt",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.turnip",
+      "display_name": "Turnip",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.parsnip",
+      "display_name": "Parsnip",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.rye",
+      "display_name": "Rye",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": [
+          -10,
+          14
+        ],
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.rice",
+      "display_name": "Rice",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": [
+          22,
+          40
+        ],
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.soybean",
+      "display_name": "Soybean",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.amaranth",
+      "display_name": "Amaranth",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.cassava",
+      "display_name": "Cassava",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.peanut",
+      "display_name": "Peanut",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.pineapple",
+      "display_name": "Pineapple",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.sunflower",
+      "display_name": "Sunflower",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.pumpkin",
+      "display_name": "Pumpkin",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.cabbage",
+      "display_name": "Cabbage",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.fennel",
+      "display_name": "Fennel",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.crop.licorice",
+      "display_name": "Licorice",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "crop",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Farming",
+        "evidence_status": "wiki_1_20_7",
+        "as_of": "2026-11-03",
+        "source_game_version": "1.20.7"
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.orange_oak_bolete",
+      "display_name": "Orange oak bolete",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": "ground; deciduous-host association"
+    },
+    {
+      "id": "flora.vanilla.fungus.king_bolete",
+      "display_name": "King bolete",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": "ground; tree-associated"
+    },
+    {
+      "id": "flora.vanilla.fungus.bitter_bolete",
+      "display_name": "Bitter bolete",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.devil_s_bolete",
+      "display_name": "Devil's bolete",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.fly_agaric",
+      "display_name": "Fly agaric",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.green_cracked_russula",
+      "display_name": "Green cracked russula",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.violet_web_cap",
+      "display_name": "Violet web cap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.almond_mushroom",
+      "display_name": "Almond mushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.red_wine_cap",
+      "display_name": "Red wine cap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.paddy_straw",
+      "display_name": "Paddy straw",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.death_cap",
+      "display_name": "Death cap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.puffball",
+      "display_name": "Puffball",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.earth_ball",
+      "display_name": "Earth ball",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.chanterelle",
+      "display_name": "Chanterelle",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.black_trumpet",
+      "display_name": "Black trumpet",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.field_mushroom",
+      "display_name": "Field mushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.gold_drop_milkcap",
+      "display_name": "Gold-drop milkcap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.indigo_milkcap",
+      "display_name": "Indigo milkcap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.saffron_milkcap",
+      "display_name": "Saffron milkcap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.common_morel",
+      "display_name": "Common morel",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.witchhat_mushroom",
+      "display_name": "Witchhat mushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.lobster",
+      "display_name": "Lobster",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.jack_o_lantern_mushroom",
+      "display_name": "Jack-o'-lantern mushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.devilstooth_mushroom",
+      "display_name": "Devilstooth mushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.elfin_saddle",
+      "display_name": "Elfin saddle",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.blue_meanie",
+      "display_name": "Blue meanie",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.fool_s_conecap",
+      "display_name": "Fool's conecap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.gold_cap",
+      "display_name": "Gold cap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.honey_mushroom",
+      "display_name": "Honey mushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.laughing_jim",
+      "display_name": "Laughing jim",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.liberty_cap",
+      "display_name": "Liberty cap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.sickener",
+      "display_name": "Sickener",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.wavy_cap",
+      "display_name": "Wavy cap",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.shiitake",
+      "display_name": "Shiitake",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": "wood-associated; verify host from source"
+    },
+    {
+      "id": "flora.vanilla.fungus.pink_bonnet",
+      "display_name": "Pink bonnet",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.livermushroom",
+      "display_name": "Livermushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.funeral_bell",
+      "display_name": "Funeral bell",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.deer_ear_mushroom",
+      "display_name": "Deer ear mushroom",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.reishi",
+      "display_name": "Reishi",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.white_oyster",
+      "display_name": "White oyster",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.bearded_tooth",
+      "display_name": "Bearded tooth",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.chicken_of_the_woods",
+      "display_name": "Chicken of the woods",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.tinder_hoof",
+      "display_name": "Tinder hoof",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.dryad_saddle",
+      "display_name": "Dryad saddle",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.vanilla.fungus.pink_oyster",
+      "display_name": "Pink oyster",
+      "variant": null,
+      "origin": "vanilla",
+      "category": "fungus",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://wiki.vintagestory.at/Mushroom",
+        "evidence_status": "wiki_1_22",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.cedar_pine",
+      "display_name": "Cedar pine",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.fir",
+      "display_name": "Fir",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.spruce",
+      "display_name": "Spruce",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.blue_spruce",
+      "display_name": "Blue spruce",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.douglas_fir",
+      "display_name": "Douglas fir",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.arborvitae",
+      "display_name": "Arborvitae",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.red_cedar",
+      "display_name": "Red cedar",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.yew",
+      "display_name": "Yew",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.kauri",
+      "display_name": "Kauri",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.ginkgo",
+      "display_name": "Ginkgo",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.sycamore",
+      "display_name": "Sycamore",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.honey_locust",
+      "display_name": "Honey locust",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.dalbergia",
+      "display_name": "Dalbergia",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.wiliwili",
+      "display_name": "Wiliwili",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.crown_of_thorns",
+      "display_name": "Crown-of-thorns",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.umnini",
+      "display_name": "Umnini",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.banyan",
+      "display_name": "Banyan",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.elm",
+      "display_name": "Elm",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.beech",
+      "display_name": "Beech",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.bride_in_white",
+      "display_name": "Bride-in-white",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.alder",
+      "display_name": "Alder",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.bearnut",
+      "display_name": "Bearnut",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.willow",
+      "display_name": "Willow",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.red_willow",
+      "display_name": "Red willow",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.poplar",
+      "display_name": "Poplar",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.aspen",
+      "display_name": "Aspen",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.tamanu",
+      "display_name": "Tamanu",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.spurge_tree",
+      "display_name": "Spurge tree",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.azobe",
+      "display_name": "Azobe",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.guajacum",
+      "display_name": "Guajacum",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.eucalyptus",
+      "display_name": "Eucalyptus",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.ghost_gum",
+      "display_name": "Ghost gum",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.ohia",
+      "display_name": "Ohia",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.satinash",
+      "display_name": "Satinash",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.leadwood",
+      "display_name": "Leadwood",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.blue_mahoe",
+      "display_name": "Blue mahoe",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.linden",
+      "display_name": "Linden",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.sal",
+      "display_name": "Sal",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.horse_chestnut",
+      "display_name": "Horse chestnut",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.tigerwood",
+      "display_name": "Tigerwood",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.mahogany",
+      "display_name": "Mahogany",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.sapele",
+      "display_name": "Sapele",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.saxaul",
+      "display_name": "Saxaul",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.heather",
+      "display_name": "Heather",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.sourwood",
+      "display_name": "Sourwood",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.ash",
+      "display_name": "Ash",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.mousetrap_tree",
+      "display_name": "Mousetrap tree",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.catalpa",
+      "display_name": "Catalpa",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.jacaranda",
+      "display_name": "Jacaranda",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.mangrove",
+      "display_name": "Mangrove",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.wildcraft.tree_shrub.empress_tree",
+      "display_name": "Empress tree",
+      "variant": null,
+      "origin": "wildcraft",
+      "category": "tree_shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/wildcrafttree",
+        "evidence_status": "mod_names_only",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.dwarf_pine",
+      "display_name": "Dwarf pine",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.juniper",
+      "display_name": "Juniper",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.willow",
+      "display_name": "Willow",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": "historical mod description; exact one-block freshwater rule unverified"
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.alder_buckthorn",
+      "display_name": "Alder buckthorn",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.blackthorn",
+      "display_name": "Blackthorn",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.saxaul",
+      "display_name": "Saxaul",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.tree_heather",
+      "display_name": "Tree heather",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.laurel",
+      "display_name": "Laurel",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.combretum",
+      "display_name": "Combretum",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    },
+    {
+      "id": "flora.florasphere_historical.shrub.macaranga",
+      "display_name": "Macaranga",
+      "variant": null,
+      "origin": "florasphere_historical",
+      "category": "shrub",
+      "approval": "research_only",
+      "provenance": {
+        "source_url": "https://mods.vintagestory.at/florasphere",
+        "evidence_status": "historical_mod_version_unverified",
+        "as_of": "2026-11-03",
+        "source_game_version": null
+      },
+      "worldgen": {
+        "temperature_c": null,
+        "rainfall_fraction": null,
+        "forestation_fraction": null,
+        "source_elevation_fraction": null
+      },
+      "survival": null,
+      "establishment": null,
+      "phenology": null,
+      "harvest": null,
+      "visuals": null,
+      "habitat_hint": null
+    }
+  ]
+}
