@@ -69,14 +69,20 @@ mod tests {
     #[test]
     fn provisional_grid_dimensions_are_consistent() {
         assert_eq!(ELEVATION_TILES_PER_AXIS, 64);
-        assert_eq!(ELEVATION_TILES_PER_AXIS * ELEVATION_TILE_SIDE, ELEVATION_SAMPLES_PER_AXIS);
+        assert_eq!(
+            ELEVATION_TILES_PER_AXIS * ELEVATION_TILE_SIDE,
+            ELEVATION_SAMPLES_PER_AXIS
+        );
         assert_eq!(ELEVATION_SAMPLE_SPACING_METRES, 31.25);
     }
 
     #[test]
     fn both_axes_wrap_for_positive_and_negative_indices() {
         assert_eq!(wrap_sample(-1, 32_768), RasterSample { x: 32_767, z: 0 });
-        assert_eq!(wrap_sample(32_768 + 7, -32_768 - 8), RasterSample { x: 7, z: 32_760 });
+        assert_eq!(
+            wrap_sample(32_768 + 7, -32_768 - 8),
+            RasterSample { x: 7, z: 32_760 }
+        );
         assert_eq!(wrap_sample(0, 0), wrap_sample(32_768, -32_768));
     }
 
@@ -84,11 +90,21 @@ mod tests {
     fn tile_boundaries_are_addressed_without_off_by_one_errors() {
         assert_eq!(
             tile_address(wrap_sample(511, 512)),
-            TileAddress { tile_x: 0, tile_z: 1, local_x: 511, local_z: 0 }
+            TileAddress {
+                tile_x: 0,
+                tile_z: 1,
+                local_x: 511,
+                local_z: 0
+            }
         );
         assert_eq!(
             tile_address(wrap_sample(-1, -1)),
-            TileAddress { tile_x: 63, tile_z: 63, local_x: 511, local_z: 511 }
+            TileAddress {
+                tile_x: 63,
+                tile_z: 63,
+                local_x: 511,
+                local_z: 511
+            }
         );
     }
 
