@@ -1,7 +1,8 @@
 //! Mesh hexagonal-prism caps and sides with per-face 32x32 material UVs.
 //! This derived geometry does not own world/material resource state.
 
-use crate::materials::Material;
+use crate::materials_p0::{self, Material};
+use hexel_survival_game::material_contract::HexFace;
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
 use hexel_survival_game::world::{Block, CellPos, ChunkPos, World, CHUNK_SIDE, HEX_RADIUS};
@@ -48,22 +49,10 @@ fn triangle(
 }
 
 // The image is a square, but the projected top/bottom surface is a real hex.
-fn cap_uv(position: Vec3, center: Vec3) -> [f32; 2] {
-    [
-        (0.5 + (position.x - center.x) / (2.0 * HEX_RADIUS)).clamp(0.0, 1.0),
-        (0.5 + (position.z - center.z) / (2.0 * HEX_RADIUS)).clamp(0.0, 1.0),
-    ]
-}
-
-fn material_for(block: Block, cell: CellPos, top: bool) -> Material {
-    match block {
-        // This forest-floor patch is a visual demo, not ecology or biome data.
-        Block::Grass if top && cell.q < 5 && cell.r >= 10 => Material::ForestFloor,
-        Block::Grass if top => Material::LowSoil,
-        Block::Grass | Block::Soil => Material::MediumSoil,
-        Block::Rock => Material::Granite,
-        Block::Air => unreachable!("Only solid cells generate faces"),
-    }
+// Top/bottom caps use X/Z measured in metres. They are real hexagons,
+// but sampling them requires no hexagonal image file or cube UV layout.
+fn cap_uv(position: Vec3) -> [f32; 2] {
+    [position.x, position.z]
 }
 
 /// Meshes visible faces of a section. Neighbor checks query the world, so
@@ -96,7 +85,7 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                         center.z + HEX_RADIUS * angle.sin(),
                     )
                 });
-                let uv = |pos| cap_uv(pos, center);
+                let uv = cap_uv;
                 if !world
                     .get(CellPos::new(cell.q, cell.r, cell.y + 1))
                     .is_solid()
@@ -109,7 +98,7 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            material_for(block, cell, true),
+                            materials_p0::for_face(block, cell, HexFace::Top),
                             [1.0, 1.0, 1.0],
                         );
                     }
@@ -126,7 +115,7 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            material_for(block, cell, false),
+                            materials_p0::for_face(block, cell, HexFace::Bottom),
                             [0.77, 0.77, 0.77],
                         );
                     }
@@ -144,17 +133,26 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     let c = Vec3::new(ring[j].x, top, ring[j].z);
                     let d = Vec3::new(ring[side].x, top, ring[side].z);
                     let shade = 0.82 + side as f32 * 0.025;
-                    let material = material_for(block, cell, false);
+                    let material = materials_p0::for_face(block, cell, HexFace::Side(side as u8));
                     let tint = [shade, shade, shade];
+                    // One side is 0.577m wide x 1m tall. Use metres
+                    // around the hex perimeter, NOT 0..1 across each side.
+                    // Half-texel inset vertically prevents the top-edge
+                    // grass rim from wrapping onto the block bottom.
+                    let u0 = side as f32 * HEX_RADIUS;
+                    let u1 = (side as f32 + 1.0) * HEX_RADIUS;
+                    let half_texel = 0.5 / materials_p0::TEXTURE_SIZE as f32;
+                    let top_v = half_texel;
+                    let bottom_v = 1.0 - half_texel;
                     triangle(
                         &mut vertices,
-                        [(a, [0.0, 1.0]), (b, [1.0, 1.0]), (c, [1.0, 0.0])],
+                        [(a, [u0, bottom_v]), (b, [u1, bottom_v]), (c, [u1, top_v])],
                         material,
                         tint,
                     );
                     triangle(
                         &mut vertices,
-                        [(a, [0.0, 1.0]), (c, [1.0, 0.0]), (d, [0.0, 0.0])],
+                        [(a, [u0, bottom_v]), (c, [u1, top_v]), (d, [u0, top_v])],
                         material,
                         tint,
                     );
@@ -178,21 +176,40 @@ mod tests {
         assert!(vertices.iter().all(|v| {
             v.position.iter().all(|x| x.is_finite())
                 && v.color.iter().all(|x| (0.0..=1.0).contains(x))
-                && v.uv.iter().all(|x| (0.0..=1.0).contains(x))
-                && v.material < crate::materials::TEXTURES.len() as u32
+                && v.uv.iter().all(|x| x.is_finite())
+                && v.material < materials_p0::LAYER_COUNT as u32
         }));
         assert!(build_chunk_mesh(&world, ChunkPos { q: 1, r: 0, y: 0 }).is_empty());
     }
 
     #[test]
-    fn demo_surface_soil_and_rock_have_distinct_materials() {
-        let c = CellPos::new(8, 8, 0);
-        assert_eq!(material_for(Block::Grass, c, true), Material::LowSoil);
-        assert_eq!(material_for(Block::Grass, c, false), Material::MediumSoil);
-        assert_eq!(material_for(Block::Rock, c, false), Material::Granite);
+    fn side_uv_span_respects_physical_hex_edge_length() {
+        let edge = HEX_RADIUS;
+        let u0 = 2.0 * edge;
+        let u1 = 3.0 * edge;
+        let texels = (u1 - u0) * materials_p0::REFERENCE_TEXELS_PER_METRE;
+        assert!((texels - 73.9).abs() < 0.1);
+    }
+
+    #[test]
+    fn preview_materials_vary_by_face_role_and_host() {
+        let soil = CellPos::new(9, 10, 2);
         assert_eq!(
-            material_for(Block::Grass, CellPos::new(2, 12, 0), true),
-            Material::ForestFloor
+            materials_p0::for_face(Block::Grass, soil, HexFace::Top),
+            Material::SoilTopFull
+        );
+        assert_eq!(
+            materials_p0::for_face(Block::Grass, soil, HexFace::Side(0)),
+            Material::SoilSideFull
+        );
+        assert_eq!(
+            materials_p0::for_face(Block::Grass, soil, HexFace::Bottom),
+            Material::SoilBare
+        );
+        let ore = CellPos::new(14, 10, 2);
+        assert_eq!(
+            materials_p0::for_face(Block::Rock, ore, HexFace::Top),
+            Material::ShaleCopper
         );
     }
 }
