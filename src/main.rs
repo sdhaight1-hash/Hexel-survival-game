@@ -1,5 +1,6 @@
 //! One native 16×16×16 chunk viewed through a first-person camera.
 
+mod materials;
 mod mesh;
 mod render;
 

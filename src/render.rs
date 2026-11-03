@@ -1,7 +1,10 @@
 //! Thin wgpu view of the simulation-owned chunk and first-person camera.
 //! No terrain, movement or world-state logic lives inside this module.
 
-use crate::mesh::{build_chunk_mesh, Vertex};
+use crate::{
+    materials,
+    mesh::{build_chunk_mesh, Vertex},
+};
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
 use hexel_survival_game::{
@@ -45,6 +48,8 @@ pub struct Renderer {
     crosshair_pipeline: wgpu::RenderPipeline,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    material_bind_group: wgpu::BindGroup,
+    _material_texture: wgpu::Texture,
     terrain_buffer: wgpu::Buffer,
     terrain_vertices: u32,
     crosshair_buffer: wgpu::Buffer,
@@ -130,13 +135,104 @@ impl Renderer {
                 resource: camera_buffer.as_entire_binding(),
             }],
         });
+        // Four 32×32 RGBA material images, uploaded as a 2D texture array.
+        // Embedded assets keep cargo-run and portable release builds identical.
+        let material_texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Hexel materials"),
+            size: wgpu::Extent3d {
+                width: materials::TEXTURE_SIZE,
+                height: materials::TEXTURE_SIZE,
+                depth_or_array_layers: materials::TEXTURES.len() as u32,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[],
+        });
+        for (layer, bytes) in materials::TEXTURES.iter().enumerate() {
+            let rgba = materials::decoded_rgba(bytes)
+                .map_err(|err| format!("Invalid material image at layer {layer}: {err}"))?;
+            queue.write_texture(
+                wgpu::TexelCopyTextureInfo {
+                    texture: &material_texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d {
+                        x: 0,
+                        y: 0,
+                        z: layer as u32,
+                    },
+                    aspect: wgpu::TextureAspect::All,
+                },
+                &rgba,
+                wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(materials::TEXTURE_SIZE * 4),
+                    rows_per_image: Some(materials::TEXTURE_SIZE),
+                },
+                wgpu::Extent3d {
+                    width: materials::TEXTURE_SIZE,
+                    height: materials::TEXTURE_SIZE,
+                    depth_or_array_layers: 1,
+                },
+            );
+        }
+        let material_view = material_texture.create_view(&wgpu::TextureViewDescriptor {
+            dimension: Some(wgpu::TextureViewDimension::D2Array),
+            ..Default::default()
+        });
+        let material_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("Nearest-neighbor 32px materials"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Nearest,
+            min_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+        let material_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Hexel material array layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2Array,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+            ],
+        });
+        let material_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Hexel material array"),
+            layout: &material_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&material_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&material_sampler),
+                },
+            ],
+        });
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("World shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("world_shader.wgsl").into()),
         });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("World pipeline layout"),
-            bind_group_layouts: &[&camera_layout],
+            bind_group_layouts: &[&camera_layout, &material_layout],
             push_constant_ranges: &[],
         });
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -273,6 +369,8 @@ impl Renderer {
             crosshair_pipeline,
             camera_buffer,
             camera_bind_group,
+            material_bind_group,
+            _material_texture: material_texture,
             terrain_buffer,
             terrain_vertices: mesh.len() as u32,
             crosshair_buffer,
@@ -343,6 +441,7 @@ impl Renderer {
             });
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.camera_bind_group, &[]);
+            pass.set_bind_group(1, &self.material_bind_group, &[]);
             pass.set_vertex_buffer(0, self.terrain_buffer.slice(..));
             pass.draw(0..self.terrain_vertices, 0..1);
             pass.set_pipeline(&self.crosshair_pipeline);
