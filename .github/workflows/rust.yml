@@ -1,0 +1,21 @@
+name: Rust foundation
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run unit tests
+        run: cargo test --all-targets

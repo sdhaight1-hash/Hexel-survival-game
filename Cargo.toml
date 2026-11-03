@@ -1,0 +1,9 @@
+[package]
+name = "hexel-survival-game"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Foundational world-data types for a planned Rust survival game"
+
+[lib]
+path = "src/lib.rs"
