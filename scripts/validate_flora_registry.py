@@ -87,6 +87,8 @@ def validate_registry(data):
         for separate in ("survival", "establishment", "phenology", "harvest", "visuals"):
             if separate not in entry:
                 raise ValueError(f"{identifier}: missing independent {separate} slot")
+        if entry["visuals"] is not None:
+            raise ValueError(f"{identifier}: cannot bind flora art until an approved asset registry exists")
     if dict(groups) != EXPECTED_GROUPS:
         raise ValueError(f"Reference inventory category drift: {dict(groups)}")
     if data.get("counts_by_source") != EXPECTED_GROUPS:
