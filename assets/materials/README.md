@@ -1,20 +1,28 @@
-# Material catalog: face-aware authoring
+# Production material registry and legacy references
 
-The source/reference image library remains under `assets/textures/`. The
-catalog in `catalog.v1.json` holds explicit stable material IDs and
-top/side/bottom image paths. Its current entries are **legacy-preview only**:
-they are not proof that the art is seamless, that the side face has the correct
-physical texel density, or that it contains vegetation transitions.
+**Current catalogs:** `catalog.v1.json` is the historical 32px prototype.
+`catalog.v2.json` is the **new authoring inventory of all 55 source
+identities**. Every v2 entry is currently `needs_art`; none has an
+approved production face set or overlay file.
 
-Future approved texture work follows `docs/material-authoring-contract.md`:
+The v2 material pipeline accepts RGB albedo and transparent overlays stored
+as **RGBA8 PNG**, allows independent rectangular source image dimensions
+(multiples of four for offline BC7), and specifies physical repeat scale in
+metres. Materials have stable IDs and either:
+- solid hexel top/side/bottom face recipes; or
+- top/side/bottom overlay recipes for ground cover or ore inclusions, with
+  the geological host chosen independently by the world.
 
-- Substrates and ore hosts stay separate from cover and individual plants.
-- A soil top may have grass cover, while a side uses grass-to-soil transition
-  and a bottom remains soil.
-- An ore is shown through an *ore-only transparent overlay* of its actual
-  geological host rock; existing opaque ore crops are unsuitable overlays.
-- Maintain the 32x32 RGBA8 baseline and record stable material IDs and status.
-- Preserve the six hexagon-side seams and use ~0.577m side width vs 1m height.
+Read [P1 material pipeline](../../docs/p1-material-pipeline.md) for the
+specific schema, authoring examples, commands and limitations. Read
+[material authoring contract](../../docs/material-authoring-contract.md)
+for geology and vegetation state ownership.
 
-Run `python3 scripts/validate_material_catalog.py` from the repository root
-before pushing. The checks run automatically in GitHub Actions.
+```powershell
+cargo run --bin material-baker -- validate
+cargo run --release --bin material-baker -- bake
+```
+
+The v1 validation remains separate:
+`python3 scripts/validate_material_catalog.py`. No new art may silently
+replace original source files under `assets/textures/`.

@@ -125,6 +125,21 @@ Read [P0 gallery guide](docs/p0-material-gallery.md) and
 [material format v2 proposal](docs/material-format-v2.md).
 The overarching P0–P7 geology/flora texture program is [issue #14](https://github.com/sdhaight1-hash/Hexel-survival-game/issues/14).
 
+## P1 material authoring and offline BC7 tooling
+
+The new [P1 material pipeline](docs/p1-material-pipeline.md) inventories **all
+55 legacy geology and organic-cover sources** as needing re-authoring.
+No old atlas crop has been promoted to production art. A versioned
+`assets/materials/catalog.v2.json` defines stable IDs, distinct hexel
+top/side/bottom material recipes and independent cover/ore overlays.
+
+Validate the catalog with `cargo run --bin material-baker -- validate`.
+Once new art has been approved for registration, bake it with
+`cargo run --release --bin material-baker -- bake`; files go to
+`target/materials-v2`. This tool supports **rectangular and square RGBA**
+textures with appropriate physical repeat scales and emits BC7. The playable
+P0 scene is unchanged while runtime v2 binding is developed.
+
 ## Tests and engineering roadmap
 
 ```sh

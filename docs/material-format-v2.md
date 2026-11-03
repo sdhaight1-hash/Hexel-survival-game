@@ -1,6 +1,11 @@
 # Hexel material format v2 — P0 prototype and proposed production contract
 
-**Status:** proposed production format; no v2 asset compiler or JSON loader exists yet.
+**Status:** the v2 JSON **authoring registry, validation and offline
+per-source BC7 baker** are now implemented. The **runtime v2 loader**
+and final packed/streamed GPU material layout are not implemented.
+See [P1 material pipeline](p1-material-pipeline.md) for actual schema and
+commands. The example farther below remains illustrative, not a live
+registered approved asset.
 The playable P0 scene uses **source-art-derived visual prototypes** in
 `src/materials_p0.rs` with the renderer in `src/render.rs`. It decodes
 five of our original high-resolution PNG crops (soil, granite, shale,
