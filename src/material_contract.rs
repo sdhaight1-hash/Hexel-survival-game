@@ -156,7 +156,8 @@ mod tests {
         assert!(!SurfaceAppearance {
             cover_kind: Some(GroundCoverKind::Grass),
             ..bare
-        }.is_consistent());
+        }
+        .is_consistent());
     }
 
     #[test]
