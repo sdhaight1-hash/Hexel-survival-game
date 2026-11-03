@@ -81,6 +81,8 @@ mod tests {
                 show_copper: true
             })
         );
+        assert_eq!(surface_y(10), 3);
+        assert_eq!(surface_y(9), 2);
         assert_eq!(sample(8, 8), None);
         assert_eq!(sample(15, 9), None);
     }

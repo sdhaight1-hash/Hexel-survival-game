@@ -294,6 +294,21 @@ mod tests {
     }
 
     #[test]
+    fn p0_reference_strip_has_raised_exposed_faces_and_real_soil_below() {
+        let world = World::demo(42);
+        for q in 2..=14 {
+            let y = crate::material_lab::surface_y(10);
+            assert!(world.get(CellPos::new(q, 10, y)).is_solid());
+            assert_eq!(world.get(CellPos::new(q, 10, y + 1)), Block::Air);
+            assert_eq!(world.get(CellPos::new(q, 10, y - 1)), Block::Soil);
+        }
+        assert_eq!(world.get(CellPos::new(2, 10, 3)), Block::Soil);
+        assert_eq!(world.get(CellPos::new(9, 10, 3)), Block::Grass);
+        assert_eq!(world.get(CellPos::new(12, 10, 3)), Block::Rock);
+        assert_eq!(world.get(CellPos::new(14, 10, 3)), Block::Rock);
+    }
+
+    #[test]
     fn authored_hexel_dimensions_are_explicit() {
         assert!((HEX_RADIUS * 3.0_f32.sqrt() - 1.0).abs() < 0.0001);
         assert_eq!(HEXEL_HEIGHT, 1.0);

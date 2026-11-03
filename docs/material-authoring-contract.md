@@ -60,7 +60,9 @@ square/cube-only art assumptions. Check the visual joins around all six side
 corners, top rim, and bottom. Ground-cover transition masks align at the top
 rim on all six sides regardless of their orientation. Avoid baked directional
 lighting in albedo textures. Use transparent RGBA for overlays; preserve
-nearest-neighbor clarity at the 32x32 baseline.
+consistent apparent detail at the chosen physical texel scale. The 32x32
+swatches are **legacy-only**: [material format v2](material-format-v2.md)
+uses a 128px P0 benchmark and does not require one fixed production size.
 
 ## Reusable art rather than combinatorial duplication
 
@@ -83,8 +85,8 @@ and allow procedural variation/grade-specific masks later.
   face sets and one opaque forest-floor swatch. Their existence is **not
   production approval**. New approved materials must carry status and explicit
   top/side/bottom paths; use stable type IDs, not a temporary GPU array index.
-- `scripts/validate_material_catalog.py` validates manifest and catalog paths
-  and checks each inventoried 32x32 asset is an RGBA8 PNG. GitHub Actions runs
+- `scripts/validate_material_catalog.py` validates legacy manifest and catalog
+  paths and checks each inventoried 32x32 asset is an RGBA8 PNG. GitHub Actions runs
   it on PRs. It cannot detect art seams, inappropriate alpha content, color
   grading, or pixel density; an in-game six-face review is also required.
 - Original atlases stay for visual reference; do **not** edit existing 55
