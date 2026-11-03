@@ -1,6 +1,8 @@
 //! One native 16×16×16 chunk viewed through a first-person camera.
 
 mod materials_p0;
+mod texture_codec;
+mod texture_pack;
 mod mesh;
 mod render;
 
