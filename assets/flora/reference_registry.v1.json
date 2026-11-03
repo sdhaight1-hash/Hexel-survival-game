@@ -435,7 +435,8 @@
         "evidence_status": "wiki_1_20_7",
         "as_of": "2026-11-03",
         "source_game_version": "1.20.7",
-        "elevation_warning": "Reference-game relative height, NOT approved for Hexel Survival Y or elevation."
+        "elevation_warning": "Reference-game relative height, NOT approved for Hexel Survival Y or elevation.",
+        "review_note": "Derived from historical tree reference (forestation 160-255 of 255); research-only pending current-game verification."
       },
       "worldgen": {
         "temperature_c": [
@@ -447,7 +448,7 @@
           1
         ],
         "forestation_fraction": [
-          0.47058823529411764,
+          0.6274509803921569,
           1
         ],
         "source_elevation_fraction": [
