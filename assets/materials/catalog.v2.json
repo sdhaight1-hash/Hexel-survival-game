@@ -10,7 +10,7 @@
       "legacy_reference": "assets/textures/soil/bony_soil.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "soil.barren",
@@ -19,7 +19,7 @@
       "legacy_reference": "assets/textures/soil/barren_soil.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "soil.low_fertility",
@@ -28,7 +28,7 @@
       "legacy_reference": "assets/textures/soil/low_fertility_soil.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "soil.medium_fertility",
@@ -37,7 +37,7 @@
       "legacy_reference": "assets/textures/soil/medium_fertility_soil.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "soil.high_fertility",
@@ -46,7 +46,7 @@
       "legacy_reference": "assets/textures/soil/high_fertility_soil.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "cover.forest_floor",
@@ -55,7 +55,7 @@
       "legacy_reference": "assets/textures/soil/forest_floor.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.bauxite",
@@ -64,7 +64,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/bauxite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.chalk",
@@ -73,7 +73,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/chalk.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.chert",
@@ -82,7 +82,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/chert.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.claystone",
@@ -91,7 +91,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/claystone.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.conglomerate",
@@ -100,7 +100,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/conglomerate.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.limestone",
@@ -109,7 +109,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/limestone.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.sandstone",
@@ -118,7 +118,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/sandstone.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.shale",
@@ -127,7 +127,7 @@
       "legacy_reference": "assets/textures/rock/sedimentary/shale.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.phyllite",
@@ -136,7 +136,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/phyllite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.slate",
@@ -145,7 +145,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/slate.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.green_marble",
@@ -154,7 +154,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/green_marble.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.red_marble",
@@ -163,7 +163,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/red_marble.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.white_marble",
@@ -172,7 +172,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/white_marble.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.andesite",
@@ -181,7 +181,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/andesite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.granite",
@@ -190,7 +190,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/granite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.kimberlite",
@@ -199,7 +199,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/kimberlite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.peridotite",
@@ -208,7 +208,7 @@
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/peridotite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.basalt",
@@ -217,7 +217,7 @@
       "legacy_reference": "assets/textures/rock/special_volcanic/basalt.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.obsidian",
@@ -226,7 +226,7 @@
       "legacy_reference": "assets/textures/rock/special_volcanic/obsidian.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.scoria",
@@ -235,7 +235,7 @@
       "legacy_reference": "assets/textures/rock/special_volcanic/scoria.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.travertine",
@@ -244,7 +244,7 @@
       "legacy_reference": "assets/textures/rock/special_volcanic/travertine.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.tuff",
@@ -253,7 +253,7 @@
       "legacy_reference": "assets/textures/rock/special_volcanic/tuff.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "rock.suevite",
@@ -262,7 +262,7 @@
       "legacy_reference": "assets/textures/rock/special_volcanic/suevite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.native_copper",
@@ -271,7 +271,7 @@
       "legacy_reference": "assets/textures/ore/native_copper.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.malachite",
@@ -280,7 +280,7 @@
       "legacy_reference": "assets/textures/ore/malachite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.cassiterite",
@@ -289,7 +289,7 @@
       "legacy_reference": "assets/textures/ore/cassiterite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.galena",
@@ -298,7 +298,7 @@
       "legacy_reference": "assets/textures/ore/galena.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.native_gold",
@@ -307,7 +307,7 @@
       "legacy_reference": "assets/textures/ore/native_gold.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.native_silver",
@@ -316,7 +316,7 @@
       "legacy_reference": "assets/textures/ore/native_silver.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.sphalerite",
@@ -325,7 +325,7 @@
       "legacy_reference": "assets/textures/ore/sphalerite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.bismuthinite",
@@ -334,7 +334,7 @@
       "legacy_reference": "assets/textures/ore/bismuthinite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.hematite",
@@ -343,7 +343,7 @@
       "legacy_reference": "assets/textures/ore/hematite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.limonite",
@@ -352,7 +352,7 @@
       "legacy_reference": "assets/textures/ore/limonite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.magnetite",
@@ -361,7 +361,7 @@
       "legacy_reference": "assets/textures/ore/magnetite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.meteoric_iron",
@@ -370,7 +370,7 @@
       "legacy_reference": "assets/textures/ore/meteoric_iron.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.ilmenite",
@@ -379,7 +379,7 @@
       "legacy_reference": "assets/textures/ore/ilmenite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.pentlandite",
@@ -388,7 +388,7 @@
       "legacy_reference": "assets/textures/ore/pentlandite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.chromite",
@@ -397,7 +397,7 @@
       "legacy_reference": "assets/textures/ore/chromite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "ore.rhodochrosite",
@@ -406,7 +406,7 @@
       "legacy_reference": "assets/textures/ore/rhodochrosite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.lignite",
@@ -415,7 +415,7 @@
       "legacy_reference": "assets/textures/mineral/lignite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.bituminous_coal",
@@ -424,7 +424,7 @@
       "legacy_reference": "assets/textures/mineral/bituminous_coal.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.anthracite",
@@ -433,7 +433,7 @@
       "legacy_reference": "assets/textures/mineral/anthracite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.halite",
@@ -442,7 +442,7 @@
       "legacy_reference": "assets/textures/mineral/halite.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.sulfur",
@@ -451,7 +451,7 @@
       "legacy_reference": "assets/textures/mineral/sulfur.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.borax",
@@ -460,7 +460,7 @@
       "legacy_reference": "assets/textures/mineral/borax.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.alum",
@@ -469,7 +469,7 @@
       "legacy_reference": "assets/textures/mineral/alum.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.cinnabar",
@@ -478,7 +478,7 @@
       "legacy_reference": "assets/textures/mineral/cinnabar.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.lapis_lazuli",
@@ -487,7 +487,7 @@
       "legacy_reference": "assets/textures/mineral/lapis_lazuli.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     },
     {
       "id": "mineral.quartz",
@@ -496,7 +496,7 @@
       "legacy_reference": "assets/textures/mineral/quartz.png",
       "representation": null,
       "faces": null,
-      "overlay": null
+      "overlays": null
     }
   ]
 }
