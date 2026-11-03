@@ -28,8 +28,7 @@ impl Vertex {
 
 // Edges i -> i+1 for the regular hexagon with first corner at 30 degrees.
 // Each direction is the cell whose occupancy hides that edge.
-const SIDE_NEIGHBORS: [(i32, i32); 6] =
-    [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)];
+const SIDE_NEIGHBORS: [(i32, i32); 6] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)];
 
 fn triangle(vertices: &mut Vec<Vertex>, a: Vec3, b: Vec3, c: Vec3, color: [f32; 3]) {
     for point in [a, b, c] {
@@ -48,7 +47,11 @@ fn color(block: Block, top: bool, side: usize) -> [f32; 3] {
         Block::Soil => [0.42, 0.29, 0.18],
         Block::Rock => [0.46, 0.48, 0.51],
     };
-    let shade = if top { 1.12 } else { 0.65 + side as f32 * 0.055 };
+    let shade = if top {
+        1.12
+    } else {
+        0.65 + side as f32 * 0.055
+    };
     base.map(|channel| (channel * shade).min(1.0))
 }
 
@@ -86,7 +89,10 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     )
                 });
 
-                if !world.get(CellPos::new(cell.q, cell.r, cell.y + 1)).is_solid() {
+                if !world
+                    .get(CellPos::new(cell.q, cell.r, cell.y + 1))
+                    .is_solid()
+                {
                     let cap = Vec3::new(center.x, top, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -100,7 +106,10 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     }
                 }
 
-                if !world.get(CellPos::new(cell.q, cell.r, cell.y - 1)).is_solid() {
+                if !world
+                    .get(CellPos::new(cell.q, cell.r, cell.y - 1))
+                    .is_solid()
+                {
                     let cap = Vec3::new(center.x, bottom, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -115,7 +124,10 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                 }
 
                 for (side, &(dq, dr)) in SIDE_NEIGHBORS.iter().enumerate() {
-                    if world.get(CellPos::new(cell.q + dq, cell.r + dr, cell.y)).is_solid() {
+                    if world
+                        .get(CellPos::new(cell.q + dq, cell.r + dr, cell.y))
+                        .is_solid()
+                    {
                         continue;
                     }
                     let j = (side + 1) % 6;

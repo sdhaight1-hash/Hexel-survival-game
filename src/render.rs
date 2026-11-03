@@ -4,7 +4,10 @@
 use crate::mesh::{build_chunk_mesh, Vertex};
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
-use hexel_survival_game::{player::Player, world::{ChunkPos, World}};
+use hexel_survival_game::{
+    player::Player,
+    world::{ChunkPos, World},
+};
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use winit::{dpi::PhysicalSize, window::Window};
@@ -22,8 +25,7 @@ struct CrosshairVertex {
 }
 
 impl CrosshairVertex {
-    const ATTRIBUTES: [wgpu::VertexAttribute; 1] =
-        wgpu::vertex_attr_array![0 => Float32x2];
+    const ATTRIBUTES: [wgpu::VertexAttribute; 1] = wgpu::vertex_attr_array![0 => Float32x2];
 
     fn layout() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
@@ -222,14 +224,30 @@ impl Renderer {
             usage: wgpu::BufferUsages::VERTEX,
         });
         let crosshair = [
-            CrosshairVertex { position: [-0.013, 0.0] },
-            CrosshairVertex { position: [-0.003, 0.0] },
-            CrosshairVertex { position: [0.003, 0.0] },
-            CrosshairVertex { position: [0.013, 0.0] },
-            CrosshairVertex { position: [0.0, -0.022] },
-            CrosshairVertex { position: [0.0, -0.005] },
-            CrosshairVertex { position: [0.0, 0.005] },
-            CrosshairVertex { position: [0.0, 0.022] },
+            CrosshairVertex {
+                position: [-0.013, 0.0],
+            },
+            CrosshairVertex {
+                position: [-0.003, 0.0],
+            },
+            CrosshairVertex {
+                position: [0.003, 0.0],
+            },
+            CrosshairVertex {
+                position: [0.013, 0.0],
+            },
+            CrosshairVertex {
+                position: [0.0, -0.022],
+            },
+            CrosshairVertex {
+                position: [0.0, -0.005],
+            },
+            CrosshairVertex {
+                position: [0.0, 0.005],
+            },
+            CrosshairVertex {
+                position: [0.0, 0.022],
+            },
         ];
         let crosshair_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("First-person crosshair"),
@@ -282,9 +300,11 @@ impl Renderer {
         let view = frame
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("World frame"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("World frame"),
+            });
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("First-person world pass"),

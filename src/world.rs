@@ -235,7 +235,11 @@ mod tests {
         assert_eq!(
             CellPos::new(-1, -16, -17).chunk_and_local(),
             (
-                ChunkPos { q: -1, r: -1, y: -2 },
+                ChunkPos {
+                    q: -1,
+                    r: -1,
+                    y: -2
+                },
                 [15, 0, 15]
             )
         );

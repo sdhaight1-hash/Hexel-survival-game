@@ -153,8 +153,7 @@ fn can_occupy(world: &World, position: Vec3) -> bool {
         // this surface test is equivalent to the player's upright body not
         // intersecting terrain. Replace with individual-cell collision when
         // caves, overhangs, placed blocks and dug terrain are introduced.
-        position.y >= top - 0.02
-            && position.y + BODY_HEIGHT >= top
+        position.y >= top - 0.02 && position.y + BODY_HEIGHT >= top
     })
 }
 
@@ -176,7 +175,14 @@ mod tests {
         let world = World::demo(42);
         let mut player = Player::spawn(&world);
         let start = player.feet.y;
-        player.step(&world, MoveInput { jump: true, ..Default::default() }, 1.0 / 60.0);
+        player.step(
+            &world,
+            MoveInput {
+                jump: true,
+                ..Default::default()
+            },
+            1.0 / 60.0,
+        );
         assert!(!player.grounded);
         assert!(player.feet.y > start);
         for _ in 0..180 {
@@ -193,8 +199,23 @@ mod tests {
         let mut b = Player::spawn(&world);
         a.look(0.0, -100_000.0);
         assert_eq!(a.pitch, 1.52);
-        a.step(&world, MoveInput { forward: true, ..Default::default() }, 0.02);
-        b.step(&world, MoveInput { forward: true, right: true, ..Default::default() }, 0.02);
+        a.step(
+            &world,
+            MoveInput {
+                forward: true,
+                ..Default::default()
+            },
+            0.02,
+        );
+        b.step(
+            &world,
+            MoveInput {
+                forward: true,
+                right: true,
+                ..Default::default()
+            },
+            0.02,
+        );
         let origin = CellPos::new(8, 7, 0).center();
         let da = (Vec3::new(a.feet.x, 0.0, a.feet.z) - Vec3::new(origin.x, 0.0, origin.z)).length();
         let db = (Vec3::new(b.feet.x, 0.0, b.feet.z) - Vec3::new(origin.x, 0.0, origin.z)).length();
@@ -206,6 +227,9 @@ mod tests {
         let world = World::demo(42);
         let player = Player::spawn(&world);
         let outside = CellPos::new(-1, 7, 0).center();
-        assert!(!can_occupy(&world, Vec3::new(outside.x, player.feet.y, outside.z)));
+        assert!(!can_occupy(
+            &world,
+            Vec3::new(outside.x, player.feet.y, outside.z)
+        ));
     }
 }
