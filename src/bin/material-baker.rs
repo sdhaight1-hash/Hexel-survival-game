@@ -112,7 +112,9 @@ fn id_valid(id: &str) -> bool {
         && parts.next().is_none()
         && [first.unwrap(), second.unwrap()].into_iter().all(|part| {
             !part.is_empty()
-                && part.bytes().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == b'_')
+                && part
+                    .bytes()
+                    .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == b'_')
         })
 }
 
@@ -138,7 +140,9 @@ fn safe_relative(path: &str, prefix: &str) -> bool {
         && path.ends_with(".png")
         && !path.contains('\\')
         && !path.contains(':')
-        && !path.split('/').any(|part| part.is_empty() || part == "." || part == "..")
+        && !path
+            .split('/')
+            .any(|part| part.is_empty() || part == "." || part == "..")
 }
 
 fn check_reference(root: &Path, relative: &str) -> Result<()> {
@@ -146,15 +150,26 @@ fn check_reference(root: &Path, relative: &str) -> Result<()> {
         return Err(invalid(format!("Invalid legacy source path: {relative}")));
     }
     if !root.join(relative).is_file() {
-        return Err(invalid(format!("Missing original reference texture: {relative}")));
+        return Err(invalid(format!(
+            "Missing original reference texture: {relative}"
+        )));
     }
     Ok(())
 }
 
-fn asset<'a>(assets: &'a BTreeMap<&str, &'a TextureAsset>, id: &str, usage: &str) -> Result<&'a TextureAsset> {
-    let item = assets.get(id).ok_or_else(|| invalid(format!("Unknown texture asset ID: {id}")))?;
+fn asset<'a>(
+    assets: &'a BTreeMap<&str, &'a TextureAsset>,
+    id: &str,
+    usage: &str,
+) -> Result<&'a TextureAsset> {
+    let item = assets
+        .get(id)
+        .ok_or_else(|| invalid(format!("Unknown texture asset ID: {id}")))?;
     if item.usage != usage {
-        return Err(invalid(format!("{id}: expected {usage}, found {}", item.usage)));
+        return Err(invalid(format!(
+            "{id}: expected {usage}, found {}",
+            item.usage
+        )));
     }
     Ok(item)
 }
@@ -183,16 +198,24 @@ fn validate(catalog: &Catalog, legacy: &[Legacy], root: &Path) -> Result<()> {
         return Err(invalid("Catalog must declare v2 and explanatory notes"));
     }
     if legacy.len() != 55 || catalog.materials.len() != legacy.len() {
-        return Err(invalid("Catalog must cover all 55 original source identities exactly"));
+        return Err(invalid(
+            "Catalog must cover all 55 original source identities exactly",
+        ));
     }
 
     let mut assets = BTreeMap::new();
     for a in &catalog.texture_assets {
         if !id_valid(&a.id) || assets.insert(a.id.as_str(), a).is_some() {
-            return Err(invalid(format!("Invalid or duplicate texture ID: {}", a.id)));
+            return Err(invalid(format!(
+                "Invalid or duplicate texture ID: {}",
+                a.id
+            )));
         }
         if !safe_relative(&a.path, "assets/production/") {
-            return Err(invalid(format!("Production asset outside approved folder: {}", a.path)));
+            return Err(invalid(format!(
+                "Production asset outside approved folder: {}",
+                a.path
+            )));
         }
         if !matches!(a.usage.as_str(), "albedo" | "overlay") {
             return Err(invalid(format!("Invalid texture usage: {}", a.usage)));
@@ -202,81 +225,135 @@ fn validate(catalog: &Catalog, legacy: &[Legacy], root: &Path) -> Result<()> {
         {
             return Err(invalid(format!("Bad color space or wrap: {}", a.id)));
         }
-        if a.repeat_metres.iter().any(|x| !x.is_finite() || *x <= 0.0 || *x > 1024.0) {
-            return Err(invalid(format!("Invalid physical repeat dimensions: {}", a.id)));
+        if a.repeat_metres
+            .iter()
+            .any(|x| !x.is_finite() || *x <= 0.0 || *x > 1024.0)
+        {
+            return Err(invalid(format!(
+                "Invalid physical repeat dimensions: {}",
+                a.id
+            )));
         }
         let path = root.join(&a.path);
         if !path.is_file() {
             return Err(invalid(format!("Missing production art: {}", a.path)));
         }
         let (width, height, rgba) = read_png(&path)?;
-        if width < 4 || height < 4 || width > 4096 || height > 4096
-            || width % 4 != 0 || height % 4 != 0
+        if width < 4
+            || height < 4
+            || width > 4096
+            || height > 4096
+            || width % 4 != 0
+            || height % 4 != 0
         {
             return Err(invalid(format!(
                 "{}: BC7 requires 4-pixel-aligned dimensions, 4..4096; got {width}x{height}",
                 a.id
             )));
         }
-        if a.usage == "overlay"
-            && rgba.chunks_exact(4).all(|pixel| pixel[3] == 255)
-        {
+        if a.usage == "overlay" && rgba.chunks_exact(4).all(|pixel| pixel[3] == 255) {
             return Err(invalid(format!("{}: overlay has no transparency", a.id)));
         }
     }
 
-    let expected: BTreeMap<_, _> = legacy.iter().map(|row| {
-        let (id, kind) = reference_id(row);
-        (id, (kind, row.crop_path.as_str()))
-    }).collect();
+    let expected: BTreeMap<_, _> = legacy
+        .iter()
+        .map(|row| {
+            let (id, kind) = reference_id(row);
+            (id, (kind, row.crop_path.as_str()))
+        })
+        .collect();
     let mut seen = BTreeSet::new();
     let mut used_assets = BTreeSet::new();
     for material in &catalog.materials {
-        let wanted = expected.get(&material.id)
-            .ok_or_else(|| invalid(format!("Unknown original material identity: {}", material.id)))?;
-        if !id_valid(&material.id) || !seen.insert(material.id.as_str())
-            || material.kind != wanted.0 || material.legacy_reference != wanted.1
+        let wanted = expected.get(&material.id).ok_or_else(|| {
+            invalid(format!(
+                "Unknown original material identity: {}",
+                material.id
+            ))
+        })?;
+        if !id_valid(&material.id)
+            || !seen.insert(material.id.as_str())
+            || material.kind != wanted.0
+            || material.legacy_reference != wanted.1
         {
-            return Err(invalid(format!("Material ID, kind or reference mismatch: {}", material.id)));
+            return Err(invalid(format!(
+                "Material ID, kind or reference mismatch: {}",
+                material.id
+            )));
         }
         check_reference(root, &material.legacy_reference)?;
         match material.status.as_str() {
             "needs_art" => {
-                if material.representation.is_some() || material.faces.is_some() || material.overlays.is_some() {
-                    return Err(invalid(format!("{}: pending art cannot masquerade as ready", material.id)));
+                if material.representation.is_some()
+                    || material.faces.is_some()
+                    || material.overlays.is_some()
+                {
+                    return Err(invalid(format!(
+                        "{}: pending art cannot masquerade as ready",
+                        material.id
+                    )));
                 }
             }
-            "candidate" | "approved" => {
-                match material.representation.as_deref() {
-                    Some("solid") if matches!(material.kind.as_str(), "soil" | "rock" | "mineral") => {
-                        if material.overlays.is_some() {
-                            return Err(invalid(format!("{}: solid has unexpected ore/cover overlay", material.id)));
-                        }
-                        let faces = material.faces.as_ref()
-                            .ok_or_else(|| invalid(format!("{}: missing top, side, bottom recipes", material.id)))?;
-                        check_faces(faces, &assets)?;
-                        for face in [&faces.top, &faces.side, &faces.bottom] {
-                            used_assets.insert(face.base.as_str());
-                            if let Some(overlay) = &face.overlay { used_assets.insert(overlay.as_str()); }
+            "candidate" | "approved" => match material.representation.as_deref() {
+                Some("solid") if matches!(material.kind.as_str(), "soil" | "rock" | "mineral") => {
+                    if material.overlays.is_some() {
+                        return Err(invalid(format!(
+                            "{}: solid has unexpected ore/cover overlay",
+                            material.id
+                        )));
+                    }
+                    let faces = material.faces.as_ref().ok_or_else(|| {
+                        invalid(format!(
+                            "{}: missing top, side, bottom recipes",
+                            material.id
+                        ))
+                    })?;
+                    check_faces(faces, &assets)?;
+                    for face in [&faces.top, &faces.side, &faces.bottom] {
+                        used_assets.insert(face.base.as_str());
+                        if let Some(overlay) = &face.overlay {
+                            used_assets.insert(overlay.as_str());
                         }
                     }
-                    Some("overlay") if matches!(material.kind.as_str(), "cover" | "ore" | "mineral") => {
-                        if material.faces.is_some() {
-                            return Err(invalid(format!("{}: overlay cannot own a host-rock face set", material.id)));
-                        }
-                        let overlays = material.overlays.as_ref()
-                            .ok_or_else(|| invalid(format!("{}: missing overlay surfaces", material.id)))?;
-                        for id in [Some(&overlays.top), overlays.side.as_ref(), overlays.bottom.as_ref()].into_iter().flatten() {
-                            asset(&assets, id, "overlay")?;
-                            used_assets.insert(id.as_str());
-                        }
-                    }
-                    _ => return Err(invalid(format!(
-                        "{}: invalid or missing representation for {}", material.id, material.kind
-                    ))),
                 }
+                Some("overlay")
+                    if matches!(material.kind.as_str(), "cover" | "ore" | "mineral") =>
+                {
+                    if material.faces.is_some() {
+                        return Err(invalid(format!(
+                            "{}: overlay cannot own a host-rock face set",
+                            material.id
+                        )));
+                    }
+                    let overlays = material.overlays.as_ref().ok_or_else(|| {
+                        invalid(format!("{}: missing overlay surfaces", material.id))
+                    })?;
+                    for id in [
+                        Some(&overlays.top),
+                        overlays.side.as_ref(),
+                        overlays.bottom.as_ref(),
+                    ]
+                    .into_iter()
+                    .flatten()
+                    {
+                        asset(&assets, id, "overlay")?;
+                        used_assets.insert(id.as_str());
+                    }
+                }
+                _ => {
+                    return Err(invalid(format!(
+                        "{}: invalid or missing representation for {}",
+                        material.id, material.kind
+                    )))
+                }
+            },
+            _ => {
+                return Err(invalid(format!(
+                    "Unrecognized approval state: {}",
+                    material.status
+                )))
             }
-            _ => return Err(invalid(format!("Unrecognized approval state: {}", material.status))),
         }
     }
     for id in assets.keys() {
@@ -292,10 +369,14 @@ fn read_png(path: &Path) -> Result<(u32, u32, Vec<u8>)> {
         .read_info()
         .map_err(|e| invalid(format!("PNG header {}: {e}", path.display())))?;
     let mut output = vec![0u8; reader.output_buffer_size()];
-    let info = reader.next_frame(&mut output)
+    let info = reader
+        .next_frame(&mut output)
         .map_err(|e| invalid(format!("PNG data {}: {e}", path.display())))?;
     if info.color_type != png::ColorType::Rgba || info.bit_depth != png::BitDepth::Eight {
-        return Err(invalid(format!("{}: production art must be 8-bit RGBA PNG", path.display())));
+        return Err(invalid(format!(
+            "{}: production art must be 8-bit RGBA PNG",
+            path.display()
+        )));
     }
     output.truncate(info.buffer_size());
     Ok((info.width, info.height, output))
@@ -317,26 +398,39 @@ fn bake(catalog: &Catalog, root: &Path, out: &Path) -> Result<usize> {
         let blocks = encode(view, &Settings::new(Format::Bc7, Effort::Balanced))
             .map_err(|e| invalid(format!("{}: BC7 compression failed: {e:?}", src.id)))?;
         if blocks.len() != texture_codec::bc7_layer_size(width, height)? {
-            return Err(invalid(format!("{}: invalid compressed block count", src.id)));
+            return Err(invalid(format!(
+                "{}: invalid compressed block count",
+                src.id
+            )));
         }
         let decoded = texture_codec::decode_bc7(&blocks, width, height)?;
-        let squared_error: f64 = rgba.chunks_exact(4)
+        let squared_error: f64 = rgba
+            .chunks_exact(4)
             .zip(decoded.chunks_exact(4))
             .flat_map(|(a, b)| (0..3).map(move |i| (a[i] as f64 - b[i] as f64).powi(2)))
             .sum();
         let mse = squared_error / (width as f64 * height as f64 * 3.0);
-        let psnr = if mse == 0.0 { f64::INFINITY } else {
+        let psnr = if mse == 0.0 {
+            f64::INFINITY
+        } else {
             10.0 * (255.0_f64.powi(2) / mse).log10()
         };
         if psnr < 25.0 {
-            return Err(invalid(format!("{}: BC7 quality rejected ({psnr:.1} dB)", src.id)));
+            return Err(invalid(format!(
+                "{}: BC7 quality rejected ({psnr:.1} dB)",
+                src.id
+            )));
         }
         let name = format!("{}.bc7", src.id);
         fs::write(out.join(&name), &blocks)?;
         textures.push(BakedTexture {
             id: src.id.clone(),
             path: name,
-            format: if src.color_space == "srgb" { "bc7-rgba-srgb" } else { "bc7-rgba-linear" },
+            format: if src.color_space == "srgb" {
+                "bc7-rgba-srgb"
+            } else {
+                "bc7-rgba-linear"
+            },
             width,
             height,
             repeat_metres: src.repeat_metres,
@@ -356,13 +450,19 @@ fn bake(catalog: &Catalog, root: &Path, out: &Path) -> Result<usize> {
 
 fn main() -> Result<()> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let catalog: Catalog = serde_json::from_slice(&fs::read(root.join("assets/materials/catalog.v2.json"))?)?;
-    let legacy: Vec<Legacy> = serde_json::from_slice(&fs::read(root.join("assets/textures/manifest.json"))?)?;
+    let catalog: Catalog =
+        serde_json::from_slice(&fs::read(root.join("assets/materials/catalog.v2.json"))?)?;
+    let legacy: Vec<Legacy> =
+        serde_json::from_slice(&fs::read(root.join("assets/textures/manifest.json"))?)?;
     validate(&catalog, &legacy, &root)?;
     let mut args = std::env::args().skip(1);
     match (args.next().as_deref(), args.next(), args.next()) {
         (Some("validate"), None, None) => {
-            let pending = catalog.materials.iter().filter(|x| x.status == "needs_art").count();
+            let pending = catalog
+                .materials
+                .iter()
+                .filter(|x| x.status == "needs_art")
+                .count();
             println!("P1 material catalog valid: {} identities, {pending} pending artwork, {} candidate/approved textures.",
                 catalog.materials.len(), catalog.texture_assets.len());
         }
@@ -370,7 +470,11 @@ fn main() -> Result<()> {
             let count = bake(&catalog, &root, &root.join("target/materials-v2"))?;
             println!("Baked {count} production texture(s) to target/materials-v2.");
         }
-        _ => return Err(invalid("Usage: cargo run --bin material-baker -- [validate|bake]")),
+        _ => {
+            return Err(invalid(
+                "Usage: cargo run --bin material-baker -- [validate|bake]",
+            ))
+        }
     }
     Ok(())
 }
@@ -389,12 +493,27 @@ mod tests {
 
     #[test]
     fn exact_source_id_mapping_preserves_geology_and_organic_cover() {
-        assert_eq!(reference_id(&entry("forest_floor", "soil")).0, "cover.forest_floor");
-        assert_eq!(reference_id(&entry("low_fertility_soil", "soil")).0, "soil.low_fertility");
-        assert_eq!(reference_id(&entry("native_copper", "ore")).0, "ore.native_copper");
-        assert_eq!(reference_id(&entry("granite", "rock/metamorphic_igneous")).0, "rock.granite");
+        assert_eq!(
+            reference_id(&entry("forest_floor", "soil")).0,
+            "cover.forest_floor"
+        );
+        assert_eq!(
+            reference_id(&entry("low_fertility_soil", "soil")).0,
+            "soil.low_fertility"
+        );
+        assert_eq!(
+            reference_id(&entry("native_copper", "ore")).0,
+            "ore.native_copper"
+        );
+        assert_eq!(
+            reference_id(&entry("granite", "rock/metamorphic_igneous")).0,
+            "rock.granite"
+        );
         assert!(!id_valid("rock.Granite"));
-        assert!(!safe_relative("assets/production/../textures/ore.png", "assets/production/"));
+        assert!(!safe_relative(
+            "assets/production/../textures/ore.png",
+            "assets/production/"
+        ));
     }
 
     #[test]
@@ -412,19 +531,24 @@ mod tests {
         let mut items = Vec::new();
         for (id, width, height) in [("test.small", 64, 128), ("test.large", 256, 256)] {
             let name = format!("{id}.png");
-            let bytes: Vec<u8> = (0..height).flat_map(|y| {
-                (0..width).flat_map(move |x| {
-                    // Smooth gradients compress well and retain distinguishable texels.
-                    let red = (x * 130 / width + 55) as u8;
-                    let green = (y * 120 / height + 60) as u8;
-                    [red, green, 90, 255]
+            let bytes: Vec<u8> = (0..height)
+                .flat_map(|y| {
+                    (0..width).flat_map(move |x| {
+                        // Smooth gradients compress well and retain distinguishable texels.
+                        let red = (x * 130 / width + 55) as u8;
+                        let green = (y * 120 / height + 60) as u8;
+                        [red, green, 90, 255]
+                    })
                 })
-            }).collect();
+                .collect();
             let path = source_dir.join(&name);
             let mut png = png::Encoder::new(File::create(&path).unwrap(), width, height);
             png.set_color(png::ColorType::Rgba);
             png.set_depth(png::BitDepth::Eight);
-            png.write_header().unwrap().write_image_data(&bytes).unwrap();
+            png.write_header()
+                .unwrap()
+                .write_image_data(&bytes)
+                .unwrap();
             items.push(TextureAsset {
                 id: id.to_owned(),
                 path: format!("assets/production/test/{name}"),
@@ -452,18 +576,32 @@ mod tests {
         assert_eq!(index["textures"][1]["height"], 128);
         assert_eq!(index["textures"][0]["repeat_metres"][0], 1.0);
         assert_eq!(index["textures"][1]["repeat_metres"][0], 0.5);
-        assert_eq!(fs::metadata(out.join("test.large.bc7")).unwrap().len(), 65536);
-        assert_eq!(fs::metadata(out.join("test.small.bc7")).unwrap().len(), 8192);
+        assert_eq!(
+            fs::metadata(out.join("test.large.bc7")).unwrap().len(),
+            65536
+        );
+        assert_eq!(
+            fs::metadata(out.join("test.small.bc7")).unwrap().len(),
+            8192
+        );
         fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]
     fn repo_catalog_has_all_original_materials_but_none_is_auto_approved() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-        let catalog: Catalog = serde_json::from_slice(&fs::read(root.join("assets/materials/catalog.v2.json")).unwrap()).unwrap();
-        let legacy: Vec<Legacy> = serde_json::from_slice(&fs::read(root.join("assets/textures/manifest.json")).unwrap()).unwrap();
+        let catalog: Catalog = serde_json::from_slice(
+            &fs::read(root.join("assets/materials/catalog.v2.json")).unwrap(),
+        )
+        .unwrap();
+        let legacy: Vec<Legacy> =
+            serde_json::from_slice(&fs::read(root.join("assets/textures/manifest.json")).unwrap())
+                .unwrap();
         validate(&catalog, &legacy, root).unwrap();
         assert_eq!(legacy.len(), 55);
-        assert!(catalog.materials.iter().all(|item| item.status == "needs_art"));
+        assert!(catalog
+            .materials
+            .iter()
+            .all(|item| item.status == "needs_art"));
     }
 }
