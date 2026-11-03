@@ -1,5 +1,8 @@
-//! Small, dependency-free foundations for the planned survival-game runtime.
+//! Game-specific data and simulation foundations.
 //!
-//! No rendering, gameplay, world-generation model, or persistence is implemented.
+//! GPU rendering and window input live in the executable; world and player
+//! logic can be tested without creating a window or graphics adapter.
 
 pub mod geography;
+pub mod player;
+pub mod world;

@@ -3,7 +3,19 @@ name = "hexel-survival-game"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "Foundational world-data types for a planned Rust survival game"
+default-run = "hexel-survival-game"
+description = "Foundational Rust survival game with a first-person hexel chunk prototype"
+
+[dependencies]
+bytemuck = { version = "1.21", features = ["derive"] }
+glam = "0.29"
+pollster = "0.4"
+wgpu = "24"
+winit = "0.30"
 
 [lib]
 path = "src/lib.rs"
+
+[[bin]]
+name = "hexel-survival-game"
+path = "src/main.rs"
