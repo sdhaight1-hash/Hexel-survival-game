@@ -50,8 +50,8 @@ fn triangle(
 // The image is a square, but the projected top/bottom surface is a real hex.
 fn cap_uv(position: Vec3, center: Vec3) -> [f32; 2] {
     [
-        0.5 + (position.x - center.x) / (2.0 * HEX_RADIUS),
-        0.5 + (position.z - center.z) / (2.0 * HEX_RADIUS),
+        (0.5 + (position.x - center.x) / (2.0 * HEX_RADIUS)).clamp(0.0, 1.0),
+        (0.5 + (position.z - center.z) / (2.0 * HEX_RADIUS)).clamp(0.0, 1.0),
     ]
 }
 
