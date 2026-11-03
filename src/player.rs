@@ -112,7 +112,7 @@ impl Player {
 
         self.vertical_velocity -= GRAVITY * dt;
         self.feet.y += self.vertical_velocity * dt;
-        let ground = footprint(world, self.feet.x, self.feet.z)
+        let ground = footprint(self.feet.x, self.feet.z)
             .filter(|&(x, z)| world.contains_demo_footprint(x, z))
             .filter_map(|(x, z)| world.support_top(x, z))
             .fold(0.0_f32, f32::max);
