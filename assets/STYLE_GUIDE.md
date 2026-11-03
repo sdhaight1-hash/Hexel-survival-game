@@ -287,22 +287,22 @@ Enable asset inspection in neutral/base light.
 
 ## 9. Production asset pipeline, compression and budgets
 
-- **Authoritative inventory:** \`assets/materials/catalog.v2.json\` tracks
-  55 legacy geology/material identities, currently all \`needs_art\`.
+- **Authoritative inventory:** `assets/materials/catalog.v2.json` tracks
+  55 legacy geology/material identities, currently all `needs_art`.
   This guide changes **no approval states**.
 - **Face/overlay contracts:** see
   [Material authoring contract](../docs/material-authoring-contract.md)
   and [P1 authoring pipeline](../docs/p1-material-pipeline.md).
-  Stable IDs, explicit face roles and physical \`repeat_metres\` belong in
+  Stable IDs, explicit face roles and physical `repeat_metres` belong in
   the catalog; gameplay never persists GPU layer indices.
-- **Source art:** new files go to \`assets/production/\` after authoring,
+- **Source art:** new files go to `assets/production/` after authoring,
   not over the 55 original source textures. Record authorship and review
   status; keep originals for comparison.
-- **Validation:** \`cargo run --bin material-baker -- validate\`.
-  **Offline BC7 bake:** \`cargo run --release --bin material-baker -- bake\`.
+- **Validation:** `cargo run --bin material-baker -- validate`.
+  **Offline BC7 bake:** `cargo run --release --bin material-baker -- bake`.
   The current tool supports rectangular and square 4px-aligned RGBA8
   sources; it produces separate BC7 textures and an index under
-  \`target/materials-v2/\`. The runtime does **not yet** load this index.
+  `target/materials-v2/`. The runtime does **not yet** load this index.
 - **Compression:** P0 uses build-time BC7, native GPU BC7 where supported,
   one-time CPU decode RGBA fallback otherwise. It currently uses one mip
   level. The **75% texture memory saving** applies to that 12-layer test,
