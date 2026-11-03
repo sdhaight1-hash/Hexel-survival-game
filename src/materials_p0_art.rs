@@ -2,6 +2,7 @@
 //! This module is used only by build.rs and pixel-quality tests; never per frame.
 
 const TEXTURE_SIZE: u32 = 256;
+const LAYER_COUNT: usize = 12;
 #[derive(Clone, Copy)]
 enum CoverLevel {
     Bare,
@@ -175,7 +176,7 @@ fn composite(base: &mut [u8], x: u32, y: u32, pigment: [u8; 3], opacity: f32) {
     }
 }
 
-fn grass_alpha(x: u32, y: u32, density: CoverDensity) -> f32 {
+fn grass_alpha(x: u32, y: u32, density: CoverLevel) -> f32 {
     let u = x as f32 / TEXTURE_SIZE as f32;
     let v = y as f32 / TEXTURE_SIZE as f32;
     let field =
@@ -205,7 +206,7 @@ fn grass_pigment(forest: &[u8], x: u32, y: u32) -> [u8; 3] {
     ]
 }
 
-fn grass_top(soil: &[u8], forest: &[u8], density: CoverDensity) -> Vec<u8> {
+fn grass_top(soil: &[u8], forest: &[u8], density: CoverLevel) -> Vec<u8> {
     let mut output = soil.to_vec();
     for y in 0..TEXTURE_SIZE {
         for x in 0..TEXTURE_SIZE {
@@ -221,7 +222,7 @@ fn grass_top(soil: &[u8], forest: &[u8], density: CoverDensity) -> Vec<u8> {
     output
 }
 
-fn grass_side(soil: &[u8], forest: &[u8], density: CoverDensity) -> Vec<u8> {
+fn grass_side(soil: &[u8], forest: &[u8], density: CoverLevel) -> Vec<u8> {
     let mut output = soil.to_vec();
     for y in 0..TEXTURE_SIZE {
         let depth_metres = y as f32 / TEXTURE_SIZE as f32;

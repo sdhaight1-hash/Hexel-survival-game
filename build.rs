@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut worst_psnr = f64::INFINITY;
     for (index, rgba) in layers.iter().enumerate() {
-        let view = ImageView::rgba8(rgba, width, height, width * 4)
+        let view = ImageView::rgba8(rgba, width, height, (width * 4) as usize)
             .map_err(|e| format!("Invalid P0 material layer {index}: {e:?}"))?;
         let compressed = encode(view, &Settings::new(Format::Bc7, Effort::Balanced))
             .map_err(|e| format!("BC7 encoding failed for layer {index}: {e:?}"))?;
