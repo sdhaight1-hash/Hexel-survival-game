@@ -10,6 +10,7 @@ description = "Foundational Rust survival game with a first-person hexel chunk p
 bytemuck = { version = "1.21", features = ["derive"] }
 glam = "0.29"
 pollster = "0.4"
+png = "0.17"
 wgpu = "24"
 winit = "0.30"
 

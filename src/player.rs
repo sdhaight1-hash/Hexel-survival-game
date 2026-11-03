@@ -6,8 +6,9 @@
 use crate::world::World;
 use glam::Vec3;
 
-const EYE_HEIGHT: f32 = 1.62;
-const BODY_HEIGHT: f32 = 1.8;
+// A 1m-tall hexel is three fifths of our character's height.
+pub const BODY_HEIGHT: f32 = 5.0 / 3.0;
+pub const EYE_HEIGHT: f32 = 1.52;
 const BODY_RADIUS: f32 = 0.27;
 const GRAVITY: f32 = 22.0;
 const JUMP_VELOCITY: f32 = 7.6;
@@ -161,6 +162,13 @@ fn can_occupy(world: &World, position: Vec3) -> bool {
 mod tests {
     use super::*;
     use crate::world::CellPos;
+
+    #[test]
+    fn one_metre_hexel_is_three_fifths_of_player_height() {
+        assert!((crate::world::HEXEL_HEIGHT / BODY_HEIGHT - 0.6).abs() < 0.000001);
+        assert!(EYE_HEIGHT < BODY_HEIGHT);
+        assert!(EYE_HEIGHT > crate::world::HEXEL_HEIGHT);
+    }
 
     #[test]
     fn spawn_is_grounded_above_terrain() {
