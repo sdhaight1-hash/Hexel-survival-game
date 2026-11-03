@@ -5,10 +5,14 @@ The playable P0 scene uses **source-art-derived visual prototypes** in
 `src/materials_p0.rs` with the renderer in `src/render.rs`. It decodes
 five of our original high-resolution PNG crops (soil, granite, shale,
 forest floor and native copper), seam-blends the source surfaces into
-256px tiles, then composes grass and ore masks for the preview.
+256px tiles, then composes grass and ore masks **at build time**.
+The resulting reference colors are compressed into an embedded BC7 pack,
+with a CPU-decoded RGBA fallback where GPU BC7 isn't supported.
 
-All 55 legacy atlas crops remain unchanged. These new tiles are generated
-at startup, not a new permanent material format or approved final artwork.
+All 55 legacy atlas crops remain unchanged. These derived P0 color tiles
+are now generated at **build time**, not startup, and remain neither a new
+permanent material format nor approved final artwork. See
+[texture compression](texture-compression.md) for the BC7 pack and fallback.
 
 ## Why not hex-shaped texture files?
 
@@ -136,3 +140,13 @@ This P0 scene does **not** implement real grass plants, species assets,
 persistent crops, automated material loading, chunk streaming, fixed hex
 torus periods, or production geology. Those have their own acceptance gates
 and should not be marked complete by the demonstration.
+
+## Build-time color compression (implemented)
+
+P0 color layers are baked into GPU BC7 blocks with a one-time CPU RGBA
+fallback. The GPU memory budget is 0.75 MiB on BC-capable adapters and
+3 MiB otherwise for all 12 layers. Quality validation, supported-device
+selection and remaining limitations are documented in
+[Texture Compression Pipeline](texture-compression.md). BC7 does not
+satisfy our later requirements for mobile ETC2/ASTC formats, mips,
+alpha-mask data formats or cross-platform texture streaming by itself.
