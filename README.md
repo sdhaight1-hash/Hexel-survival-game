@@ -92,9 +92,12 @@ None of these planetary systems is claimed to work in this first chunk.
 
 The 16³ demo currently includes a **temporary reference strip** with bare,
 very sparse, sparse and fully grassy soil, plus granite and shale both with
-and without a shared copper overlay. These original 128px procedural reference
-textures show how independent face roles and physical-metre UVs work; none
-of the 55 legacy art assets has been replaced or certified production-ready.
+and without a shared copper overlay. The P0 gallery now builds 256px visual
+prototypes from the **original high-resolution soil, granite, shale, forest
+floor and copper textures**, with seam reduction and independent grass
+and ore overlays. Physical-metre UVs and distinct hexel face roles remain
+unchanged. None of the 55 legacy art files has been overwritten or certified
+production-ready.
 
 - `F6`: toggle a checker grid for spotting stretching and face seams.
 - `F7`: cycle **checker diagnostic** at 64 / 128 / 256 texels per metre.

@@ -1,4 +1,4 @@
-//! Mesh hexagonal-prism caps and sides with per-face 32x32 material UVs.
+//! Mesh hexagonal-prism caps and sides with per-face physically scaled material UVs.
 //! This derived geometry does not own world/material resource state.
 
 use crate::materials_p0::{self, Material};
@@ -188,7 +188,7 @@ mod tests {
         let u0 = 2.0 * edge;
         let u1 = 3.0 * edge;
         let texels = (u1 - u0) * materials_p0::REFERENCE_TEXELS_PER_METRE;
-        assert!((texels - 73.9).abs() < 0.1);
+        assert!((texels - 147.8).abs() < 0.1);
     }
 
     #[test]

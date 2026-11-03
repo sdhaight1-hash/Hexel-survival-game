@@ -1,6 +1,6 @@
 struct Camera {
     view_proj: mat4x4<f32>,
-    // x: checker debug toggle; y: texel density relative to 128px/m
+    // x: checker debug toggle; y: texel density relative to 256px/m
     options: vec4<f32>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
@@ -29,7 +29,7 @@ struct VertexOut {
 }
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
     // All vertex UVs are in physical metres. Material images currently
-    // contain one repeat per metre at the 128px/m benchmark.
+    // contain one repeat per metre at the 256px/m art-preview benchmark.
     let checker = camera.options.x > 0.5;
     let layer = select(v.material, 11u, checker);
     // Scale only the diagnostic grid. Scaling the pre-baked soil/grass
