@@ -22,7 +22,11 @@ impl<'a> TexturePack<'a> {
             return Err("Missing P0 BC7 asset pack header".into());
         }
         let word = |offset: usize| {
-            u32::from_le_bytes(bytes[offset..offset + 4].try_into().expect("fixed header size"))
+            u32::from_le_bytes(
+                bytes[offset..offset + 4]
+                    .try_into()
+                    .expect("fixed header size"),
+            )
         };
         if word(4) != 1 {
             return Err("Unsupported P0 BC7 pack version".into());
@@ -34,13 +38,23 @@ impl<'a> TexturePack<'a> {
             return Err("Invalid P0 BC7 layer count".into());
         }
         let layer_bytes = texture_codec::bc7_layer_size(width, height)?;
-        let expected = layers.checked_mul(layer_bytes)
+        let expected = layers
+            .checked_mul(layer_bytes)
             .and_then(|n| n.checked_add(HEADER_BYTES))
             .ok_or("P0 BC7 pack size overflow")?;
         if bytes.len() != expected {
-            return Err(format!("P0 BC7 pack length mismatch: expected {expected}, got {}", bytes.len()));
+            return Err(format!(
+                "P0 BC7 pack length mismatch: expected {expected}, got {}",
+                bytes.len()
+            ));
         }
-        Ok(Self { bytes: &bytes[HEADER_BYTES..], width, height, layers, layer_bytes })
+        Ok(Self {
+            bytes: &bytes[HEADER_BYTES..],
+            width,
+            height,
+            layers,
+            layer_bytes,
+        })
     }
 
     pub fn embedded() -> Result<TexturePack<'static>, String> {

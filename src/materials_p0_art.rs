@@ -3,7 +3,12 @@
 
 const TEXTURE_SIZE: u32 = 256;
 #[derive(Clone, Copy)]
-enum CoverLevel { Bare, VerySparse, Sparse, Full }
+enum CoverLevel {
+    Bare,
+    VerySparse,
+    Sparse,
+    Full,
+}
 
 const SEAM_OVERLAP: usize = 40;
 pub const N: usize = TEXTURE_SIZE as usize;
@@ -308,4 +313,3 @@ pub fn generate_textures() -> Result<Vec<Vec<u8>>, String> {
     debug_assert_eq!(result.len(), LAYER_COUNT);
     Ok(result)
 }
-

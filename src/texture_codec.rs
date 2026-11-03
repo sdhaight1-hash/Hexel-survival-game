@@ -20,12 +20,17 @@ pub fn bc7_layer_size(width: u32, height: u32) -> Result<usize, String> {
 pub fn decode_bc7(bytes: &[u8], width: u32, height: u32) -> Result<Vec<u8>, String> {
     let expected = bc7_layer_size(width, height)?;
     if bytes.len() != expected {
-        return Err(format!("BC7 byte count mismatch: expected {expected}, got {}", bytes.len()));
+        return Err(format!(
+            "BC7 byte count mismatch: expected {expected}, got {}",
+            bytes.len()
+        ));
     }
     let width = width as usize;
     let height = height as usize;
     let stride = width.checked_mul(4).ok_or("RGBA row size overflow")?;
-    let count = stride.checked_mul(height).ok_or("RGBA buffer size overflow")?;
+    let count = stride
+        .checked_mul(height)
+        .ok_or("RGBA buffer size overflow")?;
     let mut pixels = vec![0u8; count];
     let blocks_w = width / 4;
     for by in 0..height / 4 {

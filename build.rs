@@ -46,15 +46,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         // Decode with an independent BC7 decoder before shipping the blocks.
         // This also tests the software fallback with *actual* encoded art.
         let decoded = texture_codec::decode_bc7(&compressed, width, height)?;
-        let error: f64 = rgba.chunks_exact(4)
+        let error: f64 = rgba
+            .chunks_exact(4)
             .zip(decoded.chunks_exact(4))
             .flat_map(|(a, b)| (0..3).map(move |i| (a[i] as f64 - b[i] as f64).powi(2)))
             .sum();
         let mse = error / ((width * height * 3) as f64);
-        let psnr = if mse == 0.0 { f64::INFINITY } else { 10.0 * (255.0 * 255.0 / mse).log10() };
+        let psnr = if mse == 0.0 {
+            f64::INFINITY
+        } else {
+            10.0 * (255.0 * 255.0 / mse).log10()
+        };
         worst_psnr = worst_psnr.min(psnr);
         if psnr < 25.0 {
-            return Err(format!("BC7 material layer {index} too lossy ({psnr:.1} dB); do not degrade artwork").into());
+            return Err(format!(
+                "BC7 material layer {index} too lossy ({psnr:.1} dB); do not degrade artwork"
+            )
+            .into());
         }
         packed.extend_from_slice(&compressed);
     }

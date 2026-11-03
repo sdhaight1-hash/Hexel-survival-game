@@ -83,7 +83,9 @@ impl Renderer {
         // Only request BC compression when the actual adapter exposes it.
         // BC7 is GPU-decoded in hardware, while unsupported GPUs get a
         // single CPU BC7 -> RGBA decode during initialization.
-        let supports_bc7 = adapter.features().contains(wgpu::Features::TEXTURE_COMPRESSION_BC);
+        let supports_bc7 = adapter
+            .features()
+            .contains(wgpu::Features::TEXTURE_COMPRESSION_BC);
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
@@ -153,7 +155,11 @@ impl Renderer {
         let packed = TexturePack::embedded()
             .map_err(|e| format!("Invalid embedded material BC7 pack: {e}"))?;
         if (packed.width, packed.height, packed.layers)
-            != (materials_p0::TEXTURE_SIZE, materials_p0::TEXTURE_SIZE, materials_p0::LAYER_COUNT)
+            != (
+                materials_p0::TEXTURE_SIZE,
+                materials_p0::TEXTURE_SIZE,
+                materials_p0::LAYER_COUNT,
+            )
         {
             return Err("P0 material pack dimensions/layer count do not match the mesh".into());
         }
@@ -164,13 +170,25 @@ impl Renderer {
         };
         println!(
             "Material textures: {} path; {:.2} MiB BC7 vs {:.2} MiB RGBA ({} GPU memory reduction)",
-            if supports_bc7 { "hardware BC7" } else { "CPU BC7 decode -> RGBA fallback" },
+            if supports_bc7 {
+                "hardware BC7"
+            } else {
+                "CPU BC7 decode -> RGBA fallback"
+            },
             packed.bc7_bytes() as f64 / 1_048_576.0,
             packed.rgba_bytes() as f64 / 1_048_576.0,
-            if supports_bc7 { "75%" } else { "0% on this adapter" },
+            if supports_bc7 {
+                "75%"
+            } else {
+                "0% on this adapter"
+            },
         );
         let material_texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some(if supports_bc7 { "Hexel BC7 materials" } else { "Hexel RGBA fallback materials" }),
+            label: Some(if supports_bc7 {
+                "Hexel BC7 materials"
+            } else {
+                "Hexel RGBA fallback materials"
+            }),
             size: wgpu::Extent3d {
                 width: packed.width,
                 height: packed.height,
@@ -187,14 +205,21 @@ impl Renderer {
             let pixels: Cow<'_, [u8]> = if supports_bc7 {
                 Cow::Borrowed(packed.bc7_layer(layer))
             } else {
-                Cow::Owned(packed.decode_layer(layer)
-                    .map_err(|e| format!("BC7 fallback decode layer {layer}: {e}"))?)
+                Cow::Owned(
+                    packed
+                        .decode_layer(layer)
+                        .map_err(|e| format!("BC7 fallback decode layer {layer}: {e}"))?,
+                )
             };
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: &material_texture,
                     mip_level: 0,
-                    origin: wgpu::Origin3d { x: 0, y: 0, z: layer as u32 },
+                    origin: wgpu::Origin3d {
+                        x: 0,
+                        y: 0,
+                        z: layer as u32,
+                    },
                     aspect: wgpu::TextureAspect::All,
                 },
                 &pixels,
@@ -205,7 +230,11 @@ impl Renderer {
                     } else {
                         packed.width * 4
                     }),
-                    rows_per_image: Some(if supports_bc7 { packed.height / 4 } else { packed.height }),
+                    rows_per_image: Some(if supports_bc7 {
+                        packed.height / 4
+                    } else {
+                        packed.height
+                    }),
                 },
                 wgpu::Extent3d {
                     width: packed.width,
