@@ -18,9 +18,13 @@ pub struct HabitatSample {
 impl HabitatSample {
     pub fn valid(self) -> bool {
         self.mean_temperature_c.is_finite()
-            && [self.annual_rain_fraction, self.forestation_fraction, self.elevation_fraction]
-                .into_iter()
-                .all(|x| x.is_finite() && (0.0..=1.0).contains(&x))
+            && [
+                self.annual_rain_fraction,
+                self.forestation_fraction,
+                self.elevation_fraction,
+            ]
+            .into_iter()
+            .all(|x| x.is_finite() && (0.0..=1.0).contains(&x))
     }
 }
 
@@ -93,9 +97,7 @@ impl HabitatRules {
         // malformed registry record can never become a normal habitat.
         for &(rule, _, is_fraction) in &constraints {
             if let ClimateConstraint::Interval(range) = rule {
-                if !range.valid()
-                    || (is_fraction && (range.min < 0.0 || range.max > 1.0))
-                {
+                if !range.valid() || (is_fraction && (range.min < 0.0 || range.max > 1.0)) {
                     return Eligibility::InvalidRule;
                 }
             }
