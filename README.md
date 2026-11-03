@@ -104,6 +104,12 @@ All new terrain, ore, soil-cover and grass texture work follows the
 legacy demo art is not yet a production-ready face set. Run
 `python3 scripts/validate_material_catalog.py` to verify registered assets.
 
+Flora species, habitat research and eventual plant appearances are now tracked
+separately from terrain materials. See [Flora to assets](docs/flora-to-assets.md)
+and the research inventory at `assets/flora/reference_registry.v1.json`.
+None of its species currently spawn in the demo. Run
+`python3 scripts/validate_flora_registry.py` to check that inventory.
+
 Read [World generation](docs/world-generation.md),
 [Integration boundaries](docs/integration.md),
 [Decisions](docs/decisions.md) and

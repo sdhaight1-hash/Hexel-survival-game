@@ -119,3 +119,11 @@ engine code are copied:
 
 All of this must eventually operate over our own streamed Q/R/Y hexel runtime,
 finite materials and synthetic toroidal-world geology.
+
+## Flora asset integration
+
+New tree, shrub, grass, crop and fungus artwork must be tied to independently
+versioned flora species IDs and growth states, never inferred from a soil or
+ore texture filename. See [Flora → rendered assets](flora-to-assets.md).
+This is a binding contract only; the 208 research inventory entries do not
+have published textures or authoring assets yet.
