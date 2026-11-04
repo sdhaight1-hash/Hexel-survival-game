@@ -192,6 +192,10 @@ unless the new branch changes those capabilities.
    CI passing alone does not constitute native mouse/clipboard
    approval.
 
+The subsequent [ore-pattern family study](ore-pattern-family-gallery.md)
+adds explicit F12 pattern and P palette identities to the benchmark
+trial labels so unlike material variants cannot be silently mixed.
+
 See [F5 GPU benchmarking](benchmark-instrumentation.md),
 [200-chunk scene](benchmark-200-chunks.md),
 and [F1 diagnostic panel](diagnostics-menu.md).
