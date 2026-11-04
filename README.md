@@ -84,6 +84,25 @@ These are **display fixtures**, not geological deposits or mineable
 resources. The three new granite/shale/copper PNGs are candidates,
 **not approved production artwork**.
 
+### Opt-in section-count streaming budget (native Windows)
+
+The existing `--streamed-world` path loads all required sections at each
+section boundary. To compare bounded per-update CPU generation and GPU
+mesh/upload work while keeping the initial 95-section bootstrap:
+
+```sh
+cargo run --release -- --streamed-world --present-mode mailbox --fps-cap 60 --stream-budget 1
+```
+
+`--stream-budget` accepts 1, 2 or 4 new sections per update and is **off
+by default**. CPU residency stays at 95 once initially populated; old
+sections are replaced incrementally and the log reports the remaining
+target-section backlog. Missing cells still sample deterministic source
+terrain for collision and neighbor faces. This is a **section-count**
+budget, not a strict millisecond guarantee; a single mesh can still
+exceed the desired frame interval. See the [pacing evidence and budget
+test plan](docs/p3-pacing-results-and-streaming-budget.md).
+
 ### Opt-in presentation synchronization A/B (native Windows)
 
 The default remains FIFO with desired maximum frame latency 2. To test
