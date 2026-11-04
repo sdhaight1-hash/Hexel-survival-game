@@ -14,6 +14,10 @@ Only streamed mode prints these lines; the one-chunk material gallery remains un
 STREAM FRAME: N update intervals; interval p50/p95/p99 A/B/C ms; >16.7 ms X >33.3 ms Y; K stream updates; worst CPU generation G ms, mesh/buffer M ms, combined S ms (single update).
 ```
 
+**Movement-input categorization (new):** Every `STREAM:` line now ends with `Is_Moving=true|false`, sampled at the end of the reporting window. `true` means the captured gameplay input has W/A/S/D or Space (jump) held. Ctrl sprint and Shift sneak on their own are modifiers and **do not** count; releasing mouse capture or opening F1/F2 reports false. This flag indicates *input intent*, **not measured velocity**: opposing keys, collisions or being airborne can make intent differ from movement.
+
+With F3 on, `STREAM FRAME:` includes `Is_Moving samples M/N`, moving p95 and idle p95 measured from **separate update-interval sample groups**. Sample counts indicate whether a three-second window is mixed; neither p95 is meaningful without enough samples. The state is sampled at `about_to_wait`, not reconstructed from physical movement. It does not claim to measure actual frame presentation time.
+
 **Interpretation:** intervals are the elapsed wall-clock time between consecutive `about_to_wait` callbacks; they include event loop scheduling/redraw behavior. They are **not** isolated renderer CPU durations, GPU frame timestamps, actual monitor presentation cadence or guaranteed end-to-end frame latency. On a paused/unfocused/occluded window, interval percentiles can be misleading. The three-second totals and per-update peaks are distinct measures. The latter capture CPU work executed synchronously in `stream_around` and `sync_stream`, **not GPU execution**. Nearest-rank p50/p95/p99 are computed separately for each reporting window. The sample buffer resets every report; there is no unbounded history.
 
 ## Reproducible comparison
