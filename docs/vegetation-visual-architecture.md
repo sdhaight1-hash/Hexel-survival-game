@@ -97,6 +97,8 @@ validated, not measured universal botanical constants.
   Hexel Survival scene uses **Q/R/Y (Y-up)**. Any import must convert
   coordinates and units explicitly and check periodic boundary rules.
 
+**Research context:** [Industry material and seasonal color study](material-variation-industry-research.md) documents official Vintage Story climate/season map hooks, Unity/SpeedTree per-tree position-based color variation, Unreal material curve/global-parameter sharing, and USGS species-specific phenology. These are useful reference **principles**, not production-ready Hexal code or proven interchangeable plant shaders.
+
 ## Candidate: reusable grayscale bark and foliage material families
 
 The [proposed material-family model](material-authoring-contract.md)
