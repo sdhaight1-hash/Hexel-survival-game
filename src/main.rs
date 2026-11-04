@@ -10,12 +10,12 @@ mod stream_metrics;
 mod texture_codec;
 mod texture_pack;
 
+use benchmark_log::ConsoleLog;
+use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
 use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
 };
-use benchmark_log::ConsoleLog;
-use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
 use render::Renderer;
 use std::{collections::HashSet, sync::Arc, time::Instant};
 use stream_metrics::StreamFrameMetrics;
@@ -101,7 +101,9 @@ impl Game {
     }
 
     fn capture_mouse(&mut self) {
-        if self.menu_open || self.console_open { return; }
+        if self.menu_open || self.console_open {
+            return;
+        }
         let Some(window) = self.window.as_ref() else {
             return;
         };
@@ -126,7 +128,6 @@ impl Game {
         self.pressed.clear();
     }
 
-
     fn toggle_menu(&mut self) {
         self.menu_open = !self.menu_open;
         self.console_open = false;
@@ -146,7 +147,8 @@ impl Game {
         self.menu_hover = None;
         if self.console_open {
             self.release_mouse();
-            self.console_log.record("F2 bottom log: OPEN (Ctrl+C copies full session)");
+            self.console_log
+                .record("F2 bottom log: OPEN (Ctrl+C copies full session)");
         } else {
             self.console_log.record("F2 bottom log: CLOSED");
             self.capture_mouse();
@@ -155,26 +157,47 @@ impl Game {
 
     fn copy_console(&mut self) {
         match self.console_log.copy() {
-            Ok(()) => self.console_log.record("F2: full session copied to clipboard"),
+            Ok(()) => self
+                .console_log
+                .record("F2: full session copied to clipboard"),
             Err(error) => self.console_log.record(format!("F2 copy failed: {error}")),
         }
     }
 
     fn apply_debug_action(&mut self, action: MenuAction) {
-        if action == MenuAction::Console { self.toggle_console(); return; }
-        if action == MenuAction::FrameStats {
-            self.frame_stats = !self.frame_stats;
-            self.console_log.record(format!("F3 streaming metrics: {}", if self.frame_stats { "ON" } else { "OFF" }));
+        if action == MenuAction::Console {
+            self.toggle_console();
             return;
         }
-        let Some(renderer) = self.renderer.as_mut() else { return; };
-        if !renderer.menu_snapshot(self.frame_stats).enabled(action) { return; }
+        if action == MenuAction::FrameStats {
+            self.frame_stats = !self.frame_stats;
+            self.console_log.record(format!(
+                "F3 streaming metrics: {}",
+                if self.frame_stats { "ON" } else { "OFF" }
+            ));
+            return;
+        }
+        let Some(renderer) = self.renderer.as_mut() else {
+            return;
+        };
+        if !renderer.menu_snapshot(self.frame_stats).enabled(action) {
+            return;
+        }
         let message = match action {
             MenuAction::UvChecker => format!("F6 UV checker: {}", renderer.toggle_checker()),
-            MenuAction::UvDensity => format!("F7 checker scale: {} texels/metre", renderer.cycle_density()),
-            MenuAction::V2Materials => format!("F8 candidate materials: {:?}", renderer.toggle_v2_preview()),
-            MenuAction::SurfacePreset => format!("F9 surface preset: {:?}", renderer.cycle_surface_preset()),
-            MenuAction::MetalGlints => format!("F10 metal glints: {:?}", renderer.toggle_metallic_glints()),
+            MenuAction::UvDensity => format!(
+                "F7 checker scale: {} texels/metre",
+                renderer.cycle_density()
+            ),
+            MenuAction::V2Materials => {
+                format!("F8 candidate materials: {:?}", renderer.toggle_v2_preview())
+            }
+            MenuAction::SurfacePreset => {
+                format!("F9 surface preset: {:?}", renderer.cycle_surface_preset())
+            }
+            MenuAction::MetalGlints => {
+                format!("F10 metal glints: {:?}", renderer.toggle_metallic_glints())
+            }
             _ => return,
         };
         self.console_log.record(message);
@@ -229,8 +252,12 @@ impl ApplicationHandler for Game {
                 self.capture_mouse();
                 self.last_frame = Instant::now();
                 self.console_log.record(benchmark_log::system_report());
-                self.console_log.record(format!("WORLD {} resident sections", self.world.chunk_count()));
-                self.console_log.record("F1 menu | F2 console + Ctrl+C | F3 streamed frame metrics");
+                self.console_log.record(format!(
+                    "WORLD {} resident sections",
+                    self.world.chunk_count()
+                ));
+                self.console_log
+                    .record("F1 menu | F2 console + Ctrl+C | F3 streamed frame metrics");
                 if self.world.is_streamed() {
                     println!(
                         "Hexel Survival STREAMED WORLD: {} resident sections; procedural source seed 42.",
@@ -291,24 +318,41 @@ impl ApplicationHandler for Game {
                 if let PhysicalKey::Code(key) = event.physical_key {
                     if event.state == ElementState::Pressed && !event.repeat {
                         if key == KeyCode::Escape {
-                            if self.menu_open { self.toggle_menu(); }
-                            else if self.console_open { self.toggle_console(); }
-                            else if self.mouse_captured { self.release_mouse(); }
-                            else { self.capture_mouse(); }
+                            if self.menu_open {
+                                self.toggle_menu();
+                            } else if self.console_open {
+                                self.toggle_console();
+                            } else if self.mouse_captured {
+                                self.release_mouse();
+                            } else {
+                                self.capture_mouse();
+                            }
                             return;
                         }
-                        if key == KeyCode::F1 { self.toggle_menu(); return; }
-                        if key == KeyCode::F2 { self.toggle_console(); return; }
-                        if self.console_open && key == KeyCode::KeyC &&
-                            (self.pressed.contains(&KeyCode::ControlLeft) || self.pressed.contains(&KeyCode::ControlRight)) {
-                            self.copy_console(); return;
+                        if key == KeyCode::F1 {
+                            self.toggle_menu();
+                            return;
+                        }
+                        if key == KeyCode::F2 {
+                            self.toggle_console();
+                            return;
+                        }
+                        if self.console_open
+                            && key == KeyCode::KeyC
+                            && (self.pressed.contains(&KeyCode::ControlLeft)
+                                || self.pressed.contains(&KeyCode::ControlRight))
+                        {
+                            self.copy_console();
+                            return;
                         }
                         if let Some(action) = MenuAction::from_key(key) {
                             self.apply_debug_action(action);
                             return;
                         }
                     }
-                    if self.menu_open || self.console_open { return; }
+                    if self.menu_open || self.console_open {
+                        return;
+                    }
                     if event.state == ElementState::Pressed {
                         self.pressed.insert(key);
                     } else {
@@ -333,19 +377,29 @@ impl ApplicationHandler for Game {
                 if self.console_open {
                     if let (Some((x, y)), Some(window)) = (self.menu_cursor, self.window.as_ref()) {
                         let size = window.inner_size();
-                        if console_copy_hit_test(x, y, size.width, size.height) { self.copy_console(); }
+                        if console_copy_hit_test(x, y, size.width, size.height) {
+                            self.copy_console();
+                        }
                     }
                 } else if self.menu_open {
                     if let (Some((x, y)), Some(window)) = (self.menu_cursor, self.window.as_ref()) {
                         let size = window.inner_size();
-                        if let Some(action) = hit_test(x, y, size.width, size.height) { self.apply_debug_action(action); }
+                        if let Some(action) = hit_test(x, y, size.width, size.height) {
+                            self.apply_debug_action(action);
+                        }
                     }
-                } else if !self.mouse_captured { self.capture_mouse(); }
+                } else if !self.mouse_captured {
+                    self.capture_mouse();
+                }
             }
             WindowEvent::RedrawRequested => {
                 if let Some(renderer) = self.renderer.as_mut() {
-                    let menu = self.menu_open.then(|| (renderer.menu_snapshot(self.frame_stats), self.menu_hover));
-                    let console = self.console_open.then(|| (self.console_log.lines(), self.console_log.generation()));
+                    let menu = self
+                        .menu_open
+                        .then(|| (renderer.menu_snapshot(self.frame_stats), self.menu_hover));
+                    let console = self
+                        .console_open
+                        .then(|| (self.console_log.lines(), self.console_log.generation()));
                     match renderer.draw(&self.player, menu, console) {
                         Ok(()) => {}
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -426,7 +480,9 @@ impl ApplicationHandler for Game {
                 self.streamed_generation_cpu_ms = 0.0;
                 self.streamed_meshing_cpu_ms = 0.0;
                 let report = self.stream_metrics.report_and_reset();
-                if self.frame_stats { self.console_log.record(report); }
+                if self.frame_stats {
+                    self.console_log.record(report);
+                }
                 self.last_stream_report = now;
             }
         }
