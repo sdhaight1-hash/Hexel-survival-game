@@ -199,6 +199,28 @@ readability in neutral light, and whether rare fantasy colors
 remain harmonious with the style guide. Do **not** turn snow into
 a white leaf tint or assume blue foliage is automatically luminous.
 
+**Time-driven seasonal palette study (additional P4/P5 visual gate):**
+extend the proposed family-palette proof with an ordered cyclic
+array of approved spring/summer/autumn/winter (or species-specific)
+color ramps. Interpolate between adjacent keyframes based on
+**authoritative game-year phase** and eventual regional phenology,
+without rebaking full-color foliage textures or changing a plant
+species/material ID. Keep interpolation space explicit (linear
+light baseline), handle year wrap and deterministic world-time
+jumps, and do not presume every region shares four Earth seasons.
+
+For one deciduous broadleaf, one evergreen and one fantasy-blue
+willow, compare fixed keyframes and a smooth full-year sweep.
+Independently test *leaf retention* and *snow/frost cover* rather
+than using color shifts to fake either. Record 1m/3m/8m visuals,
+silhouette, color gradient, LOD/mip behavior and shader cost.
+This belongs alongside first flora-asset bindings (#13), not
+inside the already-working F8 copper/material gallery. A
+prototype may use a synthetic time slider; **no planetary
+time/climate implementation is implied**. Don't expand the
+existing v2 catalog or shader contract before this visual proof.
+
+
 ## Revised dependencies and phase gates
 
 The historic **P0–P7 labels remain as milestones** for issue/PR continuity,
