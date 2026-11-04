@@ -5,7 +5,7 @@ struct Camera {
     eye_position: vec4<f32>,
     // Independent *gallery* conditions: wetness, moss, frost, metal glints.
     surface: vec4<f32>,
-    // x: grayscale ore pattern 0..5, y: palette copper/hematite/moonsilver.
+    // x: F12 mask 0..5 / world-space vein 6, y: P palette index.
     family: vec4<f32>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
@@ -54,22 +54,68 @@ fn patch_noise(p: vec2<f32>) -> f32 {
     return mix(low, high, t.y);
 }
 
+// Deterministic continuous 3D value noise in *metres of world position*.
+// No per-face UV mapping or texture tile is involved. Rendering detail
+// only; this is not the world-owned mineral deposit or mining quantity.
+fn mineral_hash3(cell: vec3<f32>) -> f32 {
+    return fract(sin(dot(cell, vec3<f32>(127.1, 311.7, 74.7))) * 43758.5453);
+}
+fn mineral_noise3(point: vec3<f32>) -> f32 {
+    let c = floor(point);
+    let f = fract(point);
+    let t = f * f * (vec3<f32>(3.0) - 2.0 * f);
+    let x00 = mix(mineral_hash3(c), mineral_hash3(c + vec3<f32>(1.0, 0.0, 0.0)), t.x);
+    let x10 = mix(mineral_hash3(c + vec3<f32>(0.0, 1.0, 0.0)),
+                  mineral_hash3(c + vec3<f32>(1.0, 1.0, 0.0)), t.x);
+    let x01 = mix(mineral_hash3(c + vec3<f32>(0.0, 0.0, 1.0)),
+                  mineral_hash3(c + vec3<f32>(1.0, 0.0, 1.0)), t.x);
+    let x11 = mix(mineral_hash3(c + vec3<f32>(0.0, 1.0, 1.0)),
+                  mineral_hash3(c + vec3<f32>(1.0, 1.0, 1.0)), t.x);
+    return mix(mix(x00, x10, t.y), mix(x01, x11, t.y), t.z);
+}
+
+// Returns (grayscale tone, ore alpha). A few bent diagonal vein sheets,
+// interrupted by irregular 3D patches and secondary crossing fractures.
+// The source, pigment, and host rock remain independently selectable.
+// Two noise octaves cost more than a texture read; measure on native GPU.
+fn world_mineral_vein(world_pos: vec3<f32>) -> vec2<f32> {
+    let bend = mineral_noise3(world_pos * 0.42 + vec3<f32>(3.4, 5.9, 12.7));
+    let body = mineral_noise3(world_pos * 0.19 + vec3<f32>(17.1, -4.3, 8.2));
+    let warped = world_pos + vec3<f32>(0.85, 0.44, -0.52) * (bend - 0.5);
+    let main_axis = dot(warped, normalize(vec3<f32>(0.62, 0.37, -0.69)))
+        + 0.12 * sin(dot(world_pos, vec3<f32>(0.46, 0.37, 1.11)));
+    let branch_axis = dot(warped, normalize(vec3<f32>(-0.32, 0.84, 0.44)))
+        + 0.17 * sin(dot(world_pos, vec3<f32>(0.91, 0.31, -0.46)));
+    let main_distance = abs(sin(main_axis * 0.84 + 0.58));
+    let branch_distance = abs(sin(branch_axis * 1.06 - 0.41));
+    let patch = smoothstep(0.32, 0.69, body);
+    let primary_width = mix(0.030, 0.11, body);
+    let primary = (1.0 - smoothstep(primary_width, primary_width + 0.10, main_distance))
+        * (0.22 + 0.78 * patch);
+    let secondary = (1.0 - smoothstep(0.028, 0.12, branch_distance))
+        * patch * 0.67;
+    let coverage = clamp(max(primary, secondary), 0.0, 1.0);
+    let tone = clamp(0.22 + 0.59 * (0.55 * bend + 0.45 * body), 0.0, 1.0);
+    return vec2<f32>(tone, coverage);
+}
+
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
     // Hexel UVs are in metres, with 1m repeats for gallery candidates.
     let checker = camera.options.x > 0.5;
     let is_copper = v.material == 9u || v.material == 10u;
     let gray_copper = !checker && camera.options.z > 0.5
         && camera.options.w > 0.5 && is_copper;
-    // Layers 12..17 share both host rocks; pattern changes coverage and
-    // tonal detail, palette changes only color. No world resource ID changes.
-    let pattern = u32(clamp(camera.family.x, 0.0, 5.0));
+    // Source layers 12..17 remain unchanged. Pattern 6 is generated from
+    // interpolated WORLD position, so it needs no new material texture layer.
+    let pattern = u32(clamp(camera.family.x, 0.0, 6.0));
     let palette = u32(clamp(camera.family.y, 0.0, 2.0));
-    let source_layer = select(v.material, 12u + pattern, gray_copper);
+    let source_layer = select(v.material, 12u + min(pattern, 5u), gray_copper);
     let layer = select(source_layer, 11u, checker);
     let scale = select(1.0, camera.options.y, checker);
     let uv = v.uv * scale;
     let albedo = textureSample(material_tiles, tile_sampler, uv, i32(layer));
     var color = albedo.rgb;
+    var ore_coverage = albedo.a;
 
     // Explicit gradients keep the extra host lookup valid inside a
     // material-dependent branch; all derivative operations are outside it.
@@ -82,7 +128,12 @@ fn patch_noise(p: vec2<f32>) -> f32 {
         );
         // Two distinct fields: source RGB is grayscale tonal detail,
         // while source alpha is mineral coverage (even for dark details).
-        let tone = clamp(albedo.r, 0.0, 1.0);
+        var tone = clamp(albedo.r, 0.0, 1.0);
+        if (pattern == 6u) {
+            let formation = world_mineral_vein(v.world_position);
+            tone = formation.x;
+            ore_coverage = formation.y;
+        }
         var dark = vec3<f32>(0.13, 0.045, 0.018);
         var mid = vec3<f32>(0.39, 0.15, 0.060);
         var light = vec3<f32>(0.76, 0.40, 0.16);
@@ -102,7 +153,7 @@ fn patch_noise(p: vec2<f32>) -> f32 {
             mix(mid, light, min(tone * 2.0 - 1.0, 1.0)),
             tone > 0.5
         );
-        color = mix(host.rgb, pigment, albedo.a);
+        color = mix(host.rgb, pigment, ore_coverage);
     }
 
     // Derivatives are calculated unconditionally for uniformity in WGSL.
@@ -148,7 +199,7 @@ fn patch_noise(p: vec2<f32>) -> f32 {
         // All other layers (including P0) have no metallic response. The
         // host is still visible; moss/frost can physically cover the ore.
         if (is_copper && camera.surface.w > 0.5) {
-            let exposed = albedo.a * (1.0 - moss) * (1.0 - frost);
+            let exposed = ore_coverage * (1.0 - moss) * (1.0 - frost);
             let metal_sheen = pow(specular, 22.0) * 0.35;
 
             // Rare stable world-UV facets: light/view-dependent, never
