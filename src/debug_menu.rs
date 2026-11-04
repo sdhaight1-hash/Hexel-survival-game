@@ -103,7 +103,11 @@ impl MenuSnapshot {
             MenuAction::UvChecker => on_off(self.uv_checker).into(),
             MenuAction::UvDensity => format!("{} PX/M", self.uv_density),
             MenuAction::V2Materials => self.v2_materials.map_or("NO ART", on_off).into(),
-            MenuAction::SurfacePreset => self.surface.unwrap_or("NO ART").to_uppercase(),
+            MenuAction::SurfacePreset => match self.surface {
+                Some("Moss / lichen") => "MOSS".into(),
+                Some(name) => name.to_uppercase(),
+                None => "NO ART".into(),
+            },
             MenuAction::MetalGlints => self.metal_glints.map_or("NO ART", on_off).into(),
             MenuAction::GrayCopper => match self.gray_copper {
                 Some(true) => "GRAY",
