@@ -99,6 +99,80 @@ test thresholds. A later segment varied between roughly
 1,455–1,784 FPS and ~0.26–0.42 ms GPU pass, which is why
 longer averages and frame-time distributions are useful.
 
+## First native Windows evidence — 2026-11-03
+
+The project owner pasted a complete copy from the F2 logger, confirming
+that the **Windows clipboard workflow works on actual hardware**.
+This verifies copy/paste and log persistence up to the moment of
+copying; it does not by itself verify mouse hitbox positions or
+visual/layout quality. F2 reported the successful copy event.
+
+**Machine / viewport from this session:**
+
+| Field | Observed |
+| --- | --- |
+| OS / architecture | Windows x86_64 |
+| CPU | Intel Core i5-9400F @ 2.90 GHz, 6 logical threads |
+| RAM | 15.9 GiB physical, 9.0 GiB available at startup |
+| GPU | NVIDIA GeForce RTX 2060, Vulkan backend |
+| Driver / features | NVIDIA 610.88; BC7, timestamps and Immediate supported |
+| Render viewport | 1280×800, Bgra8UnormSrgb |
+| Scene | 200 resident chunks, 819,200 cell slots; 293,226 solid hexels |
+| Meshing | 106,050 exposed hexels; 102,400 exposed caps + 19,576 sides |
+| Mesh triangles / vertices | **653,552** / **1,960,656** |
+| Terrain vertex buffers | 67.3 MiB |
+| CPU mesh build/upload | 81.0 ms in this session |
+
+The face accounting reconciles exactly: 102,400 × 6 +
+19,576 × 2 = **653,552 triangles**, times three vertices =
+**1,960,656**. At the recorded nearby-culling position:
+132/200 submitted chunks, **69,268** submitted exposed hexels,
+67,584 caps + 10,835 sides = 78,419 faces, **427,174**
+triangles and **1,281,522** vertices.
+
+**Measured unlocked trial summaries (F1 was OPEN throughout):**
+
+| Mode | Length | Wall FPS | CPU draw/present | Sampled GPU world pass |
+| --- | ---: | ---: | ---: | ---: |
+| P0 | 21.3 s | 2,028.0 | 0.442 ms | 0.266 ms (85 samples) |
+| F8 authored full-color copper | 9.1 s | 1,925.0 | 0.470 ms | 0.301 ms (37 samples) |
+| F11 grayscale copper, Dry | 13.0 s | 1,910.1 | 0.471 ms | 0.302 ms (52 samples) |
+| F11 grayscale copper, later Dry | 18.6 s | 1,888.9 | 0.478 ms | 0.305 ms (74 samples) |
+
+The copper F8/F11 GPU numbers differ by around **0.001 ms**
+(one microsecond) in the short comparable first pair; this is
+not strong evidence of a real shader regression. P0's GPU pass
+is around **0.035 ms** below F8's, but this comparison changes
+art/texture paths. FPS differences may also involve scheduling,
+CPU frame work and GPU clocks. The F2-open segment subsequently
+ran about 1,755–1,794 FPS with ~0.311–0.322 ms sampled GPU pass,
+but that is **not a controlled F2-vs-F1 isolated UI-cost test**.
+
+**Important limitations and resulting small fix:**
+- The source log begins `F1 diagnostics menu: OPEN` and does not
+  close F1 before the P0, F8 or F11 trials. Every BENCH sample
+  correctly reports `UI OPEN`; none qualifies as a *closed UI*
+  renderer-only benchmark.
+- Despite a longer-term averaging implementation, the completed
+  trials here are all **shorter than 30 seconds**. Rolling values
+  were accumulating correctly but never contained a full
+  continuous 30-second window.
+- The first implementation labeled all F11 runs identically even
+  when F9 moved through Wet/Moss/Frost/Combined, and `TRIAL FINAL`
+  omitted UI status. The next logging refinement now captures
+  **F4 culling, F9 preset, F10 glints, F6 checker, F7 density,
+  and F1/F2/closed state** in both sample and final-trial labels.
+  This is a *new code change* that still needs its own CI/native
+  verification, not a property of the supplied log.
+- The captured log cannot establish actual **camera-visible** faces
+  or GPU pixel overdraw, and no new VRAM usage claim is made.
+
+**Next clean comparison:** F1/F2 closed, F3 running, stationary
+camera, F5 Immediate, F8 ON, F9 Dry, F10 held constant, F6 OFF,
+F4 constant. Gather at least **30 seconds each** for F11 OFF/ON.
+No need to re-test startup CPU/GPU reporting or Windows F2 copy
+unless the new branch changes those capabilities.
+
 ## Acceptance
 
 1. Both one-chunk default and 200-chunk benchmark launch.
