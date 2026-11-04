@@ -4,7 +4,7 @@
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
     materials_p0, materials_v2,
-    mesh::{build_chunk_mesh, Vertex},
+    mesh::{build_chunk_mesh_with_stats, ExposedMeshStats, Vertex},
     texture_pack::TexturePack,
 };
 use bytemuck::{Pod, Zeroable};
@@ -54,12 +54,16 @@ struct ChunkMesh {
     buffer: wgpu::Buffer,
     vertices: u32,
     center: Vec3,
+    exposed: ExposedMeshStats,
 }
 
 #[derive(Default, Clone, Copy)]
 pub struct DrawStats {
     pub submitted_chunks: usize,
     pub submitted_vertices: u64,
+    pub submitted_exposed_hexels: u64,
+    pub submitted_cap_faces: u64,
+    pub submitted_side_faces: u64,
     /// CPU wall time includes surface acquisition/present, and may block.
     pub draw_cpu_ms: f32,
     /// Asynchronously retrieved GPU world render-pass time for one sampled
@@ -149,6 +153,8 @@ pub struct Renderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
+    hardware_report: String,
+    geometry_report: String,
     supports_unlocked_present: bool,
     gpu_timer: Option<GpuTimer>,
     gpu_profiling_enabled: bool,
@@ -235,6 +241,20 @@ impl Renderer {
             adapter.get_info().name,
             if supports_unlocked_present { "available" } else { "unavailable" },
             if supports_timestamps { "available" } else { "unavailable" }
+        );
+        let info = adapter.get_info();
+        let hardware_report = format!(
+            "GPU: {} | type {:?} | vendor {:04x} device {:04x} | backend {:?} | driver {} {} | BC7 {} | timestamp {} | Immediate {}",
+            info.name,
+            info.device_type,
+            info.vendor,
+            info.device,
+            info.backend,
+            info.driver,
+            info.driver_info.replace('\n', " "),
+            supports_bc7,
+            supports_timestamps,
+            supports_unlocked_present,
         );
         let format = caps
             .formats
@@ -636,13 +656,21 @@ impl Renderer {
         let mesh_start = Instant::now();
         let mut terrain_chunks = Vec::new();
         let mut total_vertices = 0u64;
+        let mut solid_hexels = 0u64;
+        let mut exposed_hexels = 0u64;
+        let mut cap_faces = 0u64;
+        let mut side_faces = 0u64;
         for pos in world.chunk_positions() {
-            let mesh = build_chunk_mesh(world, pos);
+            let (mesh, exposed) = build_chunk_mesh_with_stats(world, pos);
             if mesh.is_empty() {
                 continue;
             }
             let count = mesh.len() as u32;
             total_vertices += mesh.len() as u64;
+            solid_hexels += u64::from(exposed.solid_hexels);
+            exposed_hexels += u64::from(exposed.exposed_hexels);
+            cap_faces += u64::from(exposed.cap_faces);
+            side_faces += u64::from(exposed.side_faces);
             let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Exposed hexel chunk faces"),
                 contents: bytemuck::cast_slice(&mesh),
@@ -657,6 +685,7 @@ impl Renderer {
                 buffer,
                 vertices: count,
                 center: cell.center(),
+                exposed,
             });
         }
         if terrain_chunks.is_empty() {
@@ -668,6 +697,21 @@ impl Renderer {
             total_vertices,
             total_vertices as f64 * std::mem::size_of::<Vertex>() as f64 / (1024.0 * 1024.0),
             mesh_start.elapsed().as_secs_f64() * 1000.0
+        );
+        let mesh_ms = mesh_start.elapsed().as_secs_f64() * 1000.0;
+        let geometry_report = format!(
+            "SCENE resident {} chunks / {} cells | solid {} hexels | exposed {} hexels | exposed caps {} sides {} ({} faces) | triangles {} | vertices {} | vertex buffers {:.1} MiB | build/upload {:.1} ms CPU",
+            world.chunk_count(),
+            world.chunk_count() * 16 * 16 * 16,
+            solid_hexels,
+            exposed_hexels,
+            cap_faces,
+            side_faces,
+            cap_faces + side_faces,
+            total_vertices / 3,
+            total_vertices,
+            total_vertices as f64 * std::mem::size_of::<Vertex>() as f64 / (1024.0 * 1024.0),
+            mesh_ms,
         );
         let crosshair = [
             CrosshairVertex {
@@ -706,6 +750,8 @@ impl Renderer {
             device,
             queue,
             config,
+            hardware_report,
+            geometry_report,
             supports_unlocked_present,
             gpu_timer,
             gpu_profiling_enabled: false,
@@ -835,6 +881,25 @@ impl Renderer {
             gray_copper: (self.v2_preview_enabled && self.grayscale_copper_available)
                 .then_some(self.grayscale_copper_enabled),
         }
+    }
+
+    pub fn hardware_report(&self) -> &str {
+        &self.hardware_report
+    }
+
+    pub fn geometry_report(&self) -> &str {
+        &self.geometry_report
+    }
+
+    pub fn viewport_report(&self) -> String {
+        format!(
+            "DISPLAY render viewport {}x{} | swap format {:?} | present {} | GPU pass sampling {}",
+            self.config.width,
+            self.config.height,
+            self.config.format,
+            self.presentation_label(),
+            self.gpu_timer.is_some(),
+        )
     }
 
     pub fn stats(&self) -> DrawStats {
@@ -974,6 +1039,9 @@ impl Renderer {
             .create_view(&wgpu::TextureViewDescriptor::default());
         let mut submitted_chunks = 0usize;
         let mut submitted_vertices = 0u64;
+        let mut submitted_exposed_hexels = 0u64;
+        let mut submitted_cap_faces = 0u64;
+        let mut submitted_side_faces = 0u64;
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -1040,6 +1108,9 @@ impl Renderer {
                 pass.draw(0..chunk.vertices, 0..1);
                 submitted_chunks += 1;
                 submitted_vertices += u64::from(chunk.vertices);
+                submitted_exposed_hexels += u64::from(chunk.exposed.exposed_hexels);
+                submitted_cap_faces += u64::from(chunk.exposed.cap_faces);
+                submitted_side_faces += u64::from(chunk.exposed.side_faces);
             }
             pass.set_pipeline(&self.crosshair_pipeline);
             if menu.is_none() && console.is_none() {
@@ -1073,6 +1144,9 @@ impl Renderer {
         self.last_stats = DrawStats {
             submitted_chunks,
             submitted_vertices,
+            submitted_exposed_hexels,
+            submitted_cap_faces,
+            submitted_side_faces,
             draw_cpu_ms: draw_start.elapsed().as_secs_f32() * 1000.0,
             gpu_pass_ms: gpu_sample_ms,
         };
