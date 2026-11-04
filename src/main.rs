@@ -13,8 +13,8 @@ use hexel_survival_game::{
     world::World,
 };
 use render::Renderer;
-use stream_metrics::StreamFrameMetrics;
 use std::{collections::HashSet, sync::Arc, time::Instant};
+use stream_metrics::StreamFrameMetrics;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -325,7 +325,8 @@ impl ApplicationHandler for Game {
         let now = Instant::now();
         let dt = now.duration_since(self.last_frame).as_secs_f32();
         if self.world.is_streamed() {
-            self.stream_metrics.record_frame_interval(f64::from(dt) * 1000.0);
+            self.stream_metrics
+                .record_frame_interval(f64::from(dt) * 1000.0);
         }
         self.last_frame = now;
         self.player.step(&self.world, self.input(), dt);
@@ -343,7 +344,8 @@ impl ApplicationHandler for Game {
                     self.streamed_meshing_cpu_ms += result.cpu_ms;
                     mesh_upload_ms = result.cpu_ms;
                 }
-                self.stream_metrics.record_stream_update(delta.generation_cpu_ms, mesh_upload_ms);
+                self.stream_metrics
+                    .record_stream_update(delta.generation_cpu_ms, mesh_upload_ms);
             }
             if now.duration_since(self.last_stream_report).as_secs_f64() >= 3.0 {
                 let (gpu_meshes, submitted_vertices) = self
