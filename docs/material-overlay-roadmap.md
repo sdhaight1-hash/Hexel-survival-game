@@ -112,6 +112,10 @@ channel reservation before a tested vertical slice exists. The F8
 candidate copper alpha currently doubles as a preview mask, **not** a
 universal production packing contract.
 
+**Visual overview:** the [material + overlay composition diagram](../assets/diagrams/material-overlay-stack.svg) summarizes the
+design contract. The overlay-path proof and the optional SCA adapter
+remain **future gates**, not working production components.
+
 ## Revised dependencies and phase gates
 
 The historic **P0–P7 labels remain as milestones** for issue/PR continuity,
