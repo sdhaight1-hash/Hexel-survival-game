@@ -350,7 +350,16 @@ impl ApplicationHandler for Game {
                             return;
                         }
                     }
+                    // Track modifier keys even while the overlay owns input:
+                    // Ctrl+C must work in F2 without forwarding movement controls.
                     if self.menu_open || self.console_open {
+                        if matches!(key, KeyCode::ControlLeft | KeyCode::ControlRight) {
+                            if event.state == ElementState::Pressed {
+                                self.pressed.insert(key);
+                            } else {
+                                self.pressed.remove(&key);
+                            }
+                        }
                         return;
                     }
                     if event.state == ElementState::Pressed {
