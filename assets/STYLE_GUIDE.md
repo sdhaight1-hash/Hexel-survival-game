@@ -1,9 +1,8 @@
 # Hexel Survival — Canonical Art Direction & Style Guide
 
 **Status:** project art-direction baseline • **Last reviewed:** 2026-11-03
-**Revision note:** vegetation rendering and structure generation; material
-and overlay milestone audit; proposed world-space structural patterns and
-optional space-colonization integration incorporated.  
+**Revision note:** visual requirements for coherent cross-hexel patterns,
+material-specific sheen and vegetation silhouette clarified.  
 **Applies to:** terrain, geology, ores, soils, flora, water, structures, characters,
 lighting, atmosphere, UI-related visual language, concept art and asset reviews.  
 **Read this before designing or approving visual assets.**
@@ -298,10 +297,9 @@ mean forcing all leaves into cubes or banning leaf/bark textures.
   Rare colors can accent the scene but cannot replace correct habitat data.
 - Wind motion should reflect species and growth form; use restrained
   animation and sensible distance/quality cutoffs.
-- The flora research registry currently inventories **208 historical
-  research rows**, not 208 approved assets or necessarily unique species.
-  Do not make up production assets, growth states or spawn parameters from
-  this number.
+- The research flora inventory is **not** an approved asset roster.
+  Do not invent production assets, life states or spawning rules
+  from historical species references.
 
 ### Plant geometry: 2D cards, 3D meshes and hybrids
 
@@ -427,11 +425,11 @@ families, consistent physical detail and carefully tested top/side/bottom
 transitions. Avoid repeating a successful gallery swatch dozens of
 times merely to satisfy a catalog count.
 
-The 55 material identities are **not 55 approved final assets**;
-current work consists of three unapproved candidate sources and
-52 outstanding source identities. The 208 historical flora research
-entries are not a production roster. Current gallery effects are
-diagnostic, not artistic approval.
+A material inventory is **not** proof of approved final artwork;
+a flora research registry is **not** an approved asset roster.
+Experimental gallery effects are **not** artistic approval.
+For actual implementation counts and current approval states, use the
+[material/overlay roadmap](../docs/material-overlay-roadmap.md).
 
 Catalog and baker contracts belong in
 [material authoring](../docs/material-authoring-contract.md) and
@@ -456,9 +454,8 @@ All staged work and completion criteria belong in the
    where relevant. These are **provisional visual QA distances**, not
    engine LOD thresholds.
 4. **Across contexts:** neutral daylight, overcast/wet, sunset and
-   low-light. **Only neutral/basic lighting is available today**;
-   other comparisons are future acceptance gates, not blockers to
-   writing candidate assets now.
+   low-light. Perform an honest comparison with available lighting,
+   and record which intended contexts cannot yet be tested.
 5. **For ore:** identify the ore-bearing cell without tooltip at
    practical distance, distinguish ore from naturally colored host
    minerals, and retain the host's recognizable identity. Grade changes
