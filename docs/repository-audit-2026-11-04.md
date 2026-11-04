@@ -131,7 +131,7 @@ No issue was closed simply for age, and no duplicate was proven to be fully sati
 | Code review / inventory | GitHub `main` tracked tree, current source files, branch comparisons, open issues and PR metadata inspected. |
 | Markdown relative links | All 37 Markdown files checked against tracked paths; no missing tracked-relative links detected. External web link health not established. |
 | Functional reduction | Dormant `BenchSample` / `BenchHistory` and their self-tests removed; 128 lines removed from `benchmark_log.rs`. Live logging API retained. |
-| Automated CI | **Pending result on audit PR at initial authoring**; before merge require all formatter, validators, baker and all-target Rust tests green. |
+| Automated CI | **PASSED** on audit PR #53 (GitHub Actions Rust foundation run [#608](https://github.com/sdhaight1-hash/Hexel-survival-game/actions/runs/41827556074)): formatter, material/flora validators, v2 registry, candidate art bake and Rust all-target tests. Native Windows tests not included. |
 | Native Windows GPU/UI | **Not run in audit**; cannot conclude that presentation modes improve frame pacing, F2 clipboard works on every Windows config, or visual assets are approved. |
 | Branch deletion | **None performed**. Twenty behind-only branch pointers are candidates, twenty-two divergent ones require care. |
 
