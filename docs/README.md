@@ -37,6 +37,8 @@ implementation; the project owner approves art and deliberate design changes.
 | Which voxel worldgen, LOD, hex grid and meshing references inform the architecture? | [Worldgen reference review](worldgen-streaming-reference-review.md) | [World-scale foundation](world-scale-foundation.md) |
 | How do pre-generated geography, Vintage Story climate palettes, Hytale WorldGen and TanTanDev techniques fit together? | [Worldgen/climate/rendering synthesis](worldgen-climate-rendering-reference-synthesis.md) | [World generation](world-generation.md), [earlier reference review](worldgen-streaming-reference-review.md) |
 | How do I run the first moving streamed-world prototype? | [P3.2A streamed world](p3-2-streamed-world.md) | [World-scale foundation](world-scale-foundation.md) |
+| How do I use F1/F2/F3 and benchmark moving versus mouse panning? | [Debug console integration](debug-console-streamer-integration.md) | [CPU render timing](p3-render-cpu-stage-timing.md), [stream frame intervals](p3-streaming-frame-metrics.md) |
+| How can I A/B test the ~50 ms surface-acquire waits? | [Presentation A/B protocol](p3-presentation-mode-ab.md) | [CPU render timing](p3-render-cpu-stage-timing.md) |
 | How do we move from the static demo to a 1,024 km streamed world? | [World-scale foundation](world-scale-foundation.md) | [World generation](world-generation.md) |
 | What is the selected world and water invariant? | [World generation](world-generation.md) | [Decisions](decisions.md), [Integration](integration.md) |
 | What is the next game/world milestone? | [Core roadmap](roadmap.md) | [Material/overlay roadmap](material-overlay-roadmap.md) |
@@ -65,12 +67,18 @@ implementation determine actual contracts, quality and shipping status.
 - **Historical:** preserved design context. It cannot override a newer
   verified specification or current code.
 
-**Current material snapshot:** the bounded one-chunk P0 gallery, embedded
-BC7 fallback, v2 catalog/BC7 baker/index validator, F8 candidate gallery
-and F9/F10 diagnostic surfaces exist. Three source art records are
-`candidate`, 52 are `needs_art`, **zero are `approved`**. There is no
-general v2 material GPU binding, persistent ore/cover system, world
-streaming, living flora or finite-water solver.
+**Current runtime snapshot (2026-11-04):** the default bounded one-chunk
+P0 gallery and its BC7 fallback coexist with the opt-in deterministic,
+moving **95-section streamed world**. The v2 catalog/BC7 baker/index
+validator, F8 candidate gallery, F9/F10 diagnostic surfaces, F1 clickable
+menu, F2 copyable console and F3 frame/render CPU diagnostics exist.
+`Is_Moving` and `Is_Looking` partition samples; opt-in presentation
+mode/latency launch flags support native A/B tests. These are engineering
+prototypes, not finished world-scale streaming or validated GPU timings.
+Three source art records remain `candidate`, 52 are `needs_art`,
+and **zero are `approved`**. There is no general v2 production
+material binding, persistent world edit/ore/cover system, living flora,
+finite-water solver, active toroidal wrap or distant LOD.
 
 **SCA status:** the [bounded headless prototype](../src/space_colonization.rs),
 [space-colonization study](space-colonization-study.md) and
@@ -94,6 +102,11 @@ mask system does not depend on SCA.
 - **Other repositories:** Voxel Game Engine and Hexel Game Engine are
   reference implementations, not dependencies or sources of game-state
   authority. Their docs must not be assumed to match this runtime.
+
+The [repository audit and branch disposition report](repository-audit-2026-11-04.md)
+records which remote branches contain unique historical/experimental work,
+which documents were stale, and what remains blocked by Windows-native QA.
+Treat that report as a dated snapshot, not a replacement for this index.
 
 The [master art epic #14](https://github.com/sdhaight1-hash/Hexel-survival-game/issues/14)
 tracks P0–P7 tasks. The [main roadmap](roadmap.md) tracks M0–M3.
