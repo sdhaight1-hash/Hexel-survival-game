@@ -73,6 +73,54 @@ CPU milliseconds include surface acquisition/presentation and can block.
 Neither is a **GPU timestamp, isolated shader cost, true GPU memory
 profiler, or proof that one texture format is faster**.
 
+## First native Windows observation — 2026-11-03
+
+User-provided console log from `cargo run --release -- --benchmark-200`
+on the benchmark feature branch (full hardware/GPU identification,
+fixed camera pose and screen capture not supplied):
+
+| Reported metric | Native result |
+| --- | --- |
+| Resident chunks | **200 / 200** |
+| Startup exposed vertices | **1,960,656** |
+| Resident vertex buffers | **67.3 MiB** |
+| CPU mesh build/upload wall time | **71.1 ms** |
+| Chunks submitted per logged sample (F4 initial nearby mode) | **132 / 200** |
+| Vertices submitted per logged sample | **1,281,522** |
+| P0 FPS | Generally **~60 FPS**; one **30.2 FPS** sample |
+| F8 full-color FPS | Generally **~60 FPS** |
+| F11 grayscale FPS | Generally **~60 FPS** |
+| Reported CPU draw/present wall time | Generally **~16.4–16.6 ms** for all three |
+
+**Interpretation:** static scene generation and the F8/F11 rendering
+controls work in this native run, and the submitted counts remain
+stable while the camera remains at the tested pose. There is **no
+measurable shader win or regression demonstrated here**. The
+application uses FIFO/V-sync and the CPU draw wall time includes
+surface acquisition/present: the near-identical ~60 FPS and ~16.5 ms
+numbers are presentation-limited, **not isolated GPU frame times**.
+A transient 30.2 FPS sample cannot be assigned a root cause without
+frame/GPU timing data.
+
+**Missing evidence:** F4 was **not** toggled in the submitted log,
+so there is no 132-vs-200-chunk comparison yet. Several intervals
+also changed F9/F10/F11/F6/F7 settings during a measurement window.
+No fixed-camera screenshots, independent native GPU timestamp, GPU
+memory measurement or longer frametime distribution were supplied.
+The repeated `F11 unavailable` messages happened with F8/P0 active,
+as designed. Existing harmless Rust dead-code warnings and a locally
+modified `Cargo.lock` do not indicate benchmark failure.
+
+**Next meaningful performance gate:** run fixed-pose F3 windows with
+F9=Dry, F10 fixed, F6 off and F8 on; compare F11 OFF/ON, then F4
+distance culling ON/OFF, separately. For a real shader comparison,
+add an **opt-in non-V-sync benchmark present mode** plus, if the
+adapter supports them, GPU timestamp queries or another trusted
+GPU frame profiler. Preserve normal V-sync behavior for gameplay
+and report CPU vs GPU measurements distinctly. Consider true frustum
+culling/mesh compression after valid measurements; these are not
+required to accept the static scene itself.
+
 ## Technical bounds
 
 - Original `World::demo(42)` remains unchanged, including P0 reference
