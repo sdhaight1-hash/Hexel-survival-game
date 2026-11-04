@@ -191,4 +191,3 @@ impl ConsoleLog {
         }
     }
 }
-
