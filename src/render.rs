@@ -4,7 +4,7 @@
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
     materials_p0, materials_v2,
-    mesh::{build_chunk_mesh, Vertex},
+    mesh::{build_chunk_mesh_relative, Vertex},
     presentation::PresentationOptions,
     texture_pack::TexturePack,
 };
@@ -100,6 +100,8 @@ pub struct Renderer {
     surface_preset: SurfacePreset,
     metallic_glints: bool,
     terrain_meshes: HashMap<ChunkPos, TerrainGpuMesh>,
+    /// Fixed axial origin shared by all opt-in distant-spawn GPU meshes.
+    render_origin: Option<(i32, i32)>,
     crosshair_buffer: wgpu::Buffer,
     crosshair_vertices: u32,
     _depth_texture: wgpu::Texture,
@@ -568,9 +570,10 @@ impl Renderer {
             cache: None,
         });
 
+        let render_origin = presentation.spawn_cell;
         let mut terrain_meshes = HashMap::new();
         for pos in world.chunk_positions() {
-            let mesh = build_chunk_mesh(world, pos);
+            let mesh = build_chunk_mesh_relative(world, pos, render_origin);
             if mesh.is_empty() {
                 continue;
             }
@@ -648,6 +651,7 @@ impl Renderer {
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
             terrain_meshes,
+            render_origin,
             crosshair_buffer,
             crosshair_vertices: crosshair.len() as u32,
             _depth_texture: depth_texture,
@@ -668,7 +672,7 @@ impl Renderer {
         let mut meshed_buffers = 0usize;
         let mut uploaded_bytes = 0u64;
         for &pos in &delta.added {
-            let mesh = build_chunk_mesh(world, pos);
+            let mesh = build_chunk_mesh_relative(world, pos, self.render_origin);
             if mesh.is_empty() {
                 continue;
             }
@@ -835,7 +839,19 @@ impl Renderer {
         }
 
         let aspect = self.config.width as f32 / self.config.height as f32;
-        let eye = player.eye_position();
+        let absolute_eye = player.eye_position();
+        // Vertex buffers for opt-in distant spawns use integer-axial-relative
+        // metre positions; the camera must use exactly the same origin.
+        // Player position remains global f32 for now (movement precision is
+        // a separate milestone), but mesh corner precision is restored.
+        let eye = if let Some((q, r)) = self.render_origin {
+            let x = f64::from(absolute_eye.x) - f64::from(q) - f64::from(r) * 0.5;
+            let z = f64::from(absolute_eye.z)
+                - f64::from(r) * f64::from(hexel_survival_game::world::HEX_ROW_SPACING);
+            Vec3::new(x as f32, absolute_eye.y, z as f32)
+        } else {
+            absolute_eye
+        };
         let view_proj = Mat4::perspective_rh(70.0_f32.to_radians(), aspect, 0.05, 200.0)
             * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
         let conditions = self.surface_preset.conditions();
