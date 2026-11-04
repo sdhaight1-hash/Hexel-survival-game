@@ -30,7 +30,7 @@ implementation; the project owner approves art and deliberate design changes.
 | How should Hexal **look**? | [Style guide](../assets/STYLE_GUIDE.md) | [Original visual reference posters](../assets/style-infographics/README.md) |
 | What has **shipped** for materials? | [Material/overlay roadmap](material-overlay-roadmap.md) | [P0 gallery](p0-material-gallery.md), [P1 baker](p1-material-pipeline.md), [P2.1 review](p2-1-texture-review.md), [P2.2 surface preview](p2-2-reactive-surfaces.md) |
 | How do base, ore, cover and conditions differ? | [Material authoring contract](material-authoring-contract.md) | [Overlay architecture](overlay-visual-architecture.md) |
-| How do continuous feature masks and optional SCA fit? | [Overlay architecture](overlay-visual-architecture.md) | [Material roadmap](material-overlay-roadmap.md), [draft SCA research PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30) |
+| How do continuous feature masks and optional SCA fit? | [Overlay architecture](overlay-visual-architecture.md) | [Material roadmap](material-overlay-roadmap.md), [SCA research study](space-colonization-study.md) |
 | How are material IDs, files and BC7 baked? | [P1 material pipeline](p1-material-pipeline.md) | [Texture compression](texture-compression.md), [v2 format history](material-format-v2.md), [asset catalog](../assets/materials/README.md) |
 | How does vegetation look and render? | [Style guide](../assets/STYLE_GUIDE.md) for look; [vegetation architecture](vegetation-visual-architecture.md) for structure | [Flora research/assets](flora-to-assets.md), [flora registry](../assets/flora/README.md) |
 | What rendering effects are built or planned? | [Rendering and asset pipeline](rendering-and-asset-pipeline.md) | [P2.2 surface preview](p2-2-reactive-surfaces.md), [compression](texture-compression.md) |
@@ -68,9 +68,12 @@ and F9/F10 diagnostic surfaces exist. Three source art records are
 general v2 material GPU binding, persistent ore/cover system, world
 streaming, living flora or finite-water solver.
 
-**SCA status:** a headless research implementation plus geology/cave/water
-studies are on [draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
-not `main`. The planned P2.3 mask system does not depend on SCA.
+**SCA status:** the [bounded headless prototype](../src/space_colonization.rs),
+[space-colonization study](space-colonization-study.md) and
+[finite-water study](finite-water-spatial-growth-study.md) are now in
+`main`, merged via [PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30). None is a
+production flora/ore/cave/water generator. The planned P2.3 overlay
+mask system does not depend on SCA.
 
 ## Documentation lifecycle
 
