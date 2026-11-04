@@ -42,6 +42,7 @@ implementation; the project owner approves art and deliberate design changes.
 | How do I test capped Mailbox pacing against bounded section updates? | [Pacing findings and budgeted-streaming acceptance](p3-pacing-results-and-streaming-budget.md) | [P3 controlled frame pacing](p3-controlled-frame-pacing.md), [P3.2 streamer](p3-2-streamed-world.md) |
 | How do we move from the static demo to a 1,024 km streamed world? | [World-scale foundation](world-scale-foundation.md) | [World generation](world-generation.md) |
 | How do near hexel terrain and future coarse surface representations share a deterministic source? | [P3.1 world source contract](p3-1-world-source-contract.md) | [World-scale foundation](world-scale-foundation.md), [Hex topology candidate](worldgen-streaming-reference-review.md) |
+| How might an exact geographic square map onto an integer hex torus, and what metric tradeoff remains? | [P3.1B projection candidate](p3-1b-axial-geography-projection-candidate.md) | [P3.1 shared source](p3-1-world-source-contract.md), [World-scale foundation](world-scale-foundation.md) |
 | What is the selected world and water invariant? | [World generation](world-generation.md) | [Decisions](decisions.md), [Integration](integration.md) |
 | What is the next game/world milestone? | [Core roadmap](roadmap.md) | [Material/overlay roadmap](material-overlay-roadmap.md) |
 | How should visual contributors validate work? | [Visual contribution workflow](visual-contribution-guide.md) | [Style QA](../assets/STYLE_GUIDE.md) |
