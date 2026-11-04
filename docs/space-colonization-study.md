@@ -250,6 +250,41 @@ habitat, fluid equations or voxel conversion. The caller must test the
 - No default demo changes and no F-key toggles: feature generation remains
   experimental until its outputs and persistence are tested.
 
+## Existing Voxel-Game-Engine implementation to reuse conceptually
+
+The older [Voxel-Game-Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine)
+is the **authoring reference**, not a dependency to import blindly.
+Its [tree growth rules V4](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/tree-growth-rules-v4.md)
+describe 43 authored foliage presets with stable parent-child branch IDs,
+species-specific growth ranges, and seeded geometry. Its
+[organic hexel tree meshing](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/organic-hexel-tree-meshing.md)
+already has a conceptually useful pipeline:
+
+```text
+authored TreeBranch / BranchSpan structure
+    -> conservative occupied hexel cells
+    -> smooth bark/branch triangles
+    -> clip visible triangles to owning hex-prism cells
+    -> cutout foliage and exported asset geometry
+```
+
+That authoring app also already applies a **bounded pipe-model** postprocess
+to some trees, and explicitly documents the difference between structural
+spans and authoritative harvested wood occupancy. This reduces the case for
+rewriting a whole flora mesh pipeline inside Hexel Survival.
+
+If SCA vegetation passes later comparison tests, translate its `GrowthNode`
+parent links into a **versioned structural blueprint / authoring branch
+span**, preserving species-authored widths, stable IDs and clipping semantics.
+Do **not** render SCA graph edges as unowned wood geometry that remains after
+a player removes the corresponding hexel. The runtime still owns life
+state, harvest edits and persistence. The authoring app's Z-up coordinate
+system must convert explicitly to this game's Y-up. The existing
+`CanopyGuided` editor idea is **not evidence** of a complete SCA solver.
+
+**Scope of this PR:** neither the old authoring project nor the game's
+existing mesh renderer is modified.
+
 ## 4. Cross-chunk and periodic-world rules
 
 Do not seed a mineral vein or cave independently in every 16³ chunk: that
