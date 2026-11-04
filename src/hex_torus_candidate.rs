@@ -137,9 +137,8 @@ mod tests {
         assert!((best_error - 11.562_565_279_775_3).abs() < 1e-6);
         assert!((chosen_error - best_error).abs() < 1e-6);
         // The next permitted period overshoots by about 16.15m.
-        let next_error = ((PERIOD_R + alignment) as f64 * HEX_ROW_METRES
-            - TARGET_WORLD_METRES)
-            .abs();
+        let next_error =
+            ((PERIOD_R + alignment) as f64 * HEX_ROW_METRES - TARGET_WORLD_METRES).abs();
         assert!((next_error - 16.150_247_641_257).abs() < 1e-6);
         // This does NOT prove no alternative, nonorthogonal period or
         // differently sized hex geometry could satisfy other requirements.
