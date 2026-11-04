@@ -51,10 +51,7 @@ impl PeriodicTerrainCandidate {
 
     /// A test-only 16×16 surface slice. No 16³ allocation, GPU upload,
     /// generated ocean, or separate algorithm for distant terrain.
-    pub fn chunk_surface(
-        &self,
-        pos: CandidateChunkId,
-    ) -> Result<Vec<i32>, &'static str> {
+    pub fn chunk_surface(&self, pos: CandidateChunkId) -> Result<Vec<i32>, &'static str> {
         let side = i64::from(CHUNK_SIDE);
         let base_q = pos.q.checked_mul(side).ok_or("chunk Q overflows i64")?;
         let base_r = pos.r.checked_mul(side).ok_or("chunk R overflows i64")?;
@@ -85,8 +82,14 @@ impl PeriodicTerrainCandidate {
             for q in 0..points_per_axis {
                 let q_offset = (q as i64).checked_mul(spacing).ok_or("Q offset overflow")?;
                 let r_offset = (r as i64).checked_mul(spacing).ok_or("R offset overflow")?;
-                let aq = origin.q.checked_add(q_offset).ok_or("Q position overflow")?;
-                let ar = origin.r.checked_add(r_offset).ok_or("R position overflow")?;
+                let aq = origin
+                    .q
+                    .checked_add(q_offset)
+                    .ok_or("Q position overflow")?;
+                let ar = origin
+                    .r
+                    .checked_add(r_offset)
+                    .ok_or("R position overflow")?;
                 heights.push(self.surface_y(Axial64::new(aq, ar)));
             }
         }
@@ -105,8 +108,16 @@ impl PeriodicTerrainCandidate {
         let v = tz * tz * (3.0 - 2.0 * tz);
         let x1 = (gx + 1) % grid_side;
         let z1 = (gz + 1) % grid_side;
-        let low = lerp(self.lattice(gx, gz, domain), self.lattice(x1, gz, domain), u);
-        let high = lerp(self.lattice(gx, z1, domain), self.lattice(x1, z1, domain), u);
+        let low = lerp(
+            self.lattice(gx, gz, domain),
+            self.lattice(x1, gz, domain),
+            u,
+        );
+        let high = lerp(
+            self.lattice(gx, z1, domain),
+            self.lattice(x1, z1, domain),
+            u,
+        );
         lerp(low, high, v)
     }
 
@@ -195,16 +206,27 @@ mod tests {
     fn chunk_boundaries_and_order_independent_regeneration_agree() {
         let source = PeriodicTerrainCandidate::new(97);
         let chunks = [
-            CandidateChunkId { q: -1, r: -1, y: 13 },
+            CandidateChunkId {
+                q: -1,
+                r: -1,
+                y: 13,
+            },
             CandidateChunkId { q: 0, r: 0, y: 13 },
-            CandidateChunkId { q: PERIOD_Q / 16 - 1, r: 0, y: 13 },
+            CandidateChunkId {
+                q: PERIOD_Q / 16 - 1,
+                r: 0,
+                y: 13,
+            },
             CandidateChunkId {
                 q: R_PERIOD_Q_OFFSET / 16,
                 r: PERIOD_R / 16 - 1,
                 y: 13,
             },
         ];
-        let first: Vec<_> = chunks.iter().map(|&p| source.chunk_surface(p).unwrap()).collect();
+        let first: Vec<_> = chunks
+            .iter()
+            .map(|&p| source.chunk_surface(p).unwrap())
+            .collect();
         for (key, original) in chunks.iter().rev().zip(first.iter().rev()) {
             let regenerated = source.chunk_surface(*key).unwrap();
             assert_eq!(&regenerated, original);
@@ -227,12 +249,20 @@ mod tests {
         let origin = Axial64::new(-80, 97);
         let baseline = source.coarse_surface(origin, 16, 9).unwrap();
         assert_eq!(baseline, source.coarse_surface(origin, 16, 9).unwrap());
-        assert_eq!(baseline, source.coarse_surface(translated(origin, 1, -1), 16, 9).unwrap());
+        assert_eq!(
+            baseline,
+            source
+                .coarse_surface(translated(origin, 1, -1), 16, 9)
+                .unwrap()
+        );
         for r in 0..9 {
             for q in 0..9 {
                 assert_eq!(
                     baseline[r * 9 + q],
-                    source.surface_y(Axial64::new(origin.q + q as i64 * 16, origin.r + r as i64 * 16))
+                    source.surface_y(Axial64::new(
+                        origin.q + q as i64 * 16,
+                        origin.r + r as i64 * 16
+                    ))
                 );
             }
         }
@@ -258,6 +288,12 @@ mod tests {
         assert!(a.coarse_surface(Axial64::new(i64::MAX, 0), 16, 3).is_err());
         assert!(a.coarse_surface(Axial64::new(0, 0), 0, 3).is_err());
         assert!(a.coarse_surface(Axial64::new(0, 0), 16, 130).is_err());
-        assert!(a.chunk_surface(CandidateChunkId { q: i64::MAX, r: 0, y: 0 }).is_err());
+        assert!(a
+            .chunk_surface(CandidateChunkId {
+                q: i64::MAX,
+                r: 0,
+                y: 0
+            })
+            .is_err());
     }
 }
