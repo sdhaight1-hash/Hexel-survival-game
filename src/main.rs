@@ -433,7 +433,8 @@ impl ApplicationHandler for Game {
                     match renderer.draw(&self.player, menu, console) {
                         Ok(timings) => {
                             if self.world.is_streamed() {
-                                self.render_cpu_metrics.record(timings, is_moving, is_looking);
+                                self.render_cpu_metrics
+                                    .record(timings, is_moving, is_looking);
                             }
                         }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -473,8 +474,8 @@ impl ApplicationHandler for Game {
         let is_moving = self.is_moving();
         // Sum relative mouse motion between updates, not just cursor capture.
         // A 1-pixel threshold avoids flagging tiny event noise.
-        self.is_looking = self.mouse_captured
-            && self.pending_mouse_dx + self.pending_mouse_dy >= 1.0;
+        self.is_looking =
+            self.mouse_captured && self.pending_mouse_dx + self.pending_mouse_dy >= 1.0;
         self.pending_mouse_dx = 0.0;
         self.pending_mouse_dy = 0.0;
         let is_looking = self.is_looking;
