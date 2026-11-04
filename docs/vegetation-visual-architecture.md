@@ -97,6 +97,44 @@ validated, not measured universal botanical constants.
   Hexel Survival scene uses **Q/R/Y (Y-up)**. Any import must convert
   coordinates and units explicitly and check periodic boundary rules.
 
+## Candidate: reusable grayscale bark and foliage material families
+
+The [proposed material-family model](material-authoring-contract.md)
+also applies to authored plant visuals, **without** making every
+species a recolor of the same texture.
+
+- **Bark:** a small compatible family of grayscale fissure, ridge,
+  plate, flake or weathering patterns may be colorized for several
+  species/ages. Local longitudinal and radial coordinates are
+  significant; bark texture must not rotate independently on every
+  branch. Cut-log **end grain** is a separate material face/recipe.
+- **Leaves / needles:** a mask can capture internal vein/pigment detail,
+  with a species/season palette applied by shader. The **silhouette
+  opacity or cutout mask is separate**: tinting one generic blob does
+  not create a birch, oak, willow or needle cluster. Two-sided
+  transmission, alpha-aware mipmaps and geometry/LOD remain distinct.
+- **Grass, moss and fungi:** some fine texture patterns and color ramps
+  can be shared, but actual tuft height, growth form, fruiting body,
+  spawn/harvest status and species identity must come from world state
+  and authored geometry.
+- **Variation selection:** stable species ID, instance seed, age,
+  season, health and region context can choose a permitted palette
+  and vetted pattern subset. Seasonal appearance can change without
+  rebaking geometry; saved harvested trees never reappear because a
+  material variant changed.
+
+**First visual proof:** apply two or three *compatible* grayscale bark
+details to one approved trunk mesh and a second species with different
+bark geometry; apply a seasonal palette to one leaf silhouette while
+retaining exactly the same leaf coverage/shape. Compare with full-color
+authored textures and record whether species readability and GPU
+cost improve. Keep authored exceptions where the abstraction fails.
+
+This is *not* a committed new flora renderer, live palette binding,
+approved botanical asset family or general vegetation spawn system.
+See [flora asset contracts](flora-to-assets.md) and
+[the material pipeline](p1-material-pipeline.md).
+
 ## Rendering, alpha and vegetation performance
 
 - **Cards:** use double-sided, fixed-orientation alpha-cutout where
