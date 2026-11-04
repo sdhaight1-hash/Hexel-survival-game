@@ -71,7 +71,8 @@ impl ResidentSections {
     }
 
     fn unload(&mut self, pos: CandidateCellId) {
-        self.sections.remove(&pos.candidate_chunk(i64::from(CHUNK_SIDE)));
+        self.sections
+            .remove(&pos.candidate_chunk(i64::from(CHUNK_SIDE)));
     }
 
     fn sample(&self, pos: CandidateCellId) -> Block {
@@ -137,9 +138,11 @@ fn neighbor_face_visibility_and_collision_are_identical_with_unloaded_sections()
     ];
     for location in locations {
         let height = i64::from(
-            cache.source.surface_y(crate::hex_torus_candidate::Axial64::new(
-                location.q, location.r,
-            )),
+            cache
+                .source
+                .surface_y(crate::hex_torus_candidate::Axial64::new(
+                    location.q, location.r,
+                )),
         );
         for y in [height - 4, height - 1, height, height + 1] {
             let p = CandidateCellId::new(location.q, location.r, y);
@@ -189,7 +192,10 @@ fn seam_neighbor_directions_are_reciprocal_with_canonical_ownership() {
                     let image = translated(adjacent, east, north);
                     assert_eq!(image.equivalent(), adjacent.equivalent());
                     assert_eq!(cache.sample(image), cache.sample(adjacent));
-                    assert_eq!(cache.face_exposed(image, i), cache.face_exposed(adjacent, i));
+                    assert_eq!(
+                        cache.face_exposed(image, i),
+                        cache.face_exposed(adjacent, i)
+                    );
                 }
             }
         }
