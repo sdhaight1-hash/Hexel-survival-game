@@ -715,7 +715,10 @@ mod tests {
                 .count(),
             3
         );
-        assert!(catalog.materials.iter().all(|item| item.status != "approved"));
+        assert!(catalog
+            .materials
+            .iter()
+            .all(|item| item.status != "approved"));
         assert_eq!(catalog.texture_assets.len(), 3);
         assert_eq!(material_recipes(&catalog).len(), 3);
     }
