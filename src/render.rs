@@ -3,8 +3,9 @@
 
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
-    materials_p0, materials_v2, ore_pattern_study,
+    materials_p0, materials_v2,
     mesh::{build_chunk_mesh_with_stats, ExposedMeshStats, Vertex},
+    ore_pattern_study,
     texture_pack::TexturePack,
 };
 use bytemuck::{Pod, Zeroable};
@@ -1060,7 +1061,12 @@ impl Renderer {
                     conditions.frost,
                     if self.metallic_glints { 1.0 } else { 0.0 },
                 ],
-                family: [self.ore_pattern_index as f32, self.ore_palette_index as f32, 0.0, 0.0],
+                family: [
+                    self.ore_pattern_index as f32,
+                    self.ore_palette_index as f32,
+                    0.0,
+                    0.0,
+                ],
             }),
         );
         let frame = self.surface.get_current_texture()?;
