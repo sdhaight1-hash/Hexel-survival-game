@@ -980,22 +980,20 @@ impl Renderer {
         }
         if let Some((lines, generation)) = console {
             if self.console_cache_generation != Some(generation) {
-                let vertices = debug_menu::console_geometry(
-                    self.config.width,
-                    self.config.height,
-                    lines,
-                );
+                let vertices =
+                    debug_menu::console_geometry(self.config.width, self.config.height, lines);
                 self.console_vertex_count = vertices.len() as u32;
                 self.console_buffer = if vertices.is_empty() {
                     None
                 } else {
-                    Some(self.device.create_buffer_init(
-                        &wgpu::util::BufferInitDescriptor {
-                            label: Some("Cached bottom benchmark log"),
-                            contents: bytemuck::cast_slice(&vertices),
-                            usage: wgpu::BufferUsages::VERTEX,
-                        },
-                    ))
+                    Some(
+                        self.device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: Some("Cached bottom benchmark log"),
+                                contents: bytemuck::cast_slice(&vertices),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            }),
+                    )
                 };
                 self.console_cache_generation = Some(generation);
             }
