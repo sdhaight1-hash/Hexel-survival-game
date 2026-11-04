@@ -91,7 +91,11 @@ impl MenuSnapshot {
 
     fn status(self, action: MenuAction) -> String {
         fn on_off(value: bool) -> &'static str {
-            if value { "ON" } else { "OFF" }
+            if value {
+                "ON"
+            } else {
+                "OFF"
+            }
         }
         match action {
             MenuAction::FrameStats => on_off(self.frame_stats).into(),
@@ -183,47 +187,47 @@ fn rect(
 
 fn glyph(ch: char) -> [u8; 7] {
     match ch {
-        'A' => [14,17,17,31,17,17,17],
-        'B' => [30,17,17,30,17,17,30],
-        'C' => [14,17,16,16,16,17,14],
-        'D' => [30,17,17,17,17,17,30],
-        'E' => [31,16,16,30,16,16,31],
-        'F' => [31,16,16,30,16,16,16],
-        'G' => [14,17,16,23,17,17,14],
-        'H' => [17,17,17,31,17,17,17],
-        'I' => [14,4,4,4,4,4,14],
-        'J' => [7,2,2,2,18,18,12],
-        'K' => [17,18,20,24,20,18,17],
-        'L' => [16,16,16,16,16,16,31],
-        'M' => [17,27,21,21,17,17,17],
-        'N' => [17,25,21,19,17,17,17],
-        'O' => [14,17,17,17,17,17,14],
-        'P' => [30,17,17,30,16,16,16],
-        'Q' => [14,17,17,17,21,18,13],
-        'R' => [30,17,17,30,20,18,17],
-        'S' => [15,16,16,14,1,1,30],
-        'T' => [31,4,4,4,4,4,4],
-        'U' => [17,17,17,17,17,17,14],
-        'V' => [17,17,17,17,17,10,4],
-        'W' => [17,17,17,21,21,21,10],
-        'X' => [17,17,10,4,10,17,17],
-        'Y' => [17,17,10,4,4,4,4],
-        'Z' => [31,1,2,4,8,16,31],
-        '0' => [14,17,19,21,25,17,14],
-        '1' => [4,12,4,4,4,4,14],
-        '2' => [14,17,1,2,4,8,31],
-        '3' => [30,1,1,14,1,1,30],
-        '4' => [2,6,10,18,31,2,2],
-        '5' => [31,16,30,1,1,17,14],
-        '6' => [6,8,16,30,17,17,14],
-        '7' => [31,1,2,4,8,8,8],
-        '8' => [14,17,17,14,17,17,14],
-        '9' => [14,17,17,15,1,2,12],
-        '/' => [1,2,2,4,8,8,16],
-        '-' => [0,0,0,31,0,0,0],
-        '.' => [0,0,0,0,0,12,12],
-        ':' => [0,12,12,0,12,12,0],
-        '+' => [0,4,4,31,4,4,0],
+        'A' => [14, 17, 17, 31, 17, 17, 17],
+        'B' => [30, 17, 17, 30, 17, 17, 30],
+        'C' => [14, 17, 16, 16, 16, 17, 14],
+        'D' => [30, 17, 17, 17, 17, 17, 30],
+        'E' => [31, 16, 16, 30, 16, 16, 31],
+        'F' => [31, 16, 16, 30, 16, 16, 16],
+        'G' => [14, 17, 16, 23, 17, 17, 14],
+        'H' => [17, 17, 17, 31, 17, 17, 17],
+        'I' => [14, 4, 4, 4, 4, 4, 14],
+        'J' => [7, 2, 2, 2, 18, 18, 12],
+        'K' => [17, 18, 20, 24, 20, 18, 17],
+        'L' => [16, 16, 16, 16, 16, 16, 31],
+        'M' => [17, 27, 21, 21, 17, 17, 17],
+        'N' => [17, 25, 21, 19, 17, 17, 17],
+        'O' => [14, 17, 17, 17, 17, 17, 14],
+        'P' => [30, 17, 17, 30, 16, 16, 16],
+        'Q' => [14, 17, 17, 17, 21, 18, 13],
+        'R' => [30, 17, 17, 30, 20, 18, 17],
+        'S' => [15, 16, 16, 14, 1, 1, 30],
+        'T' => [31, 4, 4, 4, 4, 4, 4],
+        'U' => [17, 17, 17, 17, 17, 17, 14],
+        'V' => [17, 17, 17, 17, 17, 10, 4],
+        'W' => [17, 17, 17, 21, 21, 21, 10],
+        'X' => [17, 17, 10, 4, 10, 17, 17],
+        'Y' => [17, 17, 10, 4, 4, 4, 4],
+        'Z' => [31, 1, 2, 4, 8, 16, 31],
+        '0' => [14, 17, 19, 21, 25, 17, 14],
+        '1' => [4, 12, 4, 4, 4, 4, 14],
+        '2' => [14, 17, 1, 2, 4, 8, 31],
+        '3' => [30, 1, 1, 14, 1, 1, 30],
+        '4' => [2, 6, 10, 18, 31, 2, 2],
+        '5' => [31, 16, 30, 1, 1, 17, 14],
+        '6' => [6, 8, 16, 30, 17, 17, 14],
+        '7' => [31, 1, 2, 4, 8, 8, 8],
+        '8' => [14, 17, 17, 14, 17, 17, 14],
+        '9' => [14, 17, 17, 15, 1, 2, 12],
+        '/' => [1, 2, 2, 4, 8, 8, 16],
+        '-' => [0, 0, 0, 31, 0, 0, 0],
+        '.' => [0, 0, 0, 0, 0, 12, 12],
+        ':' => [0, 12, 12, 0, 12, 12, 0],
+        '+' => [0, 4, 4, 31, 4, 4, 0],
         _ => [0; 7],
     }
 }
@@ -272,24 +276,84 @@ pub fn geometry(
     let ink = [0.89, 0.85, 0.75, 1.0];
     let dim = [0.58, 0.59, 0.58, 1.0];
     let gold = [0.91, 0.71, 0.37, 1.0];
-    rect(&mut out, size, (left, top), (PANEL_WIDTH * scale, PANEL_HEIGHT * scale), [0.065, 0.077, 0.081, 0.96]);
-    rect(&mut out, size, (left, top), (PANEL_WIDTH * scale, 4.0 * scale), gold);
-    write_text(&mut out, size, left + 23.0 * scale, top + 18.0 * scale, 2.3 * scale, "HEXAL DIAGNOSTICS", ink);
-    write_text(&mut out, size, left + 23.0 * scale, top + 49.0 * scale, 1.7 * scale, "CLICK ROWS OR USE HOTKEYS", dim);
+    rect(
+        &mut out,
+        size,
+        (left, top),
+        (PANEL_WIDTH * scale, PANEL_HEIGHT * scale),
+        [0.065, 0.077, 0.081, 0.96],
+    );
+    rect(
+        &mut out,
+        size,
+        (left, top),
+        (PANEL_WIDTH * scale, 4.0 * scale),
+        gold,
+    );
+    write_text(
+        &mut out,
+        size,
+        left + 23.0 * scale,
+        top + 18.0 * scale,
+        2.3 * scale,
+        "HEXAL DIAGNOSTICS",
+        ink,
+    );
+    write_text(
+        &mut out,
+        size,
+        left + 23.0 * scale,
+        top + 49.0 * scale,
+        1.7 * scale,
+        "CLICK ROWS OR USE HOTKEYS",
+        dim,
+    );
 
     for (index, action) in ACTIONS.iter().copied().enumerate() {
         let y = top + (ROW_TOP + ROW_HEIGHT * index as f32) * scale;
         let enabled = snapshot.enabled(action);
         let hovered = hovered == Some(action) && enabled;
-        rect(&mut out, size, (left + 12.0 * scale, y), ((PANEL_WIDTH - 24.0) * scale, (ROW_HEIGHT - 3.0) * scale),
-            if hovered { [0.24, 0.23, 0.18, 0.96] } else if index % 2 == 0 { [0.115, 0.13, 0.13, 0.92] } else { [0.085, 0.10, 0.105, 0.92] });
-        write_text(&mut out, size, left + 23.0 * scale, y + 11.0 * scale, 2.0 * scale,
-            action.label(), if enabled { ink } else { dim });
-        write_text(&mut out, size, left + 331.0 * scale, y + 11.0 * scale, 2.0 * scale,
-            &snapshot.status(action), if enabled { gold } else { dim });
+        rect(
+            &mut out,
+            size,
+            (left + 12.0 * scale, y),
+            ((PANEL_WIDTH - 24.0) * scale, (ROW_HEIGHT - 3.0) * scale),
+            if hovered {
+                [0.24, 0.23, 0.18, 0.96]
+            } else if index % 2 == 0 {
+                [0.115, 0.13, 0.13, 0.92]
+            } else {
+                [0.085, 0.10, 0.105, 0.92]
+            },
+        );
+        write_text(
+            &mut out,
+            size,
+            left + 23.0 * scale,
+            y + 11.0 * scale,
+            2.0 * scale,
+            action.label(),
+            if enabled { ink } else { dim },
+        );
+        write_text(
+            &mut out,
+            size,
+            left + 331.0 * scale,
+            y + 11.0 * scale,
+            2.0 * scale,
+            &snapshot.status(action),
+            if enabled { gold } else { dim },
+        );
     }
-    write_text(&mut out, size, left + 22.0 * scale, top + 436.0 * scale, 1.7 * scale,
-        "F1 OR ESC TO RETURN TO WORLD", dim);
+    write_text(
+        &mut out,
+        size,
+        left + 22.0 * scale,
+        top + 436.0 * scale,
+        1.7 * scale,
+        "F1 OR ESC TO RETURN TO WORLD",
+        dim,
+    );
     out
 }
 
@@ -332,7 +396,10 @@ mod tests {
         let (left, top, scale) = layout(1280, 800);
         for (index, action) in ACTIONS.iter().copied().enumerate() {
             let row_y = top + (ROW_TOP + ROW_HEIGHT * (index as f32 + 0.5)) * scale;
-            assert_eq!(hit_test((left + 40.0) as f64, row_y as f64, 1280, 800), Some(action));
+            assert_eq!(
+                hit_test((left + 40.0) as f64, row_y as f64, 1280, 800),
+                Some(action)
+            );
         }
         assert_eq!(hit_test(2.0, 2.0, 1280, 800), None);
         assert_eq!(hit_test(100.0, 50.0, 1280, 800), None);
@@ -345,10 +412,16 @@ mod tests {
         assert!(!s.enabled(MenuAction::GrayCopper));
         assert_eq!(s.status(MenuAction::GrayCopper), "NEEDS F8");
         assert_eq!(s.status(MenuAction::UvDensity), "128 PX/M");
-        assert!(!MenuSnapshot { chunk_culling: None, ..s }.enabled(MenuAction::ChunkCulling));
+        assert!(!MenuSnapshot {
+            chunk_culling: None,
+            ..s
+        }
+        .enabled(MenuAction::ChunkCulling));
         let vertices = geometry(1280, 800, s, Some(MenuAction::FrameStats));
         assert!(!vertices.is_empty());
         assert_eq!(vertices.len() % 6, 0);
-        assert!(vertices.iter().all(|v| v.position.iter().all(|x| x.is_finite())));
+        assert!(vertices
+            .iter()
+            .all(|v| v.position.iter().all(|x| x.is_finite())));
     }
 }
