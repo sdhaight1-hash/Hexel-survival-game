@@ -5,11 +5,15 @@ use crate::render::DrawCpuTimings;
 pub struct RenderCpuMetrics {
     moving_ms: Vec<f64>,
     idle_ms: Vec<f64>,
+    looking_ms: Vec<f64>,
+    no_look_ms: Vec<f64>,
+    draw_by_state: [Vec<f64>; 4],
+    acquire_by_state: [Vec<f64>; 4],
     peaks: DrawCpuTimings,
 }
 
 impl RenderCpuMetrics {
-    pub fn record(&mut self, sample: DrawCpuTimings, is_moving: bool) {
+    pub fn record(&mut self, sample: DrawCpuTimings, is_moving: bool, is_looking: bool) {
         if !sample.total_ms.is_finite() || sample.total_ms < 0.0 {
             return;
         }
@@ -18,6 +22,15 @@ impl RenderCpuMetrics {
         } else {
             self.idle_ms.push(sample.total_ms);
         }
+        if is_looking {
+            self.looking_ms.push(sample.total_ms);
+        } else {
+            self.no_look_ms.push(sample.total_ms);
+        }
+        // 0=idle/still, 1=idle/look, 2=move/still, 3=move/look.
+        let state = usize::from(is_moving) * 2 + usize::from(is_looking);
+        self.draw_by_state[state].push(sample.total_ms);
+        self.acquire_by_state[state].push(sample.acquire_ms);
         self.peaks.total_ms = self.peaks.total_ms.max(sample.total_ms);
         self.peaks.prepare_ms = self.peaks.prepare_ms.max(sample.prepare_ms);
         self.peaks.acquire_ms = self.peaks.acquire_ms.max(sample.acquire_ms);
@@ -29,6 +42,14 @@ impl RenderCpuMetrics {
     pub fn report_and_reset(&mut self) -> String {
         self.moving_ms.sort_by(f64::total_cmp);
         self.idle_ms.sort_by(f64::total_cmp);
+        self.looking_ms.sort_by(f64::total_cmp);
+        self.no_look_ms.sort_by(f64::total_cmp);
+        for samples in &mut self.draw_by_state {
+            samples.sort_by(f64::total_cmp);
+        }
+        for samples in &mut self.acquire_by_state {
+            samples.sort_by(f64::total_cmp);
+        }
         let moving = self.moving_ms.len();
         let idle = self.idle_ms.len();
         let report = format!(
@@ -40,8 +61,24 @@ impl RenderCpuMetrics {
             self.peaks.prepare_ms, self.peaks.acquire_ms, self.peaks.encode_ms,
             self.peaks.submit_ms, self.peaks.present_ms
         );
+        let look_report = format!(
+            " LOOK CPU: Is_Looking samples {}/{}; draw p95 looking {:.2} ms ({}), no-look {:.2} ms ({}); four states [idle+still {}, idle+look {}, move+still {}, move+look {}] draw p95 {:.2}/{:.2}/{:.2}/{:.2} ms; acquire p95 {:.2}/{:.2}/{:.2}/{:.2} ms (CPU call durations).",
+            self.looking_ms.len(), moving + idle,
+            percentile(&self.looking_ms, 0.95), self.looking_ms.len(),
+            percentile(&self.no_look_ms, 0.95), self.no_look_ms.len(),
+            self.draw_by_state[0].len(), self.draw_by_state[1].len(),
+            self.draw_by_state[2].len(), self.draw_by_state[3].len(),
+            percentile(&self.draw_by_state[0], 0.95),
+            percentile(&self.draw_by_state[1], 0.95),
+            percentile(&self.draw_by_state[2], 0.95),
+            percentile(&self.draw_by_state[3], 0.95),
+            percentile(&self.acquire_by_state[0], 0.95),
+            percentile(&self.acquire_by_state[1], 0.95),
+            percentile(&self.acquire_by_state[2], 0.95),
+            percentile(&self.acquire_by_state[3], 0.95)
+        );
         *self = Self::default();
-        report
+        format!("{report}\n{look_report}")
     }
 }
 
@@ -67,6 +104,7 @@ mod tests {
                 ..DrawCpuTimings::default()
             },
             true,
+            false,
         );
         metrics.record(
             DrawCpuTimings {
@@ -75,12 +113,15 @@ mod tests {
                 ..DrawCpuTimings::default()
             },
             false,
+            true,
         );
         let report = metrics.report_and_reset();
         assert!(report.contains("2 successful draws"));
         assert!(report.contains("moving 12.00 ms (1), idle 16.00 ms (1)"));
         assert!(report.contains("acquire 9.00"));
         assert!(report.contains("present 11.00"));
+        assert!(report.contains("Is_Looking samples 1/2"));
+        assert!(report.contains("four states [idle+still 0, idle+look 1, move+still 1, move+look 0]"));
         assert!(metrics.report_and_reset().contains("0 successful draws"));
     }
 
@@ -92,6 +133,7 @@ mod tests {
                 total_ms: f64::NAN,
                 ..DrawCpuTimings::default()
             },
+            true,
             true,
         );
         assert!(metrics.report_and_reset().contains("0 successful draws"));
