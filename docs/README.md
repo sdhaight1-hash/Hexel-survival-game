@@ -41,6 +41,7 @@ implementation; the project owner approves art and deliberate design changes.
 | How do I compare six grayscale ore masks and three palettes? | [Ore-pattern family gallery](ore-pattern-family-gallery.md) | [Original F11 comparison](p2-3-grayscale-copper-gallery.md) |
 | How to run the optional 200-chunk visual benchmark? | [200-chunk benchmark notes](benchmark-200-chunks.md) | [F11 grayscale gallery](p2-3-grayscale-copper-gallery.md) |
 | What rendering effects are built or planned? | [Rendering and asset pipeline](rendering-and-asset-pipeline.md) | [P2.2 surface preview](p2-2-reactive-surfaces.md), [compression](texture-compression.md) |
+| How do we move from the static gallery to a streamed 1,024 km world? | [World-scale foundation](world-scale-foundation.md) | [World generation](world-generation.md), [Ore geology](ore-deposit-geology-and-continuity.md) |
 | What is the selected world and water invariant? | [World generation](world-generation.md) | [Decisions](decisions.md), [Integration](integration.md) |
 | What is the next game/world milestone? | [Core roadmap](roadmap.md) | [Material/overlay roadmap](material-overlay-roadmap.md) |
 | How should visual contributors validate work? | [Visual contribution workflow](visual-contribution-guide.md) | [Style QA](../assets/STYLE_GUIDE.md) |
