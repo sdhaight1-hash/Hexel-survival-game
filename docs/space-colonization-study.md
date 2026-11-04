@@ -4,17 +4,22 @@
 Not an approved flora asset, geological simulator, cave system, ore generator,
 surface-overlay runtime, or production-ready world-generation integration.
 
-**User inspiration:** [space-colonization video](https://www.youtube.com/watch?v=Y6QLhjvytXk).
-The linked video's transcript was not independently retrieved; technical
-claims below are grounded in primary publications and the existing codebase.
+**User inspiration:** [Programming Chaos space-colonization video](https://www.youtube.com/watch?v=Y6QLhjvytXk).
+The user subsequently supplied the full timestamped transcript (approximately
+53 minutes) and a separate Rust implementation discussion. Video-derived
+observations below are marked distinctly from our proposed architecture and
+independent geological/gameplay claims.
 
 ## Executive decision
 
-Use **one small deterministic branching-skeleton algorithm** as an optional
-*geometry authoring primitive*, with separately designed growth controls and
-output interpreters for vegetation, selected fractures/mineral deposits,
-selected cave networks, and certain surface patterns.
+The long-term architectural candidate is a **shared spatial growth / network
+generation foundation**, initially proven through **one small deterministic
+space-colonization skeleton algorithm**. Treat space colonization as *one growth
+strategy*, not the identity of the entire subsystem. Share graph segments,
+spatial queries, deterministic feature ownership, sampling, constraints and
+measurable outputs only when more than one real consumer needs them.
 
+Do **not** build a generic framework or multiple algorithms prematurely.
 Do **not** make space colonization the universal terrain, cave, ore, plant,
 or overlay generator. Its intrinsic output is a *rooted, mostly tree-like graph*
 of line segments, not a hydrogeological simulation, connected cave game level,
@@ -284,6 +289,114 @@ system must convert explicitly to this game's Y-up. The existing
 
 **Scope of this PR:** neither the old authoring project nor the game's
 existing mesh renderer is modified.
+
+## Transcript review: one native foundation, multiple consumers
+
+**What the supplied 53-minute video actually demonstrates:** beginning with a
+cloud of attractors and an initial node, find each attractor's nearest eligible
+node, accumulate directional influences, append parent-linked new nodes at a
+controlled step size, and remove reached attractors. The demonstrations
+include 2D tree-like structures, river-*looking* branches, road networks
+connecting target settlements, and 3D branching shapes. It emphasizes how
+changing the attractor envelope changes the resulting silhouette.
+
+**Material differences from our SC-0 code:**
+
+| Video or provided Rust material | Our SC-0 module | Proposed response |
+| --- | --- | --- |
+| Per-attractor inverse-distance weighting (with adjustable exponent suggested at 22:49-23:17) | Sums unit directions at equal weight | Test configurable weighting under fixed, measured fixtures; never change the default silently |
+| New attractors can be introduced during growth (05:50-06:18) | One batch `grow` call with an immutable input slice | Consider explicit step/state API only when runtime or editor feedback needs it |
+| One or more roots (00:51-01:26) | One root | Add seed nodes only with deterministic root ordering and connectivity/ownership semantics |
+| Both 2D and 3D examples (42:34 onwards) | 3D Vec3 | Start with a plane/surface constraint on the same 3D core; benchmark before adding a generic Vec2/Vec3 abstraction |
+| Repel settlements off road segments after building a road graph (40:57-42:21) | No repulsion operation | Make repulsion a downstream placement/constraint operation, not a requirement of the base graph generator |
+| Gradually modify branch width/color or bias/noise (33:00 onward) | Nodes only have position and parent | Derive width/material/age attributes downstream; seed any jitter deterministically |
+| Road and river appearances | No river or road simulation | Explicitly label those as geometric *visual demonstrations*, not hydrological/transport algorithms |
+
+**Important numeric nuance:** the video normalizes a node-to-target vector
+and then scales it by inverse distance (or distance raised to an exponent);
+the current SC-0 implementation uses the normalized direction alone. Both
+are legitimate variations, but they can generate materially different
+branching patterns. Add explicit seeded regression fixtures and a visual
+comparison before choosing or exposing a weighting parameter. The video
+also warns that too-large steps relative to the kill distance can give
+unsatisfactory growth; test nontermination/overshoot and bounded stopping
+rather than accepting one universal ratio.
+
+**Attached Rust example quality assessment:** treat the supplied examples as
+*design sketches, not compilable code to paste into this repository*.
+One claimed complete implementation contains
+`self.attraction_points.iter().picture()`, which is not a Rust iterator
+method. The generic 2D/3D draft uses `*self.x` on `f32` components and
+incorrectly constrains an entire `[f32; N]` coordinate array as
+`rstar::RTreeNum` (the scalar bound). It would need to be rewritten and
+compiled before adoption. The implementation repeats the basic node-parent
+`Vec` structure we already have; `petgraph` is not necessary for a
+rooted tree. The examples propose `rstar` and `rayon`, but neither is
+automatically the best choice: benchmark a fixed spatial grid against R-tree
+queries and preserve deterministic accumulator order before parallelizing.
+Do not introduce Bevy or Ggez just to preview an algorithm inside our
+existing wgpu game.
+
+### Proposed boundaries, deliberately minimal
+
+```text
+deterministic feature/region identity + sampling source
+                          |
+             geometry / growth strategy
+             (space colonization first)
+                          |
+                  parent-linked graph
+        positions, edges, extents, stable ordering
+                          |
+              typed downstream consumers
+     flora/roots | ore fractures | cave tributaries
+     surface veins/cracks | fungal structures | roads
+                          |
+        game-authoritative state + derived render data
+```
+
+Keep the initial Rust implementation in `space_colonization.rs` for now.
+Only after at least **two actual consumers** need common graph/sampling/
+spatial-index behavior should it be promoted to a `spatial_growth` or
+`spatial_networks` module. A possible future division is:
+
+- **Foundation primitives:** deterministic stable feature IDs, seeded
+  attractor placement, parent-linked edges, spatial queries, shape
+  constraints and normalized coordinates. Version them explicitly.
+- **Growth strategies:** SCA first; route graphs, grammar-guided branches,
+  or transport models only if experiments show real demand.
+- **Typed interpreters:** tree blueprint, ore deposit field, cave graph,
+  surface-facing mask and settlement routes, each with separate physical,
+  gameplay and artistic validation.
+- **Persistence and execution:** offline/region generation as default,
+  optional explicit incremental growth for systems genuinely simulated
+  over time; player edits and resource depletion remain authoritative.
+
+A "unified" subsystem must not confuse a connected *skeleton* with
+hydrological flow, fault/ore geology, accessible cave space, living
+ecology or visual materials. It must not hide toroidal seam ownership,
+chunk-border clipping, target dynamics, radius profiles or deterministic
+ordering behind a vague catch-all "growth" API.
+
+### Additional acceptance gates for generalization
+
+1. Pin one deterministic target set, root, step, kill radius and influence
+   radius; test equal-weight vs inverse-distance-weight variants for
+   reproducible, meaningfully different shapes.
+2. Compare one planar (face) and one 3D fixture; both preserve continuous
+   parent links and world-space geometry.
+3. Assert no target is incorrectly removed due to an off-range target,
+   zero-length vector, unavailable seed, geometry barrier or exhausted
+   node budget.
+4. Generate the same ore feature across two adjacent hexel sections,
+   independent of chunk request order; validate material authority and
+   persisted depletion separately.
+5. Only after SC-1 and a second independent consumer works should we
+   formalize a public cross-system graph/feature contract and evaluate
+   whether rstar, a spatial hash or other indexing is justified.
+6. Test one dynamically added-attractor fixture *only if* a step-wise API
+   becomes part of a real game/editor workflow. Otherwise keep batch
+   generation simple.
 
 ## 4. Cross-chunk and periodic-world rules
 
