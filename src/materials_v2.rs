@@ -411,7 +411,10 @@ mod tests {
         };
         use materials_p0::Material;
         assert_eq!(layers.len(), materials_p0::LAYER_COUNT);
-        assert_ne!(layers[Material::Granite as usize], layers[Material::Shale as usize]);
+        assert_ne!(
+            layers[Material::Granite as usize],
+            layers[Material::Shale as usize]
+        );
         assert_ne!(
             layers[Material::Granite as usize],
             layers[Material::GraniteCopper as usize]
