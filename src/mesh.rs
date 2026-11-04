@@ -242,6 +242,32 @@ mod tests {
     }
 
     #[test]
+    fn shared_world_positions_survive_different_cap_and_side_uvs() {
+        // At a cap/side join the same 3D position carries different
+        // (legitimate) UVs. A material field sampled from world_position
+        // therefore does not restart at the polygon boundary.
+        let mesh = build_chunk_mesh(&World::demo(42), ChunkPos::default());
+        let mut seen = std::collections::HashMap::new();
+        let mut shared_position_different_uv = false;
+        for vertex in &mesh {
+            let xyz = vertex.position.map(f32::to_bits);
+            if let Some(previous_uv) = seen.insert(xyz, vertex.uv) {
+                if previous_uv != vertex.uv {
+                    shared_position_different_uv = true;
+                    break;
+                }
+            }
+        }
+        assert!(
+            shared_position_different_uv,
+            "expected real cap/side joins with shared world positions and distinct UVs"
+        );
+        let shader = include_str!("world_shader.wgsl");
+        assert!(shader.contains("world_mineral_vein(v.world_position)"));
+        assert!(shader.contains("if (pattern == 6u)"));
+    }
+
+    #[test]
     fn neighboring_benchmark_chunks_generate_valid_exposed_meshes() {
         let world = World::benchmark(42);
         for pos in [
