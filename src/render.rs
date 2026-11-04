@@ -62,6 +62,17 @@ pub struct StreamGpuUpdate {
     pub cpu_ms: f64,
 }
 
+/// Wall-clock CPU timings around rendering calls; these do not measure GPU execution.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct DrawCpuTimings {
+    pub total_ms: f64,
+    pub prepare_ms: f64,
+    pub acquire_ms: f64,
+    pub encode_ms: f64,
+    pub submit_ms: f64,
+    pub present_ms: f64,
+}
+
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
@@ -738,7 +749,8 @@ impl Renderer {
         player: &Player,
         menu: Option<(MenuSnapshot, Option<MenuAction>)>,
         console: Option<(&VecDeque<String>, u64)>,
-    ) -> Result<(), wgpu::SurfaceError> {
+    ) -> Result<DrawCpuTimings, wgpu::SurfaceError> {
+        let draw_start = Instant::now();
         if let Some((snapshot, hovered)) = menu {
             if self.menu_cache != Some((snapshot, hovered)) {
                 let vertices =
@@ -808,7 +820,9 @@ impl Renderer {
                 ],
             }),
         );
+        let acquire_start = Instant::now();
         let frame = self.surface.get_current_texture()?;
+        let encode_start = Instant::now();
         let view = frame
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
@@ -875,9 +889,20 @@ impl Renderer {
                 pass.draw(0..self.console_vertex_count, 0..1);
             }
         }
-        self.queue.submit(std::iter::once(encoder.finish()));
+        let command_buffer = encoder.finish();
+        let submit_start = Instant::now();
+        self.queue.submit(std::iter::once(command_buffer));
+        let present_start = Instant::now();
         frame.present();
-        Ok(())
+        let finished = Instant::now();
+        Ok(DrawCpuTimings {
+            total_ms: finished.duration_since(draw_start).as_secs_f64() * 1000.0,
+            prepare_ms: acquire_start.duration_since(draw_start).as_secs_f64() * 1000.0,
+            acquire_ms: encode_start.duration_since(acquire_start).as_secs_f64() * 1000.0,
+            encode_ms: submit_start.duration_since(encode_start).as_secs_f64() * 1000.0,
+            submit_ms: present_start.duration_since(submit_start).as_secs_f64() * 1000.0,
+            present_ms: finished.duration_since(present_start).as_secs_f64() * 1000.0,
+        })
     }
 }
 
