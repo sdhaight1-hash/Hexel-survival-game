@@ -975,7 +975,7 @@ impl Renderer {
                     stencil_ops: None,
                 }),
                 occlusion_query_set: None,
-                timestamp_writes: timestamp_writes.as_ref(),
+                timestamp_writes,
             });
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.camera_bind_group, &[]);
