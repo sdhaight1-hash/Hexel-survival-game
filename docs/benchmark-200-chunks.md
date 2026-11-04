@@ -121,6 +121,42 @@ and report CPU vs GPU measurements distinctly. Consider true frustum
 culling/mesh compression after valid measurements; these are not
 required to accept the static scene itself.
 
+## Second native Windows observation — F4 comparison (2026-11-03)
+
+A second `cargo run --release -- --benchmark-200` session kept
+**F8 full-color** selected, enabled F3 logging, and toggled F4 between
+all-resident draws and the conservative nearby-distance limit.
+
+| Metric | F4 OFF (all resident) | F4 ON (distance-cull) |
+| --- | ---: | ---: |
+| Submitted chunks | **200 / 200** | **132 / 200** |
+| Submitted vertices | **1,960,656** | **1,281,522** |
+| Repeated FPS samples | **~59.3–60.6 FPS** | **~59.4–60.3 FPS** |
+| CPU draw/present wall time | **~16.3–16.7 ms** | **~16.4–16.6 ms** |
+
+**Verified:** the F4 control reduced chunk submissions by **68 (34%)**
+and submitted vertices by **679,134 (~34.6%)** at this camera pose,
+then returned to all 200 chunks when disabled. Native run completed
+without a reported crash. The mesh startup message repeated
+**1,960,656 vertices** and **67.3 MiB vertex buffers**, with
+**66.0 ms CPU build/upload** this session (71.1 ms in the prior run).
+
+**Not established:** the ~60 FPS and ~16.5 ms readings remain
+FIFO/V-sync presentation-limited. This data cannot show the GPU
+render-time savings, whether the benchmark is draw-call-bound,
+CPU-bound or fill-rate-bound, nor a shader performance difference.
+No F11 grayscale mode comparison was reported in this *second* run,
+nor was a hardware GPU timestamp measurement. The two F4 settings
+were sampled at one repeated submitted-chunk configuration, not
+across a formal camera sweep. Do not claim the same 34% reduction
+for all camera locations.
+
+**Next experiment:** keep F8 + F9 Dry + F10 fixed, turn off F6,
+and compare F11 OFF/ON with an opt-in unlocked presentation mode,
+followed by GPU timestamps if the adapter supports the feature.
+Leave normal V-sync gameplay untouched; report FPS distribution,
+actual frame-time statistics and any GPU timing separately.
+
 ## Technical bounds
 
 - Original `World::demo(42)` remains unchanged, including P0 reference
