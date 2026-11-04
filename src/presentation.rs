@@ -47,7 +47,9 @@ impl PresentationOptions {
                         "1" => Some(1),
                         "2" => Some(2),
                         "4" => Some(4),
-                        _ => return Err(format!("Invalid --stream-budget '{value}'; use 1, 2 or 4")),
+                        _ => {
+                            return Err(format!("Invalid --stream-budget '{value}'; use 1, 2 or 4"))
+                        }
                     };
                 }
                 "--fps-cap" => {
@@ -130,9 +132,10 @@ mod tests {
     #[test]
     fn parses_opt_in_stream_budgets() {
         for (size, expected) in [("1", 1), ("2", 2), ("4", 4)] {
-            let (_, settings) =
-                PresentationOptions::parse(["--stream-budget", size].into_iter().map(str::to_owned))
-                    .unwrap();
+            let (_, settings) = PresentationOptions::parse(
+                ["--stream-budget", size].into_iter().map(str::to_owned),
+            )
+            .unwrap();
             assert_eq!(settings.stream_budget, Some(expected));
         }
     }
