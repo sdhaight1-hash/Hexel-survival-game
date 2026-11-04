@@ -135,6 +135,45 @@ approved botanical asset family or general vegetation spawn system.
 See [flora asset contracts](flora-to-assets.md) and
 [the material pipeline](p1-material-pipeline.md).
 
+### Fantasy palette and seasonal examples
+
+The recent five reference screenshots motivate a focused pair of
+tests. A **drooping blue-leaf willow** should retain a recognizable
+weeping silhouette, canopy clusters and trunk/bark anatomy while an
+approved blue/cyan palette modifies only appropriate leaf pigment
+and shader response. An autumn broadleaf can shift pigment while
+retaining leaf silhouettes. Neither proves a new species must be
+created: a palette morph is still the existing species unless
+habitat, behavior, harvest products or growth rules justify a
+separate authoritative species identity.
+
+A frost-covered sparse tree and a snowy grove illustrate a
+**different** axis: bare branches, snow adhesion, frost coverage,
+possible snow mass/geometry, and winter lighting. These cannot be
+implemented correctly by setting an ordinary leaf-albedo palette
+to white. Seasonal geometry/leaf retention and weather cover
+require independent material/structure/state inputs.
+
+This gives a small *fantasy and season* art test:
+
+1. Reuse one willow structure with natural and fantasy-blue leaf
+   palettes; verify matching silhouette, root/branch ownership and
+   readable leaves in neutral light and shadow.
+2. Compare one broadleaf tree with approved green and warm autumn
+   pigment ramps, holding geometry and internal grayscale detail
+   constant to isolate the effect of coloration.
+3. Compare bare, frosted and snow-covered tree states with
+   **separate** cover geometry/masks and leaf-retention choices,
+   rather than a single white color multiplier.
+4. Check canopy depth, two-sided foliage lighting, texture/mip
+   behavior and art-coherent color grading in moving first-person
+   inspection; distinguish shader savings from simply using fewer
+   source textures.
+
+These tests are proposals only; the current one-chunk prototype
+has no living tree renderer, weather-driven accumulation or
+general shader recoloring.
+
 ## Rendering, alpha and vegetation performance
 
 - **Cards:** use double-sided, fixed-orientation alpha-cutout where
