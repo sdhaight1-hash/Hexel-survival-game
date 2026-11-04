@@ -16,6 +16,7 @@ use hexel_survival_game::{
 };
 use std::{
     borrow::Cow,
+    collections::VecDeque,
     sync::{mpsc, Arc},
     time::{Duration, Instant},
 };
@@ -157,6 +158,9 @@ pub struct Renderer {
     menu_buffer: Option<wgpu::Buffer>,
     menu_vertex_count: u32,
     menu_cache: Option<(MenuSnapshot, Option<MenuAction>)>,
+    console_buffer: Option<wgpu::Buffer>,
+    console_vertex_count: u32,
+    console_cache_generation: Option<u64>,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     debug_checker: bool,
@@ -711,6 +715,9 @@ impl Renderer {
             menu_buffer: None,
             menu_vertex_count: 0,
             menu_cache: None,
+            console_buffer: None,
+            console_vertex_count: 0,
+            console_cache_generation: None,
             camera_buffer,
             camera_bind_group,
             debug_checker: false,
@@ -813,6 +820,7 @@ impl Renderer {
     pub fn menu_snapshot(&self, frame_stats: bool) -> MenuSnapshot {
         let has_art = self.v2_materials.is_some();
         MenuSnapshot {
+            console_open: false,
             frame_stats,
             chunk_culling: (self.terrain_chunks.len() > 1).then_some(self.chunk_culling),
             unlocked_present: self
@@ -850,7 +858,8 @@ impl Renderer {
         self.config.width = size.width;
         self.config.height = size.height;
         self.surface.configure(&self.device, &self.config);
-        self.menu_cache = None; // pixel-space menu must be rebuilt after resize
+        self.menu_cache = None; // pixel-space panels must be rebuilt after resize
+        self.console_cache_generation = None;
         let (texture, view) = create_depth(&self.device, size.width, size.height);
         self._depth_texture = texture;
         self.depth_view = view;
@@ -876,6 +885,7 @@ impl Renderer {
         &mut self,
         player: &Player,
         menu: Option<(MenuSnapshot, Option<MenuAction>)>,
+        console: Option<(&VecDeque<String>, u64)>,
     ) -> Result<(), wgpu::SurfaceError> {
         let draw_start = Instant::now();
         let gpu_sample_ms = self
@@ -902,6 +912,32 @@ impl Renderer {
             self.menu_cache = None;
             self.menu_buffer = None;
             self.menu_vertex_count = 0;
+        }
+        if let Some((lines, generation)) = console {
+            if self.console_cache_generation != Some(generation) {
+                let vertices = debug_menu::console_geometry(
+                    self.config.width,
+                    self.config.height,
+                    lines,
+                );
+                self.console_vertex_count = vertices.len() as u32;
+                self.console_buffer = if vertices.is_empty() {
+                    None
+                } else {
+                    Some(self.device.create_buffer_init(
+                        &wgpu::util::BufferInitDescriptor {
+                            label: Some("Cached bottom benchmark log"),
+                            contents: bytemuck::cast_slice(&vertices),
+                            usage: wgpu::BufferUsages::VERTEX,
+                        },
+                    ))
+                };
+                self.console_cache_generation = Some(generation);
+            }
+        } else if self.console_cache_generation.is_some() {
+            self.console_cache_generation = None;
+            self.console_buffer = None;
+            self.console_vertex_count = 0;
         }
         let aspect = self.config.width as f32 / self.config.height as f32;
         let eye = player.eye_position();
@@ -1006,7 +1042,7 @@ impl Renderer {
                 submitted_vertices += u64::from(chunk.vertices);
             }
             pass.set_pipeline(&self.crosshair_pipeline);
-            if menu.is_none() {
+            if menu.is_none() && console.is_none() {
                 pass.set_vertex_buffer(0, self.crosshair_buffer.slice(..));
                 pass.draw(0..self.crosshair_vertices, 0..1);
             }
@@ -1014,6 +1050,11 @@ impl Renderer {
                 pass.set_pipeline(&self.menu_pipeline);
                 pass.set_vertex_buffer(0, buffer.slice(..));
                 pass.draw(0..self.menu_vertex_count, 0..1);
+            }
+            if let Some(buffer) = self.console_buffer.as_ref().filter(|_| console.is_some()) {
+                pass.set_pipeline(&self.menu_pipeline);
+                pass.set_vertex_buffer(0, buffer.slice(..));
+                pass.draw(0..self.console_vertex_count, 0..1);
             }
         }
         if timestamp_this_frame {
