@@ -463,13 +463,21 @@ mod tests {
         assert_eq!(s.status(MenuAction::UvDensity), "128 PX/M");
         assert_eq!(s.status(MenuAction::Presentation), "VSYNC");
         assert_eq!(
-            MenuSnapshot { unlocked_present: None, ..s }.status(MenuAction::Presentation),
+            MenuSnapshot {
+                unlocked_present: None,
+                ..s
+            }
+            .status(MenuAction::Presentation),
             "N/A"
         );
         assert_eq!(s.status(MenuAction::SurfacePreset), "DRY SET");
         assert_eq!(s.status(MenuAction::MetalGlints), "ON SET");
         assert_eq!(
-            MenuSnapshot { v2_materials: Some(true), ..s }.status(MenuAction::SurfacePreset),
+            MenuSnapshot {
+                v2_materials: Some(true),
+                ..s
+            }
+            .status(MenuAction::SurfacePreset),
             "DRY"
         );
         assert!(!MenuSnapshot {
