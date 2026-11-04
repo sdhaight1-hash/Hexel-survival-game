@@ -58,9 +58,11 @@ the mouse.
 | F9 | Diagnostic dry/wet/moss/frost/mixed states in F8 gallery |
 | F10 | Diagnostic native-copper glints ON/OFF in F8 gallery |
 | F11 | Compare authored-color copper vs grayscale source + shader palette, F8 gallery only |
+| F12 | Cycle original-derived + five new grayscale ore-pattern studies (requires F8 + F11) |
+| P | Cycle Copper / Hematite / Moonsilver display palettes (requires F8 + F11) |
 
 The [F1 diagnostics menu](docs/diagnostics-menu.md) displays current
-F3–F11 values, including F5 presentation; clicking its rows triggers
+F3–F12 and P values, including F5 presentation; clicking its rows triggers
 the **same code path** as the hotkeys. [Benchmark instrumentation](docs/benchmark-instrumentation.md)
 adds frame-time percentiles and optional asynchronous GPU pass timings.
 [Benchmark history and console](docs/benchmark-history-console.md)
@@ -134,7 +136,8 @@ state as live survival-game state.
   and art-approval standard only.
 - [Core engineering roadmap](docs/roadmap.md) and
   [material/overlay roadmap](docs/material-overlay-roadmap.md).
-- [F11 grayscale copper comparison](docs/p2-3-grayscale-copper-gallery.md): narrow A/B art fixture (not a new material format).
+- [Ore-pattern family gallery](docs/ore-pattern-family-gallery.md): five new grayscale coverage masks, three pigment ramps, F12/P art controls.
+- [F11 grayscale copper comparison](docs/p2-3-grayscale-copper-gallery.md): original A/B art fixture (not a new material format).
 - [Material contract](docs/material-authoring-contract.md),
   [P1 catalog and baker](docs/p1-material-pipeline.md), and
   [P2.2 reactive preview](docs/p2-2-reactive-surfaces.md).
