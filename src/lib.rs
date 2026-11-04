@@ -13,3 +13,4 @@ pub mod player;
 pub mod space_colonization;
 pub mod surface_layers;
 pub mod world;
+pub mod worldgen_foundation;
