@@ -28,7 +28,12 @@ font should **not** be interpreted as the final game UI style.
 - Press **F1** to open the developer menu and release the mouse.
 - Click a row to change the same runtime setting as its displayed F-key.
 - **F1 or Esc** closes the menu and recaptures first-person mouse look.
-- **F3, F4, F6, F7, F8, F9, F10 and F11** remain working hotkeys.
+- **F3, F4, F5, F6, F7, F8, F9, F10 and F11** remain working hotkeys.
+  F5 toggles FIFO vs Immediate presentation only when the 200-chunk
+  benchmark adapter reports true Immediate support; otherwise its
+  row displays N/A. F3 logs frame percentiles and asynchronous GPU
+  render-pass timestamps when supported. See
+  [benchmark instrumentation](benchmark-instrumentation.md).
 - The menu shows the current value directly from the renderer / Game:
   F3 log ON/OFF; F4 nearby culling or N/A; F6 UV checker ON/OFF;
   F7 64/128/256 texels/metre; F8 materials ON/OFF; F9 Dry/Wet/
@@ -38,6 +43,9 @@ font should **not** be interpreted as the final game UI style.
   F11 requires **F8 ON** and a compatible copper source. F9/F10
   can prepare a preview state with F8 off, preserving the existing
   hotkey contract; the state only renders when F8 is selected.
+  The menu now explicitly displays values like `DRY SET` or
+  `ON SET` when configured but inactive. A footer reports whether
+  GPU pass timers are supported on the chosen adapter.
 - Clicks outside actionable rows do not accidentally recapture the
   cursor or change the world. Cursor move changes a row highlight.
 
