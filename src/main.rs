@@ -397,16 +397,10 @@ impl ApplicationHandler for Game {
                                 }
                                 let elapsed = self.benchmark_window_start.elapsed().as_secs_f64();
                                 if elapsed >= 3.0 {
-                                    let frame_times = &mut self.benchmark_frame_intervals_ms;
-                                    frame_times.sort_by(f64::total_cmp);
-                                    let percentile = |pct: usize| {
-                                        if frame_times.is_empty() {
-                                            0.0
-                                        } else {
-                                            frame_times[(frame_times.len() * pct / 100)
-                                                .min(frame_times.len() - 1)]
-                                        }
-                                    };
+                                    self.benchmark_frame_intervals_ms.sort_by(f64::total_cmp);
+                                    let p50 = frame_percentile_ms(&self.benchmark_frame_intervals_ms, 50);
+                                    let p95 = frame_percentile_ms(&self.benchmark_frame_intervals_ms, 95);
+                                    let p99 = frame_percentile_ms(&self.benchmark_frame_intervals_ms, 99);
                                     let gpu = if self.benchmark_gpu_samples > 0 {
                                         format!(
                                             "{:.2} ms GPU pass ({} samples)",
@@ -424,9 +418,9 @@ impl ApplicationHandler for Game {
                                         renderer.material_comparison_label(),
                                         renderer.presentation_label(),
                                         f64::from(self.benchmark_frames) / elapsed,
-                                        percentile(50),
-                                        percentile(95),
-                                        percentile(99),
+                                        p50,
+                                        p95,
+                                        p99,
                                         self.benchmark_draw_ms_total / f64::from(self.benchmark_frames),
                                         gpu,
                                         stats.submitted_chunks,
@@ -472,6 +466,29 @@ impl ApplicationHandler for Game {
         if let Some(window) = self.window.as_ref() {
             window.request_redraw();
         }
+    }
+}
+
+/// Nearest sampled frame interval at a requested percentile. Input is sorted
+/// by the caller; empty windows report zero instead of implying GPU timing.
+fn frame_percentile_ms(sorted: &[f64], percentile: usize) -> f64 {
+    if sorted.is_empty() {
+        return 0.0;
+    }
+    sorted[(sorted.len() * percentile / 100).min(sorted.len() - 1)]
+}
+
+#[cfg(test)]
+mod benchmark_stats_tests {
+    use super::*;
+
+    #[test]
+    fn frame_percentiles_use_observed_sorted_intervals() {
+        assert_eq!(frame_percentile_ms(&[], 95), 0.0);
+        let frames: Vec<f64> = (1..=100).map(f64::from).collect();
+        assert_eq!(frame_percentile_ms(&frames, 50), 51.0);
+        assert_eq!(frame_percentile_ms(&frames, 95), 96.0);
+        assert_eq!(frame_percentile_ms(&frames, 99), 100.0);
     }
 }
 
