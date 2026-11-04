@@ -71,6 +71,26 @@ pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
     }
 }
 
+/// Stable, *display-only* rock and copper distribution across the static
+/// benchmark scene. Not geological eligibility, ore grades or mineable stock.
+pub fn for_benchmark_face(block: Block, cell: CellPos, face: HexFace) -> Material {
+    // Preserve the original authored reference strip exactly in its chunk.
+    if (0..16).contains(&cell.q) && (0..16).contains(&cell.r) {
+        return for_face(block, cell, face);
+    }
+    if block == Block::Rock {
+        // Coherent 8-hexel material patches, not random per-face materials.
+        let patch = (cell.q.div_euclid(8) * 3 + cell.r.div_euclid(8) * 5).rem_euclid(4);
+        return match patch {
+            0 => Material::Granite,
+            1 => Material::GraniteCopper,
+            2 => Material::Shale,
+            _ => Material::ShaleCopper,
+        };
+    }
+    for_face(block, cell, face)
+}
+
 fn soil_face(density: CoverDensity, top: bool, side: bool) -> Material {
     if top {
         match density {
@@ -102,6 +122,26 @@ use art::{generate_textures, N};
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn benchmark_material_patches_preserve_reference_and_are_stable() {
+        let p = CellPos::new(12, 10, 3);
+        assert_eq!(
+            for_benchmark_face(Block::Rock, p, HexFace::Top),
+            for_face(Block::Rock, p, HexFace::Top)
+        );
+        let samples: Vec<_> = (0..32)
+            .map(|q| for_benchmark_face(Block::Rock, CellPos::new(q + 40, 24, 6), HexFace::Top))
+            .collect();
+        assert!(samples.contains(&Material::Granite));
+        assert!(samples.contains(&Material::GraniteCopper));
+        assert!(samples.contains(&Material::Shale));
+        assert!(samples.contains(&Material::ShaleCopper));
+        assert_eq!(
+            for_benchmark_face(Block::Rock, CellPos::new(40, 24, 3), HexFace::Side(4)),
+            for_benchmark_face(Block::Rock, CellPos::new(40, 24, 6), HexFace::Top)
+        );
+    }
 
     #[test]
     fn source_derived_materials_decode_and_have_256px_rgba_layers() {

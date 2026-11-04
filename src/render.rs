@@ -11,9 +11,9 @@ use glam::{Mat4, Vec3};
 use hexel_survival_game::{
     player::Player,
     surface_layers::SurfacePreset,
-    world::{ChunkPos, World},
+    world::{CellPos, World, CHUNK_SIDE},
 };
-use std::{borrow::Cow, sync::Arc};
+use std::{borrow::Cow, sync::Arc, time::Instant};
 use wgpu::util::DeviceExt;
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -44,6 +44,21 @@ impl CrosshairVertex {
     }
 }
 
+struct ChunkMesh {
+    buffer: wgpu::Buffer,
+    vertices: u32,
+    center: Vec3,
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct DrawStats {
+    pub submitted_chunks: usize,
+    pub submitted_vertices: u64,
+    /// CPU wall time for the draw path, including surface acquisition/present.
+    /// This is not a GPU timestamp or a shader-only benchmark.
+    pub draw_cpu_ms: f32,
+}
+
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
@@ -63,8 +78,9 @@ pub struct Renderer {
     grayscale_copper_enabled: bool,
     surface_preset: SurfacePreset,
     metallic_glints: bool,
-    terrain_buffer: wgpu::Buffer,
-    terrain_vertices: u32,
+    terrain_chunks: Vec<ChunkMesh>,
+    chunk_culling: bool,
+    last_stats: DrawStats,
     crosshair_buffer: wgpu::Buffer,
     crosshair_vertices: u32,
     _depth_texture: wgpu::Texture,
@@ -469,15 +485,42 @@ impl Renderer {
             cache: None,
         });
 
-        let mesh = build_chunk_mesh(world, ChunkPos::default());
-        if mesh.is_empty() {
+        let mesh_start = Instant::now();
+        let mut terrain_chunks = Vec::new();
+        let mut total_vertices = 0u64;
+        for pos in world.chunk_positions() {
+            let mesh = build_chunk_mesh(world, pos);
+            if mesh.is_empty() {
+                continue;
+            }
+            let count = mesh.len() as u32;
+            total_vertices += mesh.len() as u64;
+            let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Exposed hexel chunk faces"),
+                contents: bytemuck::cast_slice(&mesh),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+            let cell = CellPos::new(
+                pos.q * CHUNK_SIDE + CHUNK_SIDE / 2,
+                pos.r * CHUNK_SIDE + CHUNK_SIDE / 2,
+                pos.y * CHUNK_SIDE,
+            );
+            terrain_chunks.push(ChunkMesh {
+                buffer,
+                vertices: count,
+                center: cell.center(),
+            });
+        }
+        if terrain_chunks.is_empty() {
             return Err("No terrain geometry was generated".to_string());
         }
-        let terrain_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Exposed hexel faces"),
-            contents: bytemuck::cast_slice(&mesh),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
+        println!(
+            "Terrain meshes: {} loaded chunk(s), {} vertices, {:.1} MiB vertex buffers, {:.1} ms CPU build/upload (not GPU time).",
+            terrain_chunks.len(),
+            total_vertices,
+            total_vertices as f64 * std::mem::size_of::<Vertex>() as f64 / (1024.0 * 1024.0),
+            mesh_start.elapsed().as_secs_f64() * 1000.0
+        );
         let crosshair = [
             CrosshairVertex {
                 position: [-0.013, 0.0],
@@ -529,8 +572,9 @@ impl Renderer {
             grayscale_copper_enabled: false,
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
-            terrain_buffer,
-            terrain_vertices: mesh.len() as u32,
+            terrain_chunks,
+            chunk_culling: true,
+            last_stats: DrawStats::default(),
             crosshair_buffer,
             crosshair_vertices: crosshair.len() as u32,
             _depth_texture: depth_texture,
@@ -573,6 +617,30 @@ impl Renderer {
         Some(self.metallic_glints)
     }
 
+    /// F4: draw all resident chunks or limit to nearby chunks.
+    /// Both modes keep the same 200 loaded/generated meshes.
+    pub fn toggle_chunk_culling(&mut self) -> Option<bool> {
+        if self.terrain_chunks.len() <= 1 {
+            return None;
+        }
+        self.chunk_culling = !self.chunk_culling;
+        Some(self.chunk_culling)
+    }
+
+    pub fn stats(&self) -> DrawStats {
+        self.last_stats
+    }
+
+    pub fn material_comparison_label(&self) -> &'static str {
+        if !self.v2_preview_enabled {
+            "P0"
+        } else if self.grayscale_copper_enabled {
+            "F11 grayscale"
+        } else {
+            "F8 full-color"
+        }
+    }
+
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
         if size.width == 0 || size.height == 0 {
             return;
@@ -602,6 +670,7 @@ impl Renderer {
     }
 
     pub fn draw(&mut self, player: &Player) -> Result<(), wgpu::SurfaceError> {
+        let draw_start = Instant::now();
         let aspect = self.config.width as f32 / self.config.height as f32;
         let eye = player.eye_position();
         let view_proj = Mat4::perspective_rh(70.0_f32.to_radians(), aspect, 0.05, 200.0)
@@ -635,6 +704,8 @@ impl Renderer {
         let view = frame
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
+        let mut submitted_chunks = 0usize;
+        let mut submitted_vertices = 0u64;
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -678,14 +749,30 @@ impl Renderer {
                 &self.material_bind_group
             };
             pass.set_bind_group(1, material_group, &[]);
-            pass.set_vertex_buffer(0, self.terrain_buffer.slice(..));
-            pass.draw(0..self.terrain_vertices, 0..1);
+            for chunk in &self.terrain_chunks {
+                let dx = chunk.center.x - eye.x;
+                let dz = chunk.center.z - eye.z;
+                // Conservative static distance culling, with extra room for
+                // skewed axial chunks. Not a camera-frustum or occlusion system.
+                if self.chunk_culling && dx * dx + dz * dz > 112.0 * 112.0 {
+                    continue;
+                }
+                pass.set_vertex_buffer(0, chunk.buffer.slice(..));
+                pass.draw(0..chunk.vertices, 0..1);
+                submitted_chunks += 1;
+                submitted_vertices += u64::from(chunk.vertices);
+            }
             pass.set_pipeline(&self.crosshair_pipeline);
             pass.set_vertex_buffer(0, self.crosshair_buffer.slice(..));
             pass.draw(0..self.crosshair_vertices, 0..1);
         }
         self.queue.submit(std::iter::once(encoder.finish()));
         frame.present();
+        self.last_stats = DrawStats {
+            submitted_chunks,
+            submitted_vertices,
+            draw_cpu_ms: draw_start.elapsed().as_secs_f32() * 1000.0,
+        };
         Ok(())
     }
 }
