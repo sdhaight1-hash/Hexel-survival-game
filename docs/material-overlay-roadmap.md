@@ -116,6 +116,8 @@ universal production packing contract.
 design contract. The overlay-path proof and the optional SCA adapter
 remain **future gates**, not working production components.
 
+**Evidence baseline:** the [industry research study](material-variation-industry-research.md) compares official Hytale tint providers, Vintage Story's climate/season colormaps, Eco's ecological authority and material/foliage techniques from Unreal, Unity/SpeedTree, Godot, Mojang, and graphics research. It distinguishes verified shipped mechanisms from draft Hexal proposals; **do not** interpret those precedents as approval of our live shader architecture.
+
 ## Proposed variation model (pending visual/technical proof)
 
 The recent material study boards compared five visual variations for
