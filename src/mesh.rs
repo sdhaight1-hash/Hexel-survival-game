@@ -198,7 +198,9 @@ mod tests {
             let vertices = build_chunk_mesh(&world, pos);
             assert!(!vertices.is_empty());
             assert_eq!(vertices.len() % 3, 0);
-            assert!(vertices.iter().all(|vertex| vertex.position.iter().all(|p| p.is_finite())));
+            assert!(vertices
+                .iter()
+                .all(|vertex| vertex.position.iter().all(|p| p.is_finite())));
         }
     }
 
