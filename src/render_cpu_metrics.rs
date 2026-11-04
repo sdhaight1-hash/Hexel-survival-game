@@ -62,7 +62,7 @@ impl RenderCpuMetrics {
             self.peaks.submit_ms, self.peaks.present_ms
         );
         let look_report = format!(
-            " LOOK CPU: Is_Looking samples {}/{}; draw p95 looking {:.2} ms ({}), no-look {:.2} ms ({}); four states [idle+still {}, idle+look {}, move+still {}, move+look {}] draw p95 {:.2}/{:.2}/{:.2}/{:.2} ms; acquire p95 {:.2}/{:.2}/{:.2}/{:.2} ms (CPU call durations).",
+            "LOOK CPU: Is_Looking samples {}/{}; draw p95 looking {:.2} ms ({}), no-look {:.2} ms ({}); four states [idle+still {}, idle+look {}, move+still {}, move+look {}] draw p95 {:.2}/{:.2}/{:.2}/{:.2} ms; acquire p95 {:.2}/{:.2}/{:.2}/{:.2} ms (CPU call durations).",
             self.looking_ms.len(), moving + idle,
             percentile(&self.looking_ms, 0.95), self.looking_ms.len(),
             percentile(&self.no_look_ms, 0.95), self.no_look_ms.len(),
@@ -123,6 +123,31 @@ mod tests {
         assert!(report.contains("Is_Looking samples 1/2"));
         assert!(report.contains("four states [idle+still 0, idle+look 1, move+still 1, move+look 0]"));
         assert!(metrics.report_and_reset().contains("0 successful draws"));
+    }
+
+    #[test]
+    fn four_states_keep_acquire_percentiles_separate() {
+        let mut metrics = RenderCpuMetrics::default();
+        for (moving, looking, draw, acquire) in [
+            (false, false, 4.0, 2.0),
+            (false, true, 12.0, 10.0),
+            (true, false, 20.0, 18.0),
+            (true, true, 40.0, 38.0),
+        ] {
+            metrics.record(
+                DrawCpuTimings {
+                    total_ms: draw,
+                    acquire_ms: acquire,
+                    ..DrawCpuTimings::default()
+                },
+                moving,
+                looking,
+            );
+        }
+        let report = metrics.report_and_reset();
+        assert!(report.contains("four states [idle+still 1, idle+look 1, move+still 1, move+look 1]"));
+        assert!(report.contains("draw p95 4.00/12.00/20.00/40.00 ms"));
+        assert!(report.contains("acquire p95 2.00/10.00/18.00/38.00 ms"));
     }
 
     #[test]
