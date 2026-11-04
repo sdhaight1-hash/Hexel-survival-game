@@ -1,7 +1,7 @@
 //! Read-only runtime validation for the offline v2 material handoff.
 //! This does not replace the P0 gallery or assign transient GPU texture slots.
 
-use crate::{materials_p0, texture_codec, texture_pack::TexturePack};
+use crate::{materials_p0, ore_pattern_study, texture_codec, texture_pack::TexturePack};
 use serde::Deserialize;
 use std::{
     collections::HashSet,
@@ -324,9 +324,9 @@ fn grayscale_copper_tile(overlay: &[u8]) -> Vec<u8> {
 }
 
 /// Create a *separate*, opt-in RGBA preview array of the original 12 display
-/// slots as P0, plus a shared grayscale copper source at layer 12 when
-/// a compatible candidate exists. The default P0 pack remains unchanged.
-/// Only granite, shale and shared copper-mask candidates are currently wired.
+/// slots as P0, plus source-derived grayscale copper at layer 12 and five
+/// distinctly shaped study patterns at layers 13..=17 when copper exists.
+/// The default P0 pack and actual world resource IDs remain unchanged.
 pub fn preview_layers(p0: &TexturePack<'_>) -> Result<Option<Vec<Vec<u8>>>, String> {
     let Some((index, directory)) = load_default()? else {
         return Ok(None);
@@ -354,9 +354,13 @@ pub fn preview_layers(p0: &TexturePack<'_>) -> Result<Option<Vec<Vec<u8>>>, Stri
         ] {
             layers[composite as usize] = composite_ore(&layers[host as usize], &mask);
         }
-        // One source mask serves *both* rock hosts. Layer 12 is only sampled
-        // in the shader-driven F11 comparison, never as world/resource data.
+        // Pattern 0 preserves the prior F11 grayscale A/B path. The five
+        // extra deterministic masks are generated once, independently from
+        // world mineral occurrence and both displayed host-rock textures.
         layers.push(grayscale_copper_tile(&mask));
+        for pattern in 1..=ore_pattern_study::GENERATED_PATTERNS {
+            layers.push(ore_pattern_study::generate(pattern));
+        }
     } else {
         // No v2 ore source: keep the P0 copper coloration but mark its
         // F8 preview as nonmetallic rather than highlighting an entire face.
@@ -442,13 +446,22 @@ mod tests {
             return;
         };
         use materials_p0::Material;
-        assert_eq!(layers.len(), materials_p0::LAYER_COUNT + 1);
+        assert_eq!(
+            layers.len(),
+            materials_p0::LAYER_COUNT + ore_pattern_study::FAMILY_NAMES.len()
+        );
         let gray = &layers[materials_p0::LAYER_COUNT];
         assert!(gray
             .chunks_exact(4)
             .all(|pixel| pixel[0] == pixel[1] && pixel[1] == pixel[2]));
         assert!(gray.chunks_exact(4).any(|pixel| pixel[3] > 32));
         assert!(gray.chunks_exact(4).any(|pixel| pixel[3] == 0));
+        for (i, generated) in layers[materials_p0::LAYER_COUNT + 1..]
+            .iter()
+            .enumerate()
+        {
+            assert_eq!(generated, &ore_pattern_study::generate(i + 1));
+        }
         assert_ne!(
             layers[Material::Granite as usize],
             layers[Material::Shale as usize]
