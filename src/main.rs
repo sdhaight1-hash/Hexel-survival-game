@@ -1,5 +1,6 @@
 //! First-person one-chunk demo or opt-in 200-chunk material benchmark.
 
+mod benchmark_log;
 mod debug_menu;
 mod materials_p0;
 mod materials_v2;
@@ -8,7 +9,8 @@ mod render;
 mod texture_codec;
 mod texture_pack;
 
-use debug_menu::{hit_test, MenuAction};
+use benchmark_log::{BenchHistory, BenchSample, ConsoleLog};
+use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
 use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
@@ -32,6 +34,9 @@ struct Game {
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
     menu_open: bool,
+    console_open: bool,
+    console_log: ConsoleLog,
+    benchmark_history: BenchHistory,
     menu_cursor: Option<(f64, f64)>,
     menu_hover: Option<MenuAction>,
     last_frame: Instant,
@@ -62,6 +67,9 @@ impl Default for Game {
             pressed: HashSet::new(),
             mouse_captured: false,
             menu_open: false,
+            console_open: false,
+            console_log: ConsoleLog::new(),
+            benchmark_history: BenchHistory::default(),
             menu_cursor: None,
             menu_hover: None,
             last_frame: Instant::now(),
@@ -104,16 +112,49 @@ impl Game {
     }
 
     fn toggle_menu(&mut self) {
+        if self.benchmark_logging {
+            self.finish_benchmark_trial();
+            self.reset_benchmark_trial();
+        }
         self.menu_open = !self.menu_open;
+        self.console_open = false;
         self.menu_hover = None;
         self.menu_cursor = None;
-        self.pressed.clear(); // avoid held movement keys leaking out of the menu
+        self.pressed.clear();
         if self.menu_open {
             self.release_mouse();
-            println!("F1 diagnostics menu: OPEN (click a row; F1/Esc closes)");
+            self.console_log.record("F1 diagnostics menu: OPEN (F1/Esc closes)");
         } else {
             self.capture_mouse();
-            println!("F1 diagnostics menu: CLOSED");
+            self.console_log.record("F1 diagnostics menu: CLOSED");
+        }
+    }
+
+    fn toggle_console(&mut self) {
+        if self.benchmark_logging {
+            self.finish_benchmark_trial();
+            self.reset_benchmark_trial();
+        }
+        self.console_open = !self.console_open;
+        self.menu_open = false;
+        self.menu_hover = None;
+        self.menu_cursor = None;
+        self.pressed.clear();
+        if self.console_open {
+            self.release_mouse();
+            self.console_log.record("F2 bottom log: OPEN (Ctrl+C or COPY LOG, F2/Esc closes)");
+        } else {
+            self.capture_mouse();
+            self.console_log.record("F2 bottom log: CLOSED");
+        }
+    }
+
+    fn copy_console(&mut self) {
+        match self.console_log.copy() {
+            Ok(()) => self.console_log.record("F2 session log copied to Windows clipboard"),
+            Err(error) => self.console_log.record(format!(
+                "F2 clipboard unavailable: {error}. Full log: {}", benchmark_log::LOG_FILE
+            )),
         }
     }
 
@@ -125,6 +166,23 @@ impl Game {
         self.benchmark_gpu_samples = 0;
         self.benchmark_frame_intervals_ms.clear();
         self.benchmark_last_present = None;
+    }
+
+    fn reset_benchmark_trial(&mut self) {
+        self.reset_benchmark_window();
+        self.benchmark_history.clear();
+    }
+
+    fn finish_benchmark_trial(&mut self) {
+        let trial = self.benchmark_history.trial();
+        if trial.frames == 0 {
+            return;
+        }
+        let label = self.renderer.as_ref().map_or_else(
+            || "not initialized".into(),
+            |r| format!("{} | {}", r.material_comparison_label(), r.presentation_label()),
+        );
+        self.console_log.record(format_average(&label, "TRIAL FINAL", trial));
     }
 
     /// One action path for F-keys and mouse-selected menu rows.
