@@ -77,6 +77,28 @@ The asset IDs above are *examples*, not registered files or save-compatible
 values. A later approved asset catalog will validate references and require
 fallback behavior for missing variants.
 
+## Candidate grayscale-pattern reuse in published flora assets
+
+A future approved flora visual asset may select curated grayscale
+bark-detail, leaf-pigment or grass-fiber patterns and apply
+species/season/age palettes. This could avoid keeping independent
+full-color textures for every palette variant. The proposal is
+documented in [material authoring](material-authoring-contract.md)
+and [vegetation visual architecture](vegetation-visual-architecture.md).
+
+**Do not collapse separate roles:** a leaf's alpha-cutout silhouette
+is distinct from grayscale inner vein/pigment detail; longitudinal
+bark ridges require trunk/branch-aligned coordinates; actual shape,
+wood ownership, age, growth stages, harvested/dead state and species
+identity still belong to the saved plant/asset data, not a tint.
+
+An asset-binding catalog should reference **stable approved
+material-family and pattern IDs**, not provisional GPU array slots.
+Color variants can be derived from one authored pattern, but the
+real species must remain identifiable without relying exclusively
+on hue. This proposal changes no records in the existing
+research-only flora registry and introduces no unapproved visuals.
+
 ## Registry data / source cautions
 
 `assets/flora/reference_registry.v1.json` holds **208 historical research
