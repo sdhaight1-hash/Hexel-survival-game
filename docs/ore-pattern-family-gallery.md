@@ -111,6 +111,6 @@ foliage ramps.
 
 References:
 - [F11 original comparison](p2-3-grayscale-copper-gallery.md)
-- [Industry comparison and design implications](material-variation-industry-research.md)
+- [Industry comparison and design implications (draft PR #32)](https://github.com/sdhaight1-hash/Hexel-survival-game/blob/docs/grayscale-material-families-study/docs/material-variation-industry-research.md)
 - [200-chunk visual/performance benchmark](benchmark-200-chunks.md)
 - [F2 running log and sampling history](benchmark-history-console.md)
