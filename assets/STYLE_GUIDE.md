@@ -275,8 +275,7 @@ weathering, actual ore occurrence, water flow, or visual quality.
 Geologically planar veins, sediment layers, stockworks and replacement
 bodies may require fault geometry, bands, splines or other techniques.
 Never make all ores look like tree roots. The experimental implementation
-is on [draft research PR #30](
-https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
+is on [draft research PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
 not the game's working material/overlay runtime. SCA is **not a
 prerequisite** for completing the broader material pipeline.
 
@@ -303,8 +302,7 @@ camera motion. Host recognition, poor-grade readability, grounded
 material-specific sheen and pattern continuity matter more than how
 complicated the generator is. Keep the simpler method if it looks
 better or is cheaper at equivalent clarity. See the
-[revised material and overlay roadmap](
-../docs/material-overlay-roadmap.md) and
+[revised material and overlay roadmap](../docs/material-overlay-roadmap.md) and
 [P2.2 preview record](../docs/p2-2-reactive-surfaces.md).
 
 ## 6. Soil, grass and vegetation
