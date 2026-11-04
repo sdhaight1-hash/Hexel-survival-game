@@ -45,6 +45,7 @@ implementation; the project owner approves art and deliberate design changes.
 | How might an exact geographic square map onto an integer hex torus, and what metric tradeoff remains? | [P3.1B projection candidate](p3-1b-axial-geography-projection-candidate.md) | [P3.1 shared source](p3-1-world-source-contract.md), [World-scale foundation](world-scale-foundation.md) |
 | Which 16-cell-aligned hex period best fits the 1,024-km metric and what is still undecided? | [P3.1C metric comparison](p3-1c-topology-metric-decision.md) | [P3.1B projection candidate](p3-1b-axial-geography-projection-candidate.md), [Decisions](decisions.md) |
 | How are identical terrain heights and adjacent cells preserved across proposed world seams? | [P3.1D periodic terrain candidate](p3-1d-periodic-terrain-candidate.md) | [P3.1B projection](p3-1b-axial-geography-projection-candidate.md), [World generation](world-generation.md) |
+| How do unloaded chunk neighbors affect seam faces and player support? | [P3.1E seam integration checks](p3-1e-seam-integration-checks.md) | [P3.1D periodic terrain candidate](p3-1d-periodic-terrain-candidate.md) |
 | What is the selected world and water invariant? | [World generation](world-generation.md) | [Decisions](decisions.md), [Integration](integration.md) |
 | What is the next game/world milestone? | [Core roadmap](roadmap.md) | [Material/overlay roadmap](material-overlay-roadmap.md) |
 | How should visual contributors validate work? | [Visual contribution workflow](visual-contribution-guide.md) | [Style QA](../assets/STYLE_GUIDE.md) |
