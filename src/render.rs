@@ -354,7 +354,9 @@ impl Renderer {
                         },
                     ],
                 });
-                println!("V2 candidate preview ready: F8 toggles rock/copper comparison against P0.");
+                println!(
+                    "V2 candidate preview ready: F8 toggles rock/copper comparison against P0."
+                );
                 Some((v2_texture, v2_bind_group))
             }
             Ok(None) => None,
