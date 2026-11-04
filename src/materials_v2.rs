@@ -403,6 +403,26 @@ mod tests {
     }
 
     #[test]
+    fn baked_candidate_gallery_composes_distinct_hosts_when_index_exists() {
+        let pack = TexturePack::embedded().unwrap();
+        let Some(layers) = preview_layers(&pack).unwrap() else {
+            // A clean checkout can run tests before any optional offline bake.
+            return;
+        };
+        use materials_p0::Material;
+        assert_eq!(layers.len(), materials_p0::LAYER_COUNT);
+        assert_ne!(layers[Material::Granite as usize], layers[Material::Shale as usize]);
+        assert_ne!(
+            layers[Material::Granite as usize],
+            layers[Material::GraniteCopper as usize]
+        );
+        assert_ne!(
+            layers[Material::Shale as usize],
+            layers[Material::ShaleCopper as usize]
+        );
+    }
+
+    #[test]
     fn transparent_copper_preserves_host_and_opaque_copper_replaces_color() {
         let base = [60u8, 80, 100, 255, 60, 80, 100, 255];
         let overlay = [200u8, 110, 50, 0, 200, 110, 50, 255];
