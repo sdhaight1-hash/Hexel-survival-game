@@ -49,6 +49,7 @@ the mouse.
 | Space / Left Ctrl / Left Shift | Jump / sprint / sneak |
 | Esc / left click | Release / recapture cursor (Esc closes F1 menu first) |
 | F1 | Clickable developer diagnostics menu; F1 / Esc closes it |
+| F2 | Bottom-running log; Ctrl+C or COPY LOG copies the complete session; F2 / Esc closes |
 | F3 / F4 | Frame stats / nearby-chunk culling (F4 available in 200-chunk mode) |
 | F5 | Toggle FIFO V-sync vs truly unlocked Immediate when adapter supports it, benchmark scene only |
 | F6 | Toggle hex-face UV checker |
@@ -61,7 +62,10 @@ the mouse.
 The [F1 diagnostics menu](docs/diagnostics-menu.md) displays current
 F3–F11 values, including F5 presentation; clicking its rows triggers
 the **same code path** as the hotkeys. [Benchmark instrumentation](docs/benchmark-instrumentation.md)
-adds frame-time percentiles and optional asynchronous GPU pass timings. The menu is an unpaused debug overlay: close it while
+adds frame-time percentiles and optional asynchronous GPU pass timings.
+[Benchmark history and console](docs/benchmark-history-console.md)
+adds rolling 30-second/trial averages, startup CPU/RAM/GPU/scene
+metrics, exposed-face/hexel counts and a copyable `target/benchmark-session.log`. The menu is an unpaused debug overlay: close it while
 recording benchmarks.
 
 For F8–F10 preview candidates, first validate/bake the new material
