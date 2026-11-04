@@ -123,7 +123,8 @@ impl Game {
         self.pressed.clear();
         if self.menu_open {
             self.release_mouse();
-            self.console_log.record("F1 diagnostics menu: OPEN (F1/Esc closes)");
+            self.console_log
+                .record("F1 diagnostics menu: OPEN (F1/Esc closes)");
         } else {
             self.capture_mouse();
             self.console_log.record("F1 diagnostics menu: CLOSED");
@@ -142,7 +143,8 @@ impl Game {
         self.pressed.clear();
         if self.console_open {
             self.release_mouse();
-            self.console_log.record("F2 bottom log: OPEN (Ctrl+C or COPY LOG, F2/Esc closes)");
+            self.console_log
+                .record("F2 bottom log: OPEN (Ctrl+C or COPY LOG, F2/Esc closes)");
         } else {
             self.capture_mouse();
             self.console_log.record("F2 bottom log: CLOSED");
@@ -151,9 +153,12 @@ impl Game {
 
     fn copy_console(&mut self) {
         match self.console_log.copy() {
-            Ok(()) => self.console_log.record("F2 session log copied to Windows clipboard"),
+            Ok(()) => self
+                .console_log
+                .record("F2 session log copied to Windows clipboard"),
             Err(error) => self.console_log.record(format!(
-                "F2 clipboard unavailable: {error}. Full log: {}", benchmark_log::LOG_FILE
+                "F2 clipboard unavailable: {error}. Full log: {}",
+                benchmark_log::LOG_FILE
             )),
         }
     }
@@ -189,9 +194,16 @@ impl Game {
         }
         let label = self.renderer.as_ref().map_or_else(
             || "not initialized".into(),
-            |r| format!("{} | {}", r.material_comparison_label(), r.presentation_label()),
+            |r| {
+                format!(
+                    "{} | {}",
+                    r.material_comparison_label(),
+                    r.presentation_label()
+                )
+            },
         );
-        self.console_log.record(format_average(&label, "TRIAL FINAL", trial));
+        self.console_log
+            .record(format_average(&label, "TRIAL FINAL", trial));
     }
 
     /// One action path for F-keys and mouse-selected menu rows.
@@ -215,9 +227,10 @@ impl Game {
             ));
             return;
         }
-        let can_change = self.renderer.as_ref().is_some_and(|r| {
-            r.menu_snapshot(self.benchmark_logging).enabled(action)
-        });
+        let can_change = self
+            .renderer
+            .as_ref()
+            .is_some_and(|r| r.menu_snapshot(self.benchmark_logging).enabled(action));
         if can_change && self.benchmark_logging {
             self.finish_benchmark_trial(); // preserve the OLD configuration label
         }
@@ -229,7 +242,9 @@ impl Game {
             MenuAction::Presentation => match renderer.toggle_present_mode() {
                 Some(true) => "F5 presentation: UNLOCKED (Immediate, tearing possible)".into(),
                 Some(false) => "F5 presentation: VSYNC (FIFO)".into(),
-                None => "F5 unavailable: Immediate presentation not supported in this benchmark.".into(),
+                None => {
+                    "F5 unavailable: Immediate presentation not supported in this benchmark.".into()
+                }
             },
             MenuAction::ChunkCulling => match renderer.toggle_chunk_culling() {
                 Some(true) => "F4 nearby-chunk culling: ON".into(),
@@ -241,7 +256,10 @@ impl Game {
                 format!("P0 UV checker: {}", if active { "ON" } else { "OFF" })
             }
             MenuAction::UvDensity => {
-                format!("P0 checker scale: {} texels/metre", renderer.cycle_density())
+                format!(
+                    "P0 checker scale: {} texels/metre",
+                    renderer.cycle_density()
+                )
             }
             MenuAction::V2Materials => match renderer.toggle_v2_preview() {
                 Some(true) => "V2 candidate gallery: ON".into(),
@@ -318,9 +336,11 @@ impl ApplicationHandler for Game {
         match pollster::block_on(Renderer::new(window.clone(), &self.world)) {
             Ok(renderer) => {
                 self.console_log.record(benchmark_log::system_report());
-                self.console_log.record(renderer.hardware_report().to_string());
+                self.console_log
+                    .record(renderer.hardware_report().to_string());
                 self.console_log.record(renderer.viewport_report());
-                self.console_log.record(renderer.geometry_report().to_string());
+                self.console_log
+                    .record(renderer.geometry_report().to_string());
                 self.console_log.record(
                     "METRICS exposed hexels/faces = mesh-exposed; submitted = chunk distance filter; neither means camera/pixel visible"
                 );
@@ -457,9 +477,7 @@ impl ApplicationHandler for Game {
                 ..
             } => {
                 if self.console_open {
-                    if let (Some((x, y)), Some(window)) =
-                        (self.menu_cursor, self.window.as_ref())
-                    {
+                    if let (Some((x, y)), Some(window)) = (self.menu_cursor, self.window.as_ref()) {
                         let size = window.inner_size();
                         if console_copy_hit_test(x, y, size.width, size.height) {
                             self.copy_console();
@@ -493,9 +511,9 @@ impl ApplicationHandler for Game {
                             self.menu_hover,
                         )
                     });
-                    let console = self.console_open.then(|| {
-                        (self.console_log.lines(), self.console_log.generation())
-                    });
+                    let console = self
+                        .console_open
+                        .then(|| (self.console_log.lines(), self.console_log.generation()));
                     match renderer.draw(&self.player, menu, console) {
                         Ok(()) => {
                             if self.benchmark_logging {
@@ -537,7 +555,11 @@ impl ApplicationHandler for Game {
                                         "{} | {}{}",
                                         renderer.material_comparison_label(),
                                         renderer.presentation_label(),
-                                        if self.console_open || self.menu_open { " | UI OPEN" } else { "" },
+                                        if self.console_open || self.menu_open {
+                                            " | UI OPEN"
+                                        } else {
+                                            ""
+                                        },
                                     );
                                     let sample = BenchSample {
                                         seconds: elapsed,
@@ -620,7 +642,10 @@ impl ApplicationHandler for Game {
 /// Weighted FPS and CPU/GPU means, excluding unsupported GPU timings.
 fn format_average(label: &str, name: &str, sample: BenchSample) -> String {
     let gpu = match sample.gpu_ms() {
-        Some(value) => format!("{value:.3} ms sampled GPU pass ({} samples)", sample.gpu_samples),
+        Some(value) => format!(
+            "{value:.3} ms sampled GPU pass ({} samples)",
+            sample.gpu_samples
+        ),
         None => "GPU pass N/A (no completed samples)".into(),
     };
     format!(
