@@ -76,6 +76,69 @@ Similarly, do not create a distinct opaque ore image for every rock × ore ×
 grade combination. Reuse host-rock textures and transparent ore overlays,
 and allow procedural variation/grade-specific masks later.
 
+## Candidate extension: material families and grayscale-derived overlay palettes
+
+**Proposal, not an implemented registry format.** Keep **stable material
+identity** (e.g. `ore.native_copper`), **appearance variant** (e.g.
+`inclusion.nodular_02`), **mineral palette/material response** and
+**world-state occurrence** as distinct IDs/data. An approved family
+may reference a curated subset of reusable patterns with weights and
+compatibility constraints. A different GPU array layer is an
+implementation detail, never an authoritative species, rock or ore ID.
+
+An overlay need not store a full-colored RGBA image per ore species.
+For suitably compatible minerals, author **linear single-channel
+coverage** and optionally a **separate linear grayscale tonal/detail
+field**, then supply a mineral-specific small color ramp and reflectance
+parameters:
+
+- **Coverage:** `c ∈ [0,1]` means exposed mineral fraction at a face
+  sample, after host/occurrence/grade/feature eligibility and occlusion.
+  No authorized occurrence means `c = 0` regardless of artwork.
+- **Detail:** `g ∈ [0,1]` controls mineral-internal dark/mid/light
+  structure. Darkness in `g` must **not** automatically make the mineral
+  transparent. This can be omitted for flat-color stylized motifs.
+- **Palette:** one color or preferably a few mineral-specific ramp
+  stops, interpreted in a correct color space. A single RGB multiply
+  is a baseline comparison, not an adequate universal material model.
+- **Response:** roughness, metalness, localized highlights, oxidation
+  and normal/height appearance are material-specific and separately
+  controlled. Normal maps cannot be derived by merely tinting gray.
+- **Morphology:** a given ore family may allow some hairline,
+  disseminated, nodular, ribbon or stockwork patterns, but never every
+  pattern indiscriminately. Real geological eligibility and host
+  constraints remain owned by gameplay/geology.
+- **Determinism:** select family member from world seed + stable region/
+  feature ID + coordinates and fixed weights/context; the selection must
+  not change with camera frame, chunk request/rebuild order or cache
+  eviction. Persist edits and resource depletion separately.
+- **Continuity:** a structural vein uses a *world- or feature-space*
+  geometry mask; a tileable grayscale pattern supplies finer detail
+  inside it. Randomly picking an independent vein image per hexel is
+  not a substitute for continuous geology.
+
+The combination is *derived appearance*:
+`surface = blend(host_albedo, palette(g), c)` as a conceptual color
+equation. In production, composition and physically appropriate
+lighting occur in linear space and cover/condition layers must also
+be applied. A colorized ore pixel cannot create or replenish stock.
+
+Do **not** require five unique variants per one of all 55 inventoried
+materials: five is a useful *comparison-board target* for a few
+representative families. Share pattern sets when visual/geological
+similarity is justified, and permit an authored full-color exception
+where color variation or patterned chemistry is essential. Do not
+pre-bake every rock × ore × pattern × grade × wetness permutation.
+
+The next proof is **one grayscale ore-pattern family, native copper on
+both granite and shale**, compared with the existing transparent
+full-color copper overlay. Keep its stable ore ID and the v2 P0
+fallback. Require visually distinct grade states, copper recognition
+when highlights are disabled, host preservation, bounded added GPU
+samples and measured texture-memory effects before choosing the
+production representation. See [P1 pipeline](p1-material-pipeline.md)
+and [overlay visual architecture](overlay-visual-architecture.md).
+
 ## Asset locations and gates
 
 - Existing categorized source art and 32px previews are in `assets/textures`.
