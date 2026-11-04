@@ -6,6 +6,12 @@ hexel chunk (4,096 addressable cells), stepped demo terrain,
 camera/movement, gravity, collision, visible-face meshing and a
 small material/overlay **test gallery**. This is **not** world generation.
 
+**World-scale groundwork:** [the streaming-first development plan](docs/world-scale-foundation.md)
+and a headless [deterministic terrain sampler](src/generated_terrain.rs)
+can now generate arbitrary Q/R/Y chunks on demand for tests, but they
+are **not connected to the interactive renderer or world streaming**.
+The 1,024 km × 1,024 km torus remains the selected target.
+
 The player is 1⅔ m tall. Each regular hexel is 1 m across its
 opposing flats and 1 m high, with six rectangular sides, a top hexagon
 and a bottom hexagon. These are prototype dimensions; the final
