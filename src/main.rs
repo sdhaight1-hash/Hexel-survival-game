@@ -1,5 +1,7 @@
 //! Native first-person material demo or opt-in moving streamed-world prototype.
 
+mod benchmark_log;
+mod debug_menu;
 mod materials_p0;
 mod materials_v2;
 mod mesh;
@@ -12,6 +14,8 @@ use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
 };
+use benchmark_log::ConsoleLog;
+use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
 use render::Renderer;
 use std::{collections::HashSet, sync::Arc, time::Instant};
 use stream_metrics::StreamFrameMetrics;
@@ -40,6 +44,12 @@ struct Game {
     streamed_generation_cpu_ms: f64,
     streamed_meshing_cpu_ms: f64,
     stream_metrics: StreamFrameMetrics,
+    menu_open: bool,
+    console_open: bool,
+    menu_cursor: Option<(f64, f64)>,
+    menu_hover: Option<MenuAction>,
+    frame_stats: bool,
+    console_log: ConsoleLog,
 }
 
 impl Default for Game {
@@ -81,10 +91,17 @@ impl Game {
             streamed_generation_cpu_ms: 0.0,
             streamed_meshing_cpu_ms: 0.0,
             stream_metrics: StreamFrameMetrics::default(),
+            menu_open: false,
+            console_open: false,
+            menu_cursor: None,
+            menu_hover: None,
+            frame_stats: false,
+            console_log: ConsoleLog::new(),
         }
     }
 
     fn capture_mouse(&mut self) {
+        if self.menu_open || self.console_open { return; }
         let Some(window) = self.window.as_ref() else {
             return;
         };
@@ -107,6 +124,60 @@ impl Game {
         }
         self.mouse_captured = false;
         self.pressed.clear();
+    }
+
+
+    fn toggle_menu(&mut self) {
+        self.menu_open = !self.menu_open;
+        self.console_open = false;
+        self.menu_hover = None;
+        if self.menu_open {
+            self.release_mouse();
+            self.console_log.record("F1 diagnostics menu: OPEN");
+        } else {
+            self.console_log.record("F1 diagnostics menu: CLOSED");
+            self.capture_mouse();
+        }
+    }
+
+    fn toggle_console(&mut self) {
+        self.console_open = !self.console_open;
+        self.menu_open = false;
+        self.menu_hover = None;
+        if self.console_open {
+            self.release_mouse();
+            self.console_log.record("F2 bottom log: OPEN (Ctrl+C copies full session)");
+        } else {
+            self.console_log.record("F2 bottom log: CLOSED");
+            self.capture_mouse();
+        }
+    }
+
+    fn copy_console(&mut self) {
+        match self.console_log.copy() {
+            Ok(()) => self.console_log.record("F2: full session copied to clipboard"),
+            Err(error) => self.console_log.record(format!("F2 copy failed: {error}")),
+        }
+    }
+
+    fn apply_debug_action(&mut self, action: MenuAction) {
+        if action == MenuAction::Console { self.toggle_console(); return; }
+        if action == MenuAction::FrameStats {
+            self.frame_stats = !self.frame_stats;
+            self.console_log.record(format!("F3 streaming metrics: {}", if self.frame_stats { "ON" } else { "OFF" }));
+            return;
+        }
+        let Some(renderer) = self.renderer.as_mut() else { return; };
+        if !renderer.menu_snapshot(self.frame_stats).enabled(action) { return; }
+        let message = match action {
+            MenuAction::UvChecker => format!("F6 UV checker: {}", renderer.toggle_checker()),
+            MenuAction::UvDensity => format!("F7 checker scale: {} texels/metre", renderer.cycle_density()),
+            MenuAction::V2Materials => format!("F8 candidate materials: {:?}", renderer.toggle_v2_preview()),
+            MenuAction::SurfacePreset => format!("F9 surface preset: {:?}", renderer.cycle_surface_preset()),
+            MenuAction::MetalGlints => format!("F10 metal glints: {:?}", renderer.toggle_metallic_glints()),
+            _ => return,
+        };
+        self.console_log.record(message);
     }
 
     fn input(&self) -> MoveInput {
@@ -157,6 +228,9 @@ impl ApplicationHandler for Game {
                 self.renderer = Some(renderer);
                 self.capture_mouse();
                 self.last_frame = Instant::now();
+                self.console_log.record(benchmark_log::system_report());
+                self.console_log.record(format!("WORLD {} resident sections", self.world.chunk_count()));
+                self.console_log.record("F1 menu | F2 console + Ctrl+C | F3 streamed frame metrics");
                 if self.world.is_streamed() {
                     println!(
                         "Hexel Survival STREAMED WORLD: {} resident sections; procedural source seed 42.",
@@ -215,69 +289,39 @@ impl ApplicationHandler for Game {
             WindowEvent::Focused(false) => self.release_mouse(),
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(key) = event.physical_key {
-                    if key == KeyCode::Escape {
-                        if event.state == ElementState::Pressed && !event.repeat {
-                            if self.mouse_captured {
-                                self.release_mouse();
-                            } else {
-                                self.capture_mouse();
-                            }
-                        }
-                        return;
-                    }
                     if event.state == ElementState::Pressed && !event.repeat {
-                        if let Some(renderer) = self.renderer.as_mut() {
-                            match key {
-                                KeyCode::F6 => {
-                                    let active = renderer.toggle_checker();
-                                    println!(
-                                        "P0 UV checker: {}",
-                                        if active { "ON" } else { "OFF" }
-                                    );
-                                    return;
-                                }
-                                KeyCode::F7 => {
-                                    println!(
-                                        "P0 checker scale: {} texels/metre",
-                                        renderer.cycle_density()
-                                    );
-                                    return;
-                                }
-                                KeyCode::F8 => {
-                                    match renderer.toggle_v2_preview() {
-                                        Some(true) => println!("V2 candidate gallery: ON"),
-                                        Some(false) => println!("V2 candidate gallery: OFF (P0)"),
-                                        None => println!("V2 gallery unavailable: bake compatible candidate textures first."),
-                                    }
-                                    return;
-                                }
-                                KeyCode::F9 => {
-                                    match renderer.cycle_surface_preset() {
-                                        Some(name) => println!("F8 surface preset: {name}"),
-                                        None => {
-                                            println!("F9 unavailable: bake v2 candidate art first.")
-                                        }
-                                    }
-                                    return;
-                                }
-                                KeyCode::F10 => {
-                                    match renderer.toggle_metallic_glints() {
-                                        Some(true) => println!("F8 copper metallic glints: ON"),
-                                        Some(false) => println!("F8 copper metallic glints: OFF"),
-                                        None => println!(
-                                            "F10 unavailable: bake v2 candidate art first."
-                                        ),
-                                    }
-                                    return;
-                                }
-                                _ => {}
-                            }
+                        if key == KeyCode::Escape {
+                            if self.menu_open { self.toggle_menu(); }
+                            else if self.console_open { self.toggle_console(); }
+                            else if self.mouse_captured { self.release_mouse(); }
+                            else { self.capture_mouse(); }
+                            return;
+                        }
+                        if key == KeyCode::F1 { self.toggle_menu(); return; }
+                        if key == KeyCode::F2 { self.toggle_console(); return; }
+                        if self.console_open && key == KeyCode::KeyC &&
+                            (self.pressed.contains(&KeyCode::ControlLeft) || self.pressed.contains(&KeyCode::ControlRight)) {
+                            self.copy_console(); return;
+                        }
+                        if let Some(action) = MenuAction::from_key(key) {
+                            self.apply_debug_action(action);
+                            return;
                         }
                     }
+                    if self.menu_open || self.console_open { return; }
                     if event.state == ElementState::Pressed {
                         self.pressed.insert(key);
                     } else {
                         self.pressed.remove(&key);
+                    }
+                }
+            }
+            WindowEvent::CursorMoved { position, .. } => {
+                self.menu_cursor = Some((position.x, position.y));
+                if self.menu_open {
+                    if let Some(window) = self.window.as_ref() {
+                        let size = window.inner_size();
+                        self.menu_hover = hit_test(position.x, position.y, size.width, size.height);
                     }
                 }
             }
@@ -286,13 +330,23 @@ impl ApplicationHandler for Game {
                 button: MouseButton::Left,
                 ..
             } => {
-                if !self.mouse_captured {
-                    self.capture_mouse();
-                }
+                if self.console_open {
+                    if let (Some((x, y)), Some(window)) = (self.menu_cursor, self.window.as_ref()) {
+                        let size = window.inner_size();
+                        if console_copy_hit_test(x, y, size.width, size.height) { self.copy_console(); }
+                    }
+                } else if self.menu_open {
+                    if let (Some((x, y)), Some(window)) = (self.menu_cursor, self.window.as_ref()) {
+                        let size = window.inner_size();
+                        if let Some(action) = hit_test(x, y, size.width, size.height) { self.apply_debug_action(action); }
+                    }
+                } else if !self.mouse_captured { self.capture_mouse(); }
             }
             WindowEvent::RedrawRequested => {
                 if let Some(renderer) = self.renderer.as_mut() {
-                    match renderer.draw(&self.player) {
+                    let menu = self.menu_open.then(|| (renderer.menu_snapshot(self.frame_stats), self.menu_hover));
+                    let console = self.console_open.then(|| (self.console_log.lines(), self.console_log.generation()));
+                    match renderer.draw(&self.player, menu, console) {
                         Ok(()) => {}
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                             if let Some(window) = self.window.as_ref() {
@@ -352,7 +406,7 @@ impl ApplicationHandler for Game {
                     .renderer
                     .as_ref()
                     .map_or((0, 0), Renderer::terrain_counts);
-                println!(
+                self.console_log.record(format!(
                     "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s).",
                     self.world.chunk_count(),
                     gpu_meshes,
@@ -364,14 +418,15 @@ impl ApplicationHandler for Game {
                     self.streamed_generation_cpu_ms,
                     self.streamed_meshing_cpu_ms,
                     now.duration_since(self.last_stream_report).as_secs_f64(),
-                );
+                ));
                 self.streamed_generated = 0;
                 self.streamed_evicted = 0;
                 self.streamed_meshes = 0;
                 self.streamed_uploaded_bytes = 0;
                 self.streamed_generation_cpu_ms = 0.0;
                 self.streamed_meshing_cpu_ms = 0.0;
-                println!("{}", self.stream_metrics.report_and_reset());
+                let report = self.stream_metrics.report_and_reset();
+                if self.frame_stats { self.console_log.record(report); }
                 self.last_stream_report = now;
             }
         }
