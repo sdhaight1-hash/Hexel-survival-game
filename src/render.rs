@@ -5,6 +5,7 @@ use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
     materials_p0, materials_v2,
     mesh::{build_chunk_mesh, Vertex},
+    presentation::PresentationOptions,
     texture_pack::TexturePack,
 };
 use bytemuck::{Pod, Zeroable};
@@ -78,6 +79,7 @@ pub struct Renderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
+    presentation_report: String,
     pipeline: wgpu::RenderPipeline,
     crosshair_pipeline: wgpu::RenderPipeline,
     menu_pipeline: wgpu::RenderPipeline,
@@ -105,7 +107,11 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub async fn new(window: Arc<Window>, world: &World) -> Result<Self, String> {
+    pub async fn new(
+        window: Arc<Window>,
+        world: &World,
+        presentation: PresentationOptions,
+    ) -> Result<Self, String> {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -151,15 +157,31 @@ impl Renderer {
             .copied()
             .find(|f| f.is_srgb())
             .unwrap_or(caps.formats[0]);
+        let effective_mode = presentation.resolve_mode(&caps.present_modes);
+        let adapter_info = adapter.get_info();
+        let presentation_report = format!(
+            "PRESENTATION: adapter {} ({:?}); requested {:?}, effective {:?}; supported {:?}; desired maximum frame latency {}; redraw ControlFlow::Poll (unchanged).{}",
+            adapter_info.name,
+            adapter_info.backend,
+            presentation.mode,
+            effective_mode,
+            caps.present_modes,
+            presentation.max_frame_latency,
+            if effective_mode != presentation.mode {
+                " Requested mode unsupported; fell back to FIFO."
+            } else {
+                ""
+            }
+        );
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
             width: size.width.max(1),
             height: size.height.max(1),
-            present_mode: wgpu::PresentMode::Fifo,
+            present_mode: effective_mode,
             alpha_mode: caps.alpha_modes[0],
             view_formats: vec![],
-            desired_maximum_frame_latency: 2,
+            desired_maximum_frame_latency: presentation.max_frame_latency,
         };
         surface.configure(&device, &config);
 
@@ -599,6 +621,7 @@ impl Renderer {
             device,
             queue,
             config,
+            presentation_report,
             pipeline,
             crosshair_pipeline,
             menu_pipeline,
@@ -663,6 +686,10 @@ impl Renderer {
             uploaded_bytes,
             cpu_ms: start.elapsed().as_secs_f64() * 1000.0,
         }
+    }
+
+    pub fn presentation_report(&self) -> &str {
+        &self.presentation_report
     }
 
     pub fn terrain_counts(&self) -> (usize, u64) {
