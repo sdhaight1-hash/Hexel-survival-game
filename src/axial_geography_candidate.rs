@@ -241,9 +241,9 @@ mod tests {
     #[test]
     fn local_f32_delta_remains_exact_at_large_global_addresses() {
         let origin = CandidateCellId::new(1_000_000_000_000, -1_000_000_000_000, 200);
-        let offset = CandidateCellId::new(origin.q + 1, origin.r - 2, origin.y + 1);
+        let offset = CandidateCellId::new(origin.q + 2, origin.r - 2, origin.y + 1);
         let local = CandidateProjection::relative_metres(offset, origin);
-        assert_eq!(local.x, 0.0);
+        assert_eq!(local.x, 1.0);
         assert_eq!(local.y, 1.0);
         assert!((local.z + 2.0 * CandidateProjection::z_metres_per_r() as f32).abs() < 1e-6);
         assert_eq!(
