@@ -108,7 +108,7 @@ pub struct BenchSample {
 }
 
 impl BenchSample {
-    fn add(&mut self, other: Self) {
+    pub fn add(&mut self, other: Self) {
         self.seconds += other.seconds;
         self.frames += other.frames;
         self.cpu_draw_ms_total += other.cpu_draw_ms_total;
