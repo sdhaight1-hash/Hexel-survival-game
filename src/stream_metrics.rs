@@ -99,7 +99,6 @@ mod tests {
         assert!(metrics.report_and_reset().contains("0 update intervals"));
     }
 
-
     #[test]
     fn movement_samples_are_partitioned_without_mixing_idle_percentiles() {
         let mut metrics = StreamFrameMetrics::default();
