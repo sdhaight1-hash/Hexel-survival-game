@@ -198,6 +198,11 @@ p50/p95/p99 and asynchronous GPU pass timestamps, all opt-in.
 These improvements are code-level only until a new native run
 confirms adapter support and meaningful performance readings.
 
+For long-duration tests, the [F2 console and weighted history](benchmark-history-console.md)
+records startup CPU/RAM/GPU/driver data, meshed-exposed hexels/faces,
+submitted triangles, 30-second rolling and cumulative averages, and
+a session log that can be copied or pasted.
+
 See [F11 grayscale gallery notes](p2-3-grayscale-copper-gallery.md),
 [material overlay roadmap](material-overlay-roadmap.md), and
 [world-generation contracts](world-generation.md).

@@ -1,5 +1,6 @@
 //! First-person one-chunk demo or opt-in 200-chunk material benchmark.
 
+mod benchmark_log;
 mod debug_menu;
 mod materials_p0;
 mod materials_v2;
@@ -8,7 +9,8 @@ mod render;
 mod texture_codec;
 mod texture_pack;
 
-use debug_menu::{hit_test, MenuAction};
+use benchmark_log::{BenchHistory, BenchSample, ConsoleLog};
+use debug_menu::{console_copy_hit_test, hit_test, MenuAction, MenuSnapshot};
 use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
@@ -32,6 +34,9 @@ struct Game {
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
     menu_open: bool,
+    console_open: bool,
+    console_log: ConsoleLog,
+    benchmark_history: BenchHistory,
     menu_cursor: Option<(f64, f64)>,
     menu_hover: Option<MenuAction>,
     last_frame: Instant,
@@ -62,6 +67,9 @@ impl Default for Game {
             pressed: HashSet::new(),
             mouse_captured: false,
             menu_open: false,
+            console_open: false,
+            console_log: ConsoleLog::new(),
+            benchmark_history: BenchHistory::default(),
             menu_cursor: None,
             menu_hover: None,
             last_frame: Instant::now(),
@@ -104,16 +112,54 @@ impl Game {
     }
 
     fn toggle_menu(&mut self) {
+        if self.benchmark_logging {
+            self.finish_benchmark_trial();
+            self.reset_benchmark_trial();
+        }
         self.menu_open = !self.menu_open;
+        self.console_open = false;
         self.menu_hover = None;
         self.menu_cursor = None;
-        self.pressed.clear(); // avoid held movement keys leaking out of the menu
+        self.pressed.clear();
         if self.menu_open {
             self.release_mouse();
-            println!("F1 diagnostics menu: OPEN (click a row; F1/Esc closes)");
+            self.console_log
+                .record("F1 diagnostics menu: OPEN (F1/Esc closes)");
         } else {
             self.capture_mouse();
-            println!("F1 diagnostics menu: CLOSED");
+            self.console_log.record("F1 diagnostics menu: CLOSED");
+        }
+    }
+
+    fn toggle_console(&mut self) {
+        if self.benchmark_logging {
+            self.finish_benchmark_trial();
+            self.reset_benchmark_trial();
+        }
+        self.console_open = !self.console_open;
+        self.menu_open = false;
+        self.menu_hover = None;
+        self.menu_cursor = None;
+        self.pressed.clear();
+        if self.console_open {
+            self.release_mouse();
+            self.console_log
+                .record("F2 bottom log: OPEN (Ctrl+C or COPY LOG, F2/Esc closes)");
+        } else {
+            self.capture_mouse();
+            self.console_log.record("F2 bottom log: CLOSED");
+        }
+    }
+
+    fn copy_console(&mut self) {
+        match self.console_log.copy() {
+            Ok(()) => self
+                .console_log
+                .record("F2 session log copied to Windows clipboard"),
+            Err(error) => self.console_log.record(format!(
+                "F2 clipboard unavailable: {error}. Full log: {}",
+                benchmark_log::LOG_FILE
+            )),
         }
     }
 
@@ -127,74 +173,120 @@ impl Game {
         self.benchmark_last_present = None;
     }
 
+    fn reset_benchmark_trial(&mut self) {
+        self.reset_benchmark_window();
+        self.benchmark_history.clear();
+    }
+
+    fn finish_benchmark_trial(&mut self) {
+        let mut trial = self.benchmark_history.trial();
+        if self.benchmark_frames > 0 {
+            trial.add(BenchSample {
+                seconds: self.benchmark_window_start.elapsed().as_secs_f64(),
+                frames: u64::from(self.benchmark_frames),
+                cpu_draw_ms_total: self.benchmark_draw_ms_total,
+                gpu_pass_ms_total: self.benchmark_gpu_ms_total,
+                gpu_samples: u64::from(self.benchmark_gpu_samples),
+            });
+        }
+        if trial.frames == 0 {
+            return;
+        }
+        let label = self.renderer.as_ref().map_or_else(
+            || "not initialized".into(),
+            |r| {
+                benchmark_mode_label(
+                    r.material_comparison_label(),
+                    r.presentation_label(),
+                    r.menu_snapshot(self.benchmark_logging),
+                    self.menu_open,
+                    self.console_open,
+                )
+            },
+        );
+        self.console_log
+            .record(format_average(&label, "TRIAL FINAL", trial));
+    }
+
     /// One action path for F-keys and mouse-selected menu rows.
     fn apply_debug_action(&mut self, action: MenuAction) {
+        if action == MenuAction::Console {
+            self.toggle_console();
+            return;
+        }
         if action == MenuAction::FrameStats {
+            if self.benchmark_logging {
+                self.finish_benchmark_trial();
+            }
             self.benchmark_logging = !self.benchmark_logging;
-            self.reset_benchmark_window();
+            self.reset_benchmark_trial();
             if let Some(renderer) = self.renderer.as_mut() {
                 renderer.set_gpu_profiling(self.benchmark_logging);
             }
-            println!(
+            self.console_log.record(format!(
                 "F3 benchmark logging: {}",
                 if self.benchmark_logging { "ON" } else { "OFF" }
-            );
+            ));
             return;
+        }
+        let can_change = self
+            .renderer
+            .as_ref()
+            .is_some_and(|r| r.menu_snapshot(self.benchmark_logging).enabled(action));
+        if can_change && self.benchmark_logging {
+            self.finish_benchmark_trial(); // preserve the OLD configuration label
         }
         let Some(renderer) = self.renderer.as_mut() else {
             return;
         };
-        match action {
-            MenuAction::FrameStats => unreachable!(),
+        let message = match action {
+            MenuAction::Console | MenuAction::FrameStats => unreachable!(),
             MenuAction::Presentation => match renderer.toggle_present_mode() {
-                Some(true) => println!("F5 presentation: UNLOCKED (Immediate, tearing possible)"),
-                Some(false) => println!("F5 presentation: VSYNC (FIFO)"),
-                None => println!(
-                    "F5 unavailable: Immediate presentation not supported in this benchmark."
-                ),
+                Some(true) => "F5 presentation: UNLOCKED (Immediate, tearing possible)".into(),
+                Some(false) => "F5 presentation: VSYNC (FIFO)".into(),
+                None => {
+                    "F5 unavailable: Immediate presentation not supported in this benchmark.".into()
+                }
             },
             MenuAction::ChunkCulling => match renderer.toggle_chunk_culling() {
-                Some(true) => println!("F4 nearby-chunk culling: ON"),
-                Some(false) => println!("F4 nearby-chunk culling: OFF (all resident chunks drawn)"),
-                None => println!("F4 available only in multi-chunk benchmark mode."),
+                Some(true) => "F4 nearby-chunk culling: ON".into(),
+                Some(false) => "F4 nearby-chunk culling: OFF (all resident chunks drawn)".into(),
+                None => "F4 available only in multi-chunk benchmark mode.".into(),
             },
             MenuAction::UvChecker => {
                 let active = renderer.toggle_checker();
-                println!("P0 UV checker: {}", if active { "ON" } else { "OFF" });
+                format!("P0 UV checker: {}", if active { "ON" } else { "OFF" })
             }
             MenuAction::UvDensity => {
-                println!(
+                format!(
                     "P0 checker scale: {} texels/metre",
                     renderer.cycle_density()
-                );
+                )
             }
             MenuAction::V2Materials => match renderer.toggle_v2_preview() {
-                Some(true) => println!("V2 candidate gallery: ON"),
-                Some(false) => println!("V2 candidate gallery: OFF (P0)"),
-                None => {
-                    println!("V2 gallery unavailable: bake compatible candidate textures first.")
-                }
+                Some(true) => "V2 candidate gallery: ON".into(),
+                Some(false) => "V2 candidate gallery: OFF (P0)".into(),
+                None => "V2 gallery unavailable: bake compatible candidate textures first.".into(),
             },
             MenuAction::SurfacePreset => match renderer.cycle_surface_preset() {
-                Some(name) => println!("F8 surface preset: {name}"),
-                None => println!("F9 unavailable: bake v2 candidate art first."),
+                Some(name) => format!("F8 surface preset: {name}"),
+                None => "F9 unavailable: bake v2 candidate art first.".into(),
             },
             MenuAction::MetalGlints => match renderer.toggle_metallic_glints() {
-                Some(true) => println!("F8 copper metallic glints: ON"),
-                Some(false) => println!("F8 copper metallic glints: OFF"),
-                None => println!("F10 unavailable: bake v2 candidate art first."),
+                Some(true) => "F8 copper metallic glints: ON".into(),
+                Some(false) => "F8 copper metallic glints: OFF".into(),
+                None => "F10 unavailable: bake v2 candidate art first.".into(),
             },
             MenuAction::GrayCopper => match renderer.toggle_grayscale_copper() {
-                Some(true) => println!("F11 copper comparison: grayscale mask + shader palette"),
-                Some(false) => println!("F11 copper comparison: original full-color candidate"),
-                None => {
-                    println!("F11 unavailable: enable F8 with a baked native-copper candidate.")
-                }
+                Some(true) => "F11 copper comparison: grayscale mask + shader palette".into(),
+                Some(false) => "F11 copper comparison: original full-color candidate".into(),
+                None => "F11 unavailable: enable F8 with a baked native-copper candidate.".into(),
             },
+        };
+        if can_change && self.benchmark_logging {
+            self.reset_benchmark_trial();
         }
-        if self.benchmark_logging {
-            self.reset_benchmark_window(); // never mix settings within one benchmark interval
-        }
+        self.console_log.record(message);
     }
 
     fn input(&self) -> MoveInput {
@@ -245,6 +337,18 @@ impl ApplicationHandler for Game {
 
         match pollster::block_on(Renderer::new(window.clone(), &self.world)) {
             Ok(renderer) => {
+                self.console_log.record(benchmark_log::system_report());
+                self.console_log
+                    .record(renderer.hardware_report().to_string());
+                self.console_log.record(renderer.viewport_report());
+                self.console_log
+                    .record(renderer.geometry_report().to_string());
+                self.console_log.record(
+                    "METRICS exposed hexels/faces = mesh-exposed; submitted = chunk distance filter; neither means camera/pixel visible"
+                );
+                self.console_log.record(
+                    "LOG F2 bottom overlay | Ctrl+C copy full session | file target/benchmark-session.log"
+                );
                 self.window = Some(window);
                 self.renderer = Some(renderer);
                 self.capture_mouse();
@@ -256,7 +360,8 @@ impl ApplicationHandler for Game {
                 println!(
                     "WASD move | Mouse look | Space jump | Left Ctrl sprint | Left Shift sneak"
                 );
-                println!("F1: clickable diagnostics menu (F1/Esc closes); F3–F11 shortcuts remain active.");
+                println!("F1: clickable diagnostics menu (F1/Esc closes); F2 bottom console, Ctrl+C copy.");
+                println!("F3: every 3s report + rolling 30s / trial averages; F2 full session file/clipboard.");
                 println!(
                     "F5: opt-in VSYNC / UNLOCKED (Immediate) benchmark presentation if available."
                 );
@@ -314,6 +419,8 @@ impl ApplicationHandler for Game {
                         if event.state == ElementState::Pressed && !event.repeat {
                             if self.menu_open {
                                 self.toggle_menu();
+                            } else if self.console_open {
+                                self.toggle_console();
                             } else if self.mouse_captured {
                                 self.release_mouse();
                             } else {
@@ -326,6 +433,22 @@ impl ApplicationHandler for Game {
                         if event.state == ElementState::Pressed && !event.repeat {
                             self.toggle_menu();
                         }
+                        return;
+                    }
+                    if key == KeyCode::F2 {
+                        if event.state == ElementState::Pressed && !event.repeat {
+                            self.toggle_console();
+                        }
+                        return;
+                    }
+                    if self.console_open
+                        && key == KeyCode::KeyC
+                        && event.state == ElementState::Pressed
+                        && !event.repeat
+                        && (self.pressed.contains(&KeyCode::ControlLeft)
+                            || self.pressed.contains(&KeyCode::ControlRight))
+                    {
+                        self.copy_console();
                         return;
                     }
                     if event.state == ElementState::Pressed && !event.repeat {
@@ -355,7 +478,14 @@ impl ApplicationHandler for Game {
                 button: MouseButton::Left,
                 ..
             } => {
-                if self.menu_open {
+                if self.console_open {
+                    if let (Some((x, y)), Some(window)) = (self.menu_cursor, self.window.as_ref()) {
+                        let size = window.inner_size();
+                        if console_copy_hit_test(x, y, size.width, size.height) {
+                            self.copy_console();
+                        }
+                    }
+                } else if self.menu_open {
                     if let (Some((x, y)), Some(window), Some(renderer)) = (
                         self.menu_cursor,
                         self.window.as_ref(),
@@ -383,7 +513,10 @@ impl ApplicationHandler for Game {
                             self.menu_hover,
                         )
                     });
-                    match renderer.draw(&self.player, menu) {
+                    let console = self
+                        .console_open
+                        .then(|| (self.console_log.lines(), self.console_log.generation()));
+                    match renderer.draw(&self.player, menu, console) {
                         Ok(()) => {
                             if self.benchmark_logging {
                                 let now = Instant::now();
@@ -420,20 +553,49 @@ impl ApplicationHandler for Game {
                                     } else {
                                         "GPU pass N/A".to_string()
                                     };
-                                    println!(
-                                        "BENCH [{} | {}]: {:.1} FPS wall, frame p50/p95/p99 {:.2}/{:.2}/{:.2} ms, {:.2} ms CPU draw incl. acquire/present, {}, {}/{} submitted chunks, {} vertices",
+                                    let label = benchmark_mode_label(
                                         renderer.material_comparison_label(),
                                         renderer.presentation_label(),
-                                        f64::from(self.benchmark_frames) / elapsed,
+                                        renderer.menu_snapshot(self.benchmark_logging),
+                                        self.menu_open,
+                                        self.console_open,
+                                    );
+                                    let sample = BenchSample {
+                                        seconds: elapsed,
+                                        frames: u64::from(self.benchmark_frames),
+                                        cpu_draw_ms_total: self.benchmark_draw_ms_total,
+                                        gpu_pass_ms_total: self.benchmark_gpu_ms_total,
+                                        gpu_samples: u64::from(self.benchmark_gpu_samples),
+                                    };
+                                    self.benchmark_history.record_window(sample);
+                                    self.console_log.record(format!(
+                                        "BENCH [{}]: {:.1} FPS wall, frame p50/p95/p99 {:.2}/{:.2}/{:.2} ms, {:.2} ms CPU draw incl. acquire/present, {}, {}/{} submitted chunks, {} submitted exposed hexels, {} caps + {} sides = {} faces, {} triangles, {} vertices",
+                                        label,
+                                        sample.fps(),
                                         p50,
                                         p95,
                                         p99,
-                                        self.benchmark_draw_ms_total / f64::from(self.benchmark_frames),
+                                        sample.cpu_ms(),
                                         gpu,
                                         stats.submitted_chunks,
                                         self.world.chunk_count(),
+                                        stats.submitted_exposed_hexels,
+                                        stats.submitted_cap_faces,
+                                        stats.submitted_side_faces,
+                                        stats.submitted_cap_faces + stats.submitted_side_faces,
+                                        stats.submitted_vertices / 3,
                                         stats.submitted_vertices,
-                                    );
+                                    ));
+                                    self.console_log.record(format_average(
+                                        &label,
+                                        "ROLLING 30S",
+                                        self.benchmark_history.recent(30.0),
+                                    ));
+                                    self.console_log.record(format_average(
+                                        &label,
+                                        "TRIAL",
+                                        self.benchmark_history.trial(),
+                                    ));
                                     self.reset_benchmark_window();
                                 }
                             }
@@ -476,6 +638,61 @@ impl ApplicationHandler for Game {
     }
 }
 
+/// Snapshot the *actual* material/overlay/culling context for each trial.
+/// Inactive F9/F10 preferences remain marked as configured, not rendered.
+fn benchmark_mode_label(
+    material: &str,
+    presentation: &str,
+    snapshot: MenuSnapshot,
+    menu_open: bool,
+    console_open: bool,
+) -> String {
+    let flag = |value: bool| if value { "ON" } else { "OFF" };
+    let culling = snapshot.chunk_culling.map_or("N/A", flag);
+    let surface = match snapshot.surface {
+        Some(name) if snapshot.v2_materials == Some(false) => format!("{name} SET"),
+        Some(name) => name.to_string(),
+        None => "N/A".into(),
+    };
+    let glints = match snapshot.metal_glints {
+        Some(enabled) if snapshot.v2_materials == Some(false) => {
+            format!("{} SET", flag(enabled))
+        }
+        Some(enabled) => flag(enabled).into(),
+        None => "N/A".into(),
+    };
+    let ui = if menu_open {
+        "F1 OPEN"
+    } else if console_open {
+        "F2 OPEN"
+    } else {
+        "CLOSED"
+    };
+    format!(
+        "{material} | {presentation} | F4 {culling} | F9 {surface} | F10 {glints} | F6 {} | F7 {} | UI {ui}",
+        flag(snapshot.uv_checker),
+        snapshot.uv_density,
+    )
+}
+
+/// Weighted FPS and CPU/GPU means, excluding unsupported GPU timings.
+fn format_average(label: &str, name: &str, sample: BenchSample) -> String {
+    let gpu = match sample.gpu_ms() {
+        Some(value) => format!(
+            "{value:.3} ms sampled GPU pass ({} samples)",
+            sample.gpu_samples
+        ),
+        None => "GPU pass N/A (no completed samples)".into(),
+    };
+    format!(
+        "AVG {name} [{label}]: {:.1}s / {} frames, {:.1} FPS wall, {:.3} ms CPU draw incl. acquire/present, {gpu}",
+        sample.seconds,
+        sample.frames,
+        sample.fps(),
+        sample.cpu_ms(),
+    )
+}
+
 /// Nearest sampled frame interval at a requested percentile. Input is sorted
 /// by the caller; empty windows report zero instead of implying GPU timing.
 fn frame_percentile_ms(sorted: &[f64], percentile: usize) -> f64 {
@@ -488,6 +705,51 @@ fn frame_percentile_ms(sorted: &[f64], percentile: usize) -> f64 {
 #[cfg(test)]
 mod benchmark_stats_tests {
     use super::*;
+
+    #[test]
+    fn benchmark_labels_separate_surface_and_ui_context() {
+        let mut snapshot = MenuSnapshot {
+            console_open: false,
+            frame_stats: true,
+            chunk_culling: Some(true),
+            unlocked_present: Some(true),
+            gpu_timestamps: true,
+            uv_checker: false,
+            uv_density: 128,
+            v2_materials: Some(true),
+            surface: Some("Dry"),
+            metal_glints: Some(true),
+            gray_copper: Some(true),
+        };
+        let dry = benchmark_mode_label("F11 grayscale", "IMMEDIATE", snapshot, false, false);
+        snapshot.surface = Some("Moss / lichen");
+        let moss = benchmark_mode_label("F11 grayscale", "IMMEDIATE", snapshot, false, true);
+        assert_ne!(dry, moss);
+        assert!(dry.contains("F9 Dry"));
+        assert!(dry.contains("UI CLOSED"));
+        assert!(moss.contains("F9 Moss / lichen"));
+        assert!(moss.contains("UI F2 OPEN"));
+        snapshot.v2_materials = Some(false);
+        let inactive = benchmark_mode_label("P0", "FIFO", snapshot, true, false);
+        assert!(inactive.contains("F9 Moss / lichen SET"));
+        assert!(inactive.contains("F10 ON SET"));
+    }
+
+    #[test]
+    fn averages_reflect_weighted_frame_and_gpu_sample_counts() {
+        let sample = BenchSample {
+            seconds: 30.0,
+            frames: 51000,
+            cpu_draw_ms_total: 25500.0,
+            gpu_pass_ms_total: 3.6,
+            gpu_samples: 12,
+        };
+        let message = format_average("F8 | IMMEDIATE", "ROLLING 30S", sample);
+        assert!(message.contains("30.0s / 51000 frames"));
+        assert!(message.contains("1700.0 FPS wall"));
+        assert!(message.contains("0.500 ms CPU draw"));
+        assert!(message.contains("0.300 ms sampled GPU pass (12 samples)"));
+    }
 
     #[test]
     fn frame_percentiles_use_observed_sorted_intervals() {

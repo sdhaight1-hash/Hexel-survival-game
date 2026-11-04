@@ -3,16 +3,18 @@
 //! This intentionally avoids a production-game UI framework for a small testbed.
 
 use bytemuck::{Pod, Zeroable};
+use std::collections::VecDeque;
 use winit::keyboard::KeyCode;
 
 const PANEL_WIDTH: f32 = 478.0;
-const PANEL_HEIGHT: f32 = 528.0;
+const PANEL_HEIGHT: f32 = 575.0;
 const PANEL_MARGIN: f32 = 18.0;
 const ROW_TOP: f32 = 76.0;
 const ROW_HEIGHT: f32 = 43.0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MenuAction {
+    Console,
     FrameStats,
     ChunkCulling,
     Presentation,
@@ -24,7 +26,8 @@ pub enum MenuAction {
     GrayCopper,
 }
 
-pub const ACTIONS: [MenuAction; 9] = [
+pub const ACTIONS: [MenuAction; 10] = [
+    MenuAction::Console,
     MenuAction::FrameStats,
     MenuAction::ChunkCulling,
     MenuAction::Presentation,
@@ -39,6 +42,7 @@ pub const ACTIONS: [MenuAction; 9] = [
 impl MenuAction {
     pub fn from_key(key: KeyCode) -> Option<Self> {
         Some(match key {
+            KeyCode::F2 => Self::Console,
             KeyCode::F3 => Self::FrameStats,
             KeyCode::F4 => Self::ChunkCulling,
             KeyCode::F5 => Self::Presentation,
@@ -54,6 +58,7 @@ impl MenuAction {
 
     fn label(self) -> &'static str {
         match self {
+            Self::Console => "F2  LOG CONSOLE",
             Self::FrameStats => "F3  FRAME STATS",
             Self::ChunkCulling => "F4  CHUNK CULLING",
             Self::Presentation => "F5  PRESENTATION",
@@ -71,6 +76,7 @@ impl MenuAction {
 /// The menu only reads their current values and dispatches existing actions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct MenuSnapshot {
+    pub console_open: bool,
     pub frame_stats: bool,
     pub chunk_culling: Option<bool>,
     pub unlocked_present: Option<bool>,
@@ -86,7 +92,10 @@ pub struct MenuSnapshot {
 impl MenuSnapshot {
     pub fn enabled(self, action: MenuAction) -> bool {
         match action {
-            MenuAction::FrameStats | MenuAction::UvChecker | MenuAction::UvDensity => true,
+            MenuAction::Console
+            | MenuAction::FrameStats
+            | MenuAction::UvChecker
+            | MenuAction::UvDensity => true,
             MenuAction::ChunkCulling => self.chunk_culling.is_some(),
             MenuAction::Presentation => self.unlocked_present.is_some(),
             MenuAction::V2Materials => self.v2_materials.is_some(),
@@ -105,6 +114,7 @@ impl MenuSnapshot {
             }
         }
         match action {
+            MenuAction::Console => if self.console_open { "HIDE" } else { "SHOW" }.into(),
             MenuAction::FrameStats => on_off(self.frame_stats).into(),
             MenuAction::ChunkCulling => self.chunk_culling.map_or("N/A", on_off).into(),
             MenuAction::Presentation => match self.unlocked_present {
@@ -171,7 +181,7 @@ impl MenuVertex {
 
 fn menu_scale(width: u32, height: u32) -> f32 {
     (width as f32 / 520.0)
-        .min(height as f32 / 570.0)
+        .min(height as f32 / 620.0)
         .min(1.0)
         .max(0.01)
 }
@@ -261,6 +271,19 @@ fn glyph(ch: char) -> [u8; 7] {
         '.' => [0, 0, 0, 0, 0, 12, 12],
         ':' => [0, 12, 12, 0, 12, 12, 0],
         '+' => [0, 4, 4, 31, 4, 4, 0],
+        '=' => [0, 31, 0, 31, 0, 0, 0],
+        '%' => [17, 2, 4, 8, 17, 0, 0],
+        '(' => [2, 4, 8, 8, 8, 4, 2],
+        ')' => [8, 4, 2, 2, 2, 4, 8],
+        '[' => [14, 8, 8, 8, 8, 8, 14],
+        ']' => [14, 2, 2, 2, 2, 2, 14],
+        ',' => [0, 0, 0, 0, 4, 4, 8],
+        '_' => [0, 0, 0, 0, 0, 0, 31],
+        '|' => [4, 4, 4, 4, 4, 4, 4],
+        '>' => [16, 8, 4, 2, 4, 8, 16],
+        '<' => [1, 2, 4, 8, 4, 2, 1],
+        '?' => [14, 17, 1, 2, 4, 0, 4],
+        '#' => [10, 31, 10, 10, 31, 10, 0],
         _ => [0; 7],
     }
 }
@@ -382,7 +405,7 @@ pub fn geometry(
         &mut out,
         size,
         left + 22.0 * scale,
-        top + 480.0 * scale,
+        top + 523.0 * scale,
         1.7 * scale,
         "F1 OR ESC TO RETURN TO WORLD",
         dim,
@@ -391,7 +414,7 @@ pub fn geometry(
         &mut out,
         size,
         left + 22.0 * scale,
-        top + 505.0 * scale,
+        top + 548.0 * scale,
         1.55 * scale,
         if snapshot.gpu_timestamps {
             "GPU PASS TIMER AVAILABLE"
@@ -403,12 +426,127 @@ pub fn geometry(
     out
 }
 
+const CONSOLE_MARGIN: f32 = 12.0;
+const CONSOLE_HEIGHT: f32 = 270.0;
+const CONSOLE_ROW_STEP: f32 = 15.0;
+const CONSOLE_CHAR_PIXEL: f32 = 1.55;
+
+fn console_bounds(width: u32, height: u32) -> Option<(f32, f32, f32, f32)> {
+    if width < 100 || height < 100 {
+        return None;
+    }
+    let margin = CONSOLE_MARGIN.min(width as f32 * 0.02);
+    let w = width as f32 - 2.0 * margin;
+    let h = CONSOLE_HEIGHT.min(height as f32 * 0.45);
+    Some((margin, height as f32 - h - margin, w, h))
+}
+
+fn copy_button(width: u32, height: u32) -> Option<(f32, f32, f32, f32)> {
+    let (x, y, w, _) = console_bounds(width, height)?;
+    Some((x + w - 189.0, y + 8.0, 174.0, 31.0))
+}
+
+/// The fixed button occupies the same pixels as the generated overlay.
+pub fn console_copy_hit_test(x: f64, y: f64, width: u32, height: u32) -> bool {
+    let Some((left, top, w, h)) = copy_button(width, height) else {
+        return false;
+    };
+    (left..left + w).contains(&(x as f32)) && (top..top + h).contains(&(y as f32))
+}
+
+/// Return the most recent wrapped rows, but never truncate the copyable
+/// full-length log lines stored in the underlying ConsoleLog.
+fn console_tail_rows(lines: &VecDeque<String>, max_chars: usize, count: usize) -> Vec<String> {
+    let mut rows = Vec::new();
+    for line in lines {
+        let chars: Vec<char> = line.chars().collect();
+        for segment in chars.chunks(max_chars.max(1)) {
+            rows.push(segment.iter().collect());
+        }
+    }
+    rows.into_iter()
+        .rev()
+        .take(count)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect()
+}
+
+/// Draw the F2 bottom-docked running log using the *existing* HUD shader
+/// and bitmap font. Upload only when new messages or viewport size change.
+pub fn console_geometry(width: u32, height: u32, lines: &VecDeque<String>) -> Vec<MenuVertex> {
+    let Some((x, y, w, h)) = console_bounds(width, height) else {
+        return Vec::new();
+    };
+    let size = (width as f32, height as f32);
+    let mut out = Vec::new();
+    let ink = [0.89, 0.86, 0.78, 1.0];
+    let gold = [0.91, 0.71, 0.37, 1.0];
+    let dim = [0.61, 0.64, 0.62, 1.0];
+    rect(&mut out, size, (x, y), (w, h), [0.05, 0.065, 0.07, 0.95]);
+    rect(&mut out, size, (x, y), (w, 3.0), gold);
+    write_text(
+        &mut out,
+        size,
+        x + 15.0,
+        y + 13.0,
+        2.0,
+        "BENCHMARK RUNNING LOG",
+        ink,
+    );
+    if let Some((cx, cy, cw, ch)) = copy_button(width, height) {
+        rect(&mut out, size, (cx, cy), (cw, ch), [0.22, 0.24, 0.20, 0.96]);
+        write_text(
+            &mut out,
+            size,
+            cx + 9.0,
+            cy + 8.0,
+            1.8,
+            "COPY LOG CTRL+C",
+            gold,
+        );
+    }
+
+    let line_height = CONSOLE_ROW_STEP;
+    let max_rows = ((h - 72.0) / line_height).floor().max(1.0) as usize;
+    let max_chars = ((w - 34.0) / (6.0 * CONSOLE_CHAR_PIXEL)).floor().max(10.0) as usize;
+    let visible_rows = console_tail_rows(lines, max_chars, max_rows);
+    for (index, text) in visible_rows.iter().enumerate() {
+        let label_color = if text.starts_with("BENCH") || text.starts_with("AVG") {
+            ink
+        } else {
+            dim
+        };
+        write_text(
+            &mut out,
+            size,
+            x + 15.0,
+            y + 46.0 + index as f32 * line_height,
+            CONSOLE_CHAR_PIXEL,
+            text,
+            label_color,
+        );
+    }
+    write_text(
+        &mut out,
+        size,
+        x + 15.0,
+        y + h - 20.0,
+        1.4,
+        "F2 CLOSE   CTRL+C COPY   FULL LOG: TARGET/BENCHMARK-SESSION.LOG",
+        dim,
+    );
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn state() -> MenuSnapshot {
         MenuSnapshot {
+            console_open: false,
             frame_stats: false,
             chunk_culling: Some(true),
             unlocked_present: Some(false),
@@ -423,8 +561,9 @@ mod tests {
     }
 
     #[test]
-    fn nine_hotkeys_map_to_distinct_actions() {
+    fn ten_hotkeys_map_to_distinct_actions() {
         for (key, action) in [
+            (KeyCode::F2, MenuAction::Console),
             (KeyCode::F3, MenuAction::FrameStats),
             (KeyCode::F4, MenuAction::ChunkCulling),
             (KeyCode::F5, MenuAction::Presentation),
@@ -453,6 +592,30 @@ mod tests {
         assert_eq!(hit_test(2.0, 2.0, 1280, 800), None);
         assert_eq!(hit_test(100.0, 50.0, 1280, 800), None);
         assert_eq!(hit_test(100.0, 100.0, 0, 800), None);
+    }
+
+    #[test]
+    fn console_copy_hitbox_and_wrapped_tail_are_consistent() {
+        let (x, y, w, h) = copy_button(1280, 800).unwrap();
+        assert!(console_copy_hit_test(
+            (x + w / 2.0) as f64,
+            (y + h / 2.0) as f64,
+            1280,
+            800
+        ));
+        assert!(!console_copy_hit_test(0.0, 0.0, 1280, 800));
+        assert!(!console_copy_hit_test(10.0, 10.0, 0, 0));
+        let lines = VecDeque::from(["1234567890123".to_string(), "tail".to_string()]);
+        assert_eq!(
+            console_tail_rows(&lines, 5, 3),
+            vec!["67890", "123", "tail"]
+        );
+        let vertices = console_geometry(1280, 800, &lines);
+        assert!(!vertices.is_empty());
+        assert_eq!(vertices.len() % 6, 0);
+        assert!(vertices
+            .iter()
+            .all(|v| v.position.iter().all(|n| n.is_finite())));
     }
 
     #[test]
