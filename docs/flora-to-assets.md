@@ -121,6 +121,30 @@ the conversation; they have **not** been installed as repo source
 art, given a provenance license for distribution or approved as
 production assets.
 
+### Seasonal palette arrays are appearance bindings, not species IDs
+
+A future approved flora asset may reference a stable
+`seasonal_palette_set_id` (illustrative field **only**) containing
+several pigment ramps keyed by normalized world-year phase. The
+renderer can sample the relevant neighboring ramps and blend the
+leaf's grayscale inner-detail colors continuously. A blue fantasy
+willow may have a different seasonal palette set from an ordinary
+willow even when they share geometry and life rules.
+
+**Persist real state, derive color:** species identity, approved
+phenotype, maturity, leaf retention, harvest/removal and actual
+climate/health effects belong to gameplay or approved flora asset
+state. Current world time plus a deterministic region/species
+mapping determines color phase when implemented. Never store
+per-frame interpolated RGB in the flora registry or bake a new
+PNG each day. Coordinate any leaf-loss geometry and snow cover
+through their own contracts; a palette does not define either.
+
+The current reference registry remains **research-only**. No
+`seasonal_palette_set_id` field, species palette lookup or
+world-time-driven foliage renderer is implemented in this PR.
+
+
 ## Registry data / source cautions
 
 `assets/flora/reference_registry.v1.json` holds **208 historical research
