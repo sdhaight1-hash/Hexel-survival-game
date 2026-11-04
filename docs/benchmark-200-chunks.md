@@ -192,6 +192,12 @@ actual frame-time statistics and any GPU timing separately.
    terrain, region ownership, water conservation, functional mining,
    infinite chunks, or actual material-family art approval.
 
+The [F5 uncapped/GPU instrumentation](benchmark-instrumentation.md)
+extends this fixture with a hardware-gated Immediate mode, frame
+p50/p95/p99 and asynchronous GPU pass timestamps, all opt-in.
+These improvements are code-level only until a new native run
+confirms adapter support and meaningful performance readings.
+
 See [F11 grayscale gallery notes](p2-3-grayscale-copper-gallery.md),
 [material overlay roadmap](material-overlay-roadmap.md), and
 [world-generation contracts](world-generation.md).
