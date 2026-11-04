@@ -411,6 +411,19 @@ fn main() {
 #[cfg(test)]
 mod shader_tests {
     #[test]
+    fn debug_menu_shader_parses_and_validates() {
+        let source = include_str!("debug_menu.wgsl");
+        let module =
+            naga::front::wgsl::parse_str(source).expect("debug menu shader must parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("debug menu shader must pass Naga semantic validation");
+    }
+
+    #[test]
     fn p2_surface_shader_parses_and_validates() {
         let source = include_str!("world_shader.wgsl");
         let module =
