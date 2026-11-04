@@ -133,9 +133,11 @@ impl GpuTimer {
 
     fn begin_readback(&mut self) {
         let (send, receive) = mpsc::channel();
-        self.readback.slice(..).map_async(wgpu::MapMode::Read, move |result| {
-            let _ = send.send(result);
-        });
+        self.readback
+            .slice(..)
+            .map_async(wgpu::MapMode::Read, move |result| {
+                let _ = send.send(result);
+            });
         self.pending = Some(receive);
         self.last_request = Instant::now();
     }
@@ -943,11 +945,13 @@ impl Renderer {
             });
         {
             let timestamp_writes = if timestamp_this_frame {
-                self.gpu_timer.as_ref().map(|timer| wgpu::RenderPassTimestampWrites {
-                    query_set: &timer.queries,
-                    beginning_of_pass_write_index: Some(0),
-                    end_of_pass_write_index: Some(1),
-                })
+                self.gpu_timer
+                    .as_ref()
+                    .map(|timer| wgpu::RenderPassTimestampWrites {
+                        query_set: &timer.queries,
+                        beginning_of_pass_write_index: Some(0),
+                        end_of_pass_write_index: Some(1),
+                    })
             } else {
                 None
             };
