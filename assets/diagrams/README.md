@@ -21,10 +21,11 @@ shader output, or an exact hexel UV/terrain template.
   entire painted poster.
 - The planar linked hexagons illustrate **true hexagonal caps**, but
   do not specify the final global hexel-coordinate torus seam mapping.
-- SCA research currently resides on
-  [draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30);
-  the overlay compositor, world generator, water solver and real
-  geology/ecology remain **proposed**. Do not promote their labels
+- The bounded headless SCA prototype is now in
+  [src/space_colonization.rs](../../src/space_colonization.rs)
+  (merged [research PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30)); the overlay
+  compositor, world generator, water solver and real geology/ecology
+  remain **proposed**. Do not promote their labels
   to `implemented` until the code and tests prove them.
 - Diagram palette echoes Hexal's restrained warm/cool color intent,
   but is not a numeric gameplay texture palette.
