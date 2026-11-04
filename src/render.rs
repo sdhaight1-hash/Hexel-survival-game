@@ -742,12 +742,8 @@ impl Renderer {
         let draw_start = Instant::now();
         if let Some((snapshot, hovered)) = menu {
             if self.menu_cache != Some((snapshot, hovered)) {
-                let vertices = debug_menu::geometry(
-                    self.config.width,
-                    self.config.height,
-                    snapshot,
-                    hovered,
-                );
+                let vertices =
+                    debug_menu::geometry(self.config.width, self.config.height, snapshot, hovered);
                 self.menu_vertex_count = vertices.len() as u32;
                 self.menu_buffer = Some(self.device.create_buffer_init(
                     &wgpu::util::BufferInitDescriptor {
