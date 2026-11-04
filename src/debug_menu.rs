@@ -92,7 +92,10 @@ pub struct MenuSnapshot {
 impl MenuSnapshot {
     pub fn enabled(self, action: MenuAction) -> bool {
         match action {
-            MenuAction::Console | MenuAction::FrameStats | MenuAction::UvChecker | MenuAction::UvDensity => true,
+            MenuAction::Console
+            | MenuAction::FrameStats
+            | MenuAction::UvChecker
+            | MenuAction::UvDensity => true,
             MenuAction::ChunkCulling => self.chunk_culling.is_some(),
             MenuAction::Presentation => self.unlocked_present.is_some(),
             MenuAction::V2Materials => self.v2_materials.is_some(),
@@ -448,8 +451,7 @@ pub fn console_copy_hit_test(x: f64, y: f64, width: u32, height: u32) -> bool {
     let Some((left, top, w, h)) = copy_button(width, height) else {
         return false;
     };
-    (left..left + w).contains(&(x as f32))
-        && (top..top + h).contains(&(y as f32))
+    (left..left + w).contains(&(x as f32)) && (top..top + h).contains(&(y as f32))
 }
 
 /// Return the most recent wrapped rows, but never truncate the copyable
@@ -462,17 +464,18 @@ fn console_tail_rows(lines: &VecDeque<String>, max_chars: usize, count: usize) -
             rows.push(segment.iter().collect());
         }
     }
-    rows.into_iter().rev().take(count).collect::<Vec<_>>()
-        .into_iter().rev().collect()
+    rows.into_iter()
+        .rev()
+        .take(count)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect()
 }
 
 /// Draw the F2 bottom-docked running log using the *existing* HUD shader
 /// and bitmap font. Upload only when new messages or viewport size change.
-pub fn console_geometry(
-    width: u32,
-    height: u32,
-    lines: &VecDeque<String>,
-) -> Vec<MenuVertex> {
+pub fn console_geometry(width: u32, height: u32, lines: &VecDeque<String>) -> Vec<MenuVertex> {
     let Some((x, y, w, h)) = console_bounds(width, height) else {
         return Vec::new();
     };
@@ -483,16 +486,31 @@ pub fn console_geometry(
     let dim = [0.61, 0.64, 0.62, 1.0];
     rect(&mut out, size, (x, y), (w, h), [0.05, 0.065, 0.07, 0.95]);
     rect(&mut out, size, (x, y), (w, 3.0), gold);
-    write_text(&mut out, size, x + 15.0, y + 13.0, 2.0, "BENCHMARK RUNNING LOG", ink);
+    write_text(
+        &mut out,
+        size,
+        x + 15.0,
+        y + 13.0,
+        2.0,
+        "BENCHMARK RUNNING LOG",
+        ink,
+    );
     if let Some((cx, cy, cw, ch)) = copy_button(width, height) {
         rect(&mut out, size, (cx, cy), (cw, ch), [0.22, 0.24, 0.20, 0.96]);
-        write_text(&mut out, size, cx + 9.0, cy + 8.0, 1.8, "COPY LOG CTRL+C", gold);
+        write_text(
+            &mut out,
+            size,
+            cx + 9.0,
+            cy + 8.0,
+            1.8,
+            "COPY LOG CTRL+C",
+            gold,
+        );
     }
 
     let line_height = CONSOLE_ROW_STEP;
     let max_rows = ((h - 72.0) / line_height).floor().max(1.0) as usize;
-    let max_chars = ((w - 34.0) / (6.0 * CONSOLE_CHAR_PIXEL))
-        .floor().max(10.0) as usize;
+    let max_chars = ((w - 34.0) / (6.0 * CONSOLE_CHAR_PIXEL)).floor().max(10.0) as usize;
     let visible_rows = console_tail_rows(lines, max_chars, max_rows);
     for (index, text) in visible_rows.iter().enumerate() {
         let label_color = if text.starts_with("BENCH") || text.starts_with("AVG") {
@@ -501,12 +519,21 @@ pub fn console_geometry(
             dim
         };
         write_text(
-            &mut out, size, x + 15.0, y + 46.0 + index as f32 * line_height,
-            CONSOLE_CHAR_PIXEL, text, label_color,
+            &mut out,
+            size,
+            x + 15.0,
+            y + 46.0 + index as f32 * line_height,
+            CONSOLE_CHAR_PIXEL,
+            text,
+            label_color,
         );
     }
     write_text(
-        &mut out, size, x + 15.0, y + h - 20.0, 1.4,
+        &mut out,
+        size,
+        x + 15.0,
+        y + h - 20.0,
+        1.4,
         "F2 CLOSE   CTRL+C COPY   FULL LOG: TARGET/BENCHMARK-SESSION.LOG",
         dim,
     );
@@ -570,8 +597,12 @@ mod tests {
     #[test]
     fn console_copy_hitbox_and_wrapped_tail_are_consistent() {
         let (x, y, w, h) = copy_button(1280, 800).unwrap();
-        assert!(console_copy_hit_test((x + w / 2.0) as f64,
-            (y + h / 2.0) as f64, 1280, 800));
+        assert!(console_copy_hit_test(
+            (x + w / 2.0) as f64,
+            (y + h / 2.0) as f64,
+            1280,
+            800
+        ));
         assert!(!console_copy_hit_test(0.0, 0.0, 1280, 800));
         assert!(!console_copy_hit_test(10.0, 10.0, 0, 0));
         let lines = VecDeque::from(["1234567890123".to_string(), "tail".to_string()]);
@@ -582,7 +613,9 @@ mod tests {
         let vertices = console_geometry(1280, 800, &lines);
         assert!(!vertices.is_empty());
         assert_eq!(vertices.len() % 6, 0);
-        assert!(vertices.iter().all(|v| v.position.iter().all(|n| n.is_finite())));
+        assert!(vertices
+            .iter()
+            .all(|v| v.position.iter().all(|n| n.is_finite())));
     }
 
     #[test]
