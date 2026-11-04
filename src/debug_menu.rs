@@ -6,7 +6,7 @@ use bytemuck::{Pod, Zeroable};
 use winit::keyboard::KeyCode;
 
 const PANEL_WIDTH: f32 = 478.0;
-const PANEL_HEIGHT: f32 = 465.0;
+const PANEL_HEIGHT: f32 = 528.0;
 const PANEL_MARGIN: f32 = 18.0;
 const ROW_TOP: f32 = 76.0;
 const ROW_HEIGHT: f32 = 43.0;
@@ -15,6 +15,7 @@ const ROW_HEIGHT: f32 = 43.0;
 pub enum MenuAction {
     FrameStats,
     ChunkCulling,
+    Presentation,
     UvChecker,
     UvDensity,
     V2Materials,
@@ -23,9 +24,10 @@ pub enum MenuAction {
     GrayCopper,
 }
 
-pub const ACTIONS: [MenuAction; 8] = [
+pub const ACTIONS: [MenuAction; 9] = [
     MenuAction::FrameStats,
     MenuAction::ChunkCulling,
+    MenuAction::Presentation,
     MenuAction::UvChecker,
     MenuAction::UvDensity,
     MenuAction::V2Materials,
@@ -39,6 +41,7 @@ impl MenuAction {
         Some(match key {
             KeyCode::F3 => Self::FrameStats,
             KeyCode::F4 => Self::ChunkCulling,
+            KeyCode::F5 => Self::Presentation,
             KeyCode::F6 => Self::UvChecker,
             KeyCode::F7 => Self::UvDensity,
             KeyCode::F8 => Self::V2Materials,
@@ -53,6 +56,7 @@ impl MenuAction {
         match self {
             Self::FrameStats => "F3  FRAME STATS",
             Self::ChunkCulling => "F4  CHUNK CULLING",
+            Self::Presentation => "F5  PRESENTATION",
             Self::UvChecker => "F6  UV CHECKER",
             Self::UvDensity => "F7  UV DENSITY",
             Self::V2Materials => "F8  V2 MATERIALS",
@@ -69,6 +73,8 @@ impl MenuAction {
 pub struct MenuSnapshot {
     pub frame_stats: bool,
     pub chunk_culling: Option<bool>,
+    pub unlocked_present: Option<bool>,
+    pub gpu_timestamps: bool,
     pub uv_checker: bool,
     pub uv_density: u32,
     pub v2_materials: Option<bool>,
@@ -82,6 +88,7 @@ impl MenuSnapshot {
         match action {
             MenuAction::FrameStats | MenuAction::UvChecker | MenuAction::UvDensity => true,
             MenuAction::ChunkCulling => self.chunk_culling.is_some(),
+            MenuAction::Presentation => self.unlocked_present.is_some(),
             MenuAction::V2Materials => self.v2_materials.is_some(),
             MenuAction::SurfacePreset => self.surface.is_some(),
             MenuAction::MetalGlints => self.metal_glints.is_some(),
@@ -100,15 +107,37 @@ impl MenuSnapshot {
         match action {
             MenuAction::FrameStats => on_off(self.frame_stats).into(),
             MenuAction::ChunkCulling => self.chunk_culling.map_or("N/A", on_off).into(),
+            MenuAction::Presentation => match self.unlocked_present {
+                Some(true) => "UNLOCKED",
+                Some(false) => "VSYNC",
+                None => "N/A",
+            }
+            .into(),
             MenuAction::UvChecker => on_off(self.uv_checker).into(),
             MenuAction::UvDensity => format!("{} PX/M", self.uv_density),
             MenuAction::V2Materials => self.v2_materials.map_or("NO ART", on_off).into(),
             MenuAction::SurfacePreset => match self.surface {
-                Some("Moss / lichen") => "MOSS".into(),
-                Some(name) => name.to_uppercase(),
                 None => "NO ART".into(),
+                Some(name) => {
+                    let short = match name {
+                        "Moss / lichen" => "MOSS",
+                        "Combined" => "MIX",
+                        other => other,
+                    };
+                    if self.v2_materials == Some(false) {
+                        format!("{} SET", short.to_uppercase())
+                    } else {
+                        short.to_uppercase()
+                    }
+                }
             },
-            MenuAction::MetalGlints => self.metal_glints.map_or("NO ART", on_off).into(),
+            MenuAction::MetalGlints => match self.metal_glints {
+                None => "NO ART".into(),
+                Some(value) if self.v2_materials == Some(false) => {
+                    format!("{} SET", on_off(value))
+                }
+                Some(value) => on_off(value).into(),
+            },
             MenuAction::GrayCopper => match self.gray_copper {
                 Some(true) => "GRAY",
                 Some(false) => "COLOR",
@@ -142,7 +171,7 @@ impl MenuVertex {
 
 fn menu_scale(width: u32, height: u32) -> f32 {
     (width as f32 / 520.0)
-        .min(height as f32 / 505.0)
+        .min(height as f32 / 570.0)
         .min(1.0)
         .max(0.01)
 }
@@ -353,9 +382,22 @@ pub fn geometry(
         &mut out,
         size,
         left + 22.0 * scale,
-        top + 436.0 * scale,
+        top + 480.0 * scale,
         1.7 * scale,
         "F1 OR ESC TO RETURN TO WORLD",
+        dim,
+    );
+    write_text(
+        &mut out,
+        size,
+        left + 22.0 * scale,
+        top + 505.0 * scale,
+        1.55 * scale,
+        if snapshot.gpu_timestamps {
+            "GPU PASS TIMER AVAILABLE"
+        } else {
+            "GPU PASS TIMER N/A"
+        },
         dim,
     );
     out
@@ -369,6 +411,8 @@ mod tests {
         MenuSnapshot {
             frame_stats: false,
             chunk_culling: Some(true),
+            unlocked_present: Some(false),
+            gpu_timestamps: true,
             uv_checker: false,
             uv_density: 128,
             v2_materials: Some(false),
@@ -379,10 +423,11 @@ mod tests {
     }
 
     #[test]
-    fn eight_hotkeys_map_to_distinct_actions() {
+    fn nine_hotkeys_map_to_distinct_actions() {
         for (key, action) in [
             (KeyCode::F3, MenuAction::FrameStats),
             (KeyCode::F4, MenuAction::ChunkCulling),
+            (KeyCode::F5, MenuAction::Presentation),
             (KeyCode::F6, MenuAction::UvChecker),
             (KeyCode::F7, MenuAction::UvDensity),
             (KeyCode::F8, MenuAction::V2Materials),
@@ -416,6 +461,17 @@ mod tests {
         assert!(!s.enabled(MenuAction::GrayCopper));
         assert_eq!(s.status(MenuAction::GrayCopper), "NEEDS F8");
         assert_eq!(s.status(MenuAction::UvDensity), "128 PX/M");
+        assert_eq!(s.status(MenuAction::Presentation), "VSYNC");
+        assert_eq!(
+            MenuSnapshot { unlocked_present: None, ..s }.status(MenuAction::Presentation),
+            "N/A"
+        );
+        assert_eq!(s.status(MenuAction::SurfacePreset), "DRY SET");
+        assert_eq!(s.status(MenuAction::MetalGlints), "ON SET");
+        assert_eq!(
+            MenuSnapshot { v2_materials: Some(true), ..s }.status(MenuAction::SurfacePreset),
+            "DRY"
+        );
         assert!(!MenuSnapshot {
             chunk_culling: None,
             ..s
