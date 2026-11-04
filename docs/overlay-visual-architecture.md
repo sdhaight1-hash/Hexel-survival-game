@@ -70,9 +70,10 @@ does not determine rock identity, mineral grade, metallic response,
 weathering, actual ore occurrence, water flow, or visual quality.
 Geologically planar veins, sediment layers, stockworks and replacement
 bodies may require fault geometry, bands, splines or other techniques.
-Never make all ores look like tree roots. The experimental implementation
-is on [draft research PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
-not the game's working material/overlay runtime. SCA is **not a
+Never make all ores look like tree roots. The bounded experimental implementation is available in
+[src/space_colonization.rs](../src/space_colonization.rs) after
+[merged research PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30), but remains
+unconnected to the game's material/overlay runtime. SCA is **not a
 prerequisite** for completing the broader material pipeline.
 
 **Appearance-composition order is semantic, not necessarily a stack of
@@ -107,8 +108,8 @@ better or is cheaper at equivalent clarity. See the
 
 Space colonization can provide a **candidate structural skeleton**, while
 ordinary authored masks, geological faults and other deterministic sources
-remain equally valid. The shared-growth prototype is unmerged research
-on PR #30, not a dependency of the overlay renderer.
+remain equally valid. The merged headless SCA prototype is research code, not a dependency
+of the overlay renderer or an implemented feature-mask generator.
 
 ## Integration direction
 
