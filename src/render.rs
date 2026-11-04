@@ -52,8 +52,8 @@ struct ChunkMesh {
 
 #[derive(Default, Clone, Copy)]
 pub struct DrawStats {
-    pub visible_chunks: usize,
-    pub visible_vertices: u64,
+    pub submitted_chunks: usize,
+    pub submitted_vertices: u64,
     /// CPU wall time for the draw path, including surface acquisition/present.
     /// This is not a GPU timestamp or a shader-only benchmark.
     pub draw_cpu_ms: f32,
@@ -704,8 +704,8 @@ impl Renderer {
         let view = frame
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut visible_chunks = 0usize;
-        let mut visible_vertices = 0u64;
+        let mut submitted_chunks = 0usize;
+        let mut submitted_vertices = 0u64;
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -759,8 +759,8 @@ impl Renderer {
                 }
                 pass.set_vertex_buffer(0, chunk.buffer.slice(..));
                 pass.draw(0..chunk.vertices, 0..1);
-                visible_chunks += 1;
-                visible_vertices += u64::from(chunk.vertices);
+                submitted_chunks += 1;
+                submitted_vertices += u64::from(chunk.vertices);
             }
             pass.set_pipeline(&self.crosshair_pipeline);
             pass.set_vertex_buffer(0, self.crosshair_buffer.slice(..));
@@ -769,8 +769,8 @@ impl Renderer {
         self.queue.submit(std::iter::once(encoder.finish()));
         frame.present();
         self.last_stats = DrawStats {
-            visible_chunks,
-            visible_vertices,
+            submitted_chunks,
+            submitted_vertices,
             draw_cpu_ms: draw_start.elapsed().as_secs_f32() * 1000.0,
         };
         Ok(())
