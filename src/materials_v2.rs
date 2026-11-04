@@ -97,7 +97,10 @@ fn validated(index: Index, directory: &Path) -> Result<(usize, usize), String> {
             || texture.height == 0
             || texture.width % 4 != 0
             || texture.height % 4 != 0
-            || texture.repeat_metres.iter().any(|v| !v.is_finite() || *v <= 0.0)
+            || texture
+                .repeat_metres
+                .iter()
+                .any(|v| !v.is_finite() || *v <= 0.0)
             || !texture.rgb_psnr_db.is_finite()
             || texture.rgb_psnr_db < 25.0
         {
@@ -127,7 +130,11 @@ fn validated(index: Index, directory: &Path) -> Result<(usize, usize), String> {
         if !matches!(material.status.as_str(), "candidate" | "approved") {
             return Err(format!("Unapproved material in v2 index: {}", material.id));
         }
-        match (&material.representation[..], &material.faces, &material.overlays) {
+        match (
+            &material.representation[..],
+            &material.faces,
+            &material.overlays,
+        ) {
             ("solid", Some(faces), None)
                 if matches!(material.kind.as_str(), "soil" | "rock" | "mineral") =>
             {
@@ -170,8 +177,8 @@ pub fn inspect_default() -> Result<Option<(usize, usize)>, String> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(format!("Could not read {}: {error}", path.display())),
     };
-    let index: Index = serde_json::from_slice(&bytes)
-        .map_err(|e| format!("Invalid v2 index JSON: {e}"))?;
+    let index: Index =
+        serde_json::from_slice(&bytes).map_err(|e| format!("Invalid v2 index JSON: {e}"))?;
     validated(index, &directory).map(Some)
 }
 
@@ -202,9 +209,18 @@ mod tests {
             status: "candidate".into(),
             representation: "solid".into(),
             faces: Some(Faces {
-                top: Face { base: "rock.missing".into(), overlay: None },
-                side: Face { base: "rock.missing".into(), overlay: None },
-                bottom: Face { base: "rock.missing".into(), overlay: None },
+                top: Face {
+                    base: "rock.missing".into(),
+                    overlay: None,
+                },
+                side: Face {
+                    base: "rock.missing".into(),
+                    overlay: None,
+                },
+                bottom: Face {
+                    base: "rock.missing".into(),
+                    overlay: None,
+                },
             }),
             overlays: None,
         });
@@ -220,7 +236,11 @@ mod tests {
             status: "needs_art".into(),
             representation: "overlay".into(),
             faces: None,
-            overlays: Some(Overlays { top: "ore.copper".into(), side: None, bottom: None }),
+            overlays: Some(Overlays {
+                top: "ore.copper".into(),
+                side: None,
+                bottom: None,
+            }),
         });
         assert!(validated(index, Path::new(".")).is_err());
         assert!(!valid_id("rock.Granite"));
