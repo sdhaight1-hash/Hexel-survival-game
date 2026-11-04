@@ -3,6 +3,7 @@
 pub struct PresentationOptions {
     pub mode: wgpu::PresentMode,
     pub max_frame_latency: u32,
+    pub fps_cap: Option<u32>,
 }
 
 impl Default for PresentationOptions {
@@ -10,6 +11,7 @@ impl Default for PresentationOptions {
         Self {
             mode: wgpu::PresentMode::Fifo,
             max_frame_latency: 2,
+            fps_cap: None,
         }
     }
 }
@@ -34,6 +36,14 @@ impl PresentationOptions {
                                 "Unknown presentation mode '{value}'; use fifo, fifo-relaxed, mailbox or immediate"
                             ));
                         }
+                    };
+                }
+                "--fps-cap" => {
+                    let value = args.next().ok_or("--fps-cap needs a value")?;
+                    options.fps_cap = match value.as_str() {
+                        "60" => Some(60),
+                        "120" => Some(120),
+                        _ => return Err(format!("Invalid --fps-cap '{value}'; use 60 or 120")),
                     };
                 }
                 "--frame-latency" => {
@@ -72,6 +82,7 @@ mod tests {
         assert_eq!(settings, PresentationOptions::default());
         assert_eq!(settings.mode, wgpu::PresentMode::Fifo);
         assert_eq!(settings.max_frame_latency, 2);
+        assert_eq!(settings.fps_cap, None);
     }
 
     #[test]
@@ -91,6 +102,16 @@ mod tests {
         assert!(streamed);
         assert_eq!(settings.mode, wgpu::PresentMode::Mailbox);
         assert_eq!(settings.max_frame_latency, 1);
+    }
+
+    #[test]
+    fn accepts_opt_in_60_and_120_caps() {
+        for (fps, expected) in [("60", Some(60)), ("120", Some(120))] {
+            let (_, settings) =
+                PresentationOptions::parse(["--fps-cap", fps].into_iter().map(str::to_owned))
+                    .unwrap();
+            assert_eq!(settings.fps_cap, expected);
+        }
     }
 
     #[test]
@@ -118,6 +139,10 @@ mod tests {
             vec!["--frame-latency", "4"],
             vec!["--frame-latency", "invalid"],
             vec!["--frame-latency"],
+            vec!["--fps-cap"],
+            vec!["--fps-cap", "0"],
+            vec!["--fps-cap", "30"],
+            vec!["--fps-cap", "garbage"],
         ] {
             assert!(PresentationOptions::parse(args.into_iter().map(str::to_owned)).is_err());
         }
