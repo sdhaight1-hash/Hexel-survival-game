@@ -98,6 +98,69 @@ git fetch origin && git switch -C feature/ore-pattern-family-gallery origin/feat
    do not prove painterly style, good natural geology or acceptable
    morphology at scale.**
 
+## Native screenshot review — 2026-11-04
+
+The project owner provided native Windows screenshots of the v2
+gallery with F8 ON, F11 grayscale ON, and multiple F12/P states,
+including an unobstructed close-up of the two rock hosts. This
+constitutes **visual evidence of functional morphology and palette
+switching**, but **not artistic approval**.
+
+| Pattern | Visual review | Next decision |
+| --- | --- | --- |
+| SOURCE | Sparse, irregular source-derived copper inclusions; still clearly tiled | Retain as immutable A/B baseline |
+| HAIRLINE | Uniform near-parallel wavy strings, strongly repeated | Replace with discontinuous branching fracture traces |
+| NODULES | Large round-ended blobs, especially conspicuous in cool-blue pigment; same shapes visibly tiled | Make clustered, angular/rough-edged mineral pockets with varied size |
+| STOCKWORK | Dense, highly regular wire/grid-like curves, not believable vein intersections | Replace repeated periodic lattices with sparse crossing fracture networks |
+| RIBBONS | Closely spaced synchronized sinusoidal bands resembling decoration | Reject this waveform; trial irregular host-specific laminae or shear zones |
+| SCATTER | Least distracting, small copper flecks, but diffuse/repetitive with limited clustering | Keep as a starting point; grow sparse clusters with clear primary/secondary scale |
+
+**Color/pigment observations:** Copper, Hematite and Moonsilver
+change the same chosen mineral footprint, as intended.
+However, neither a saturated orange fill nor broad pastel-blue
+nodule swatches automatically read as metal or ore. F10 specular
+response cannot be judged reliably from still screenshots;
+the static images also do not prove animated shader highlights.
+
+**Host/geometry observations:** the high-frequency granite host
+competes with ore coverage; the shale cross-section is much
+quieter and visually distinct. The unobstructed close-up further
+shows the texture projection/size change around cap/side
+boundaries and how sharply the tiles repeat. These are not
+evidence of a corrupted mesh or wrong gameplay ore ID.
+
+**Direct implementation cause verified in code:** `src/mesh.rs`
+writes side UVs as a per-hexel 1m perimeter/height mapping while
+caps use world X/Z; `src/world_shader.wgsl` samples the
+grayscale mask at `v.uv`. `src/ore_pattern_study.rs` uses
+periodic, mostly sinusoidal/repeated fields. Tiling is therefore
+expected, not a GPU defect. Cycling a pigment cannot fix
+these shape and projection artifacts.
+
+**Result:** do **not** approve any of the five generated masks as
+production art, and do **not** promote the tile-based pattern
+generator to general geology or resource-ownership logic.
+
+### Next controlled engineering slice — P2.4 proposal
+
+1. Preserve F11 full-color and F12 SOURCE baselines.
+2. Test one mineral morphology at a time with **stable
+   world-space 3D coverage**, so a mineral feature crosses
+   adjacent caps and sides at the same 3D position, rather
+   than restarting on every hexel's local UVs.
+3. Replace the periodic line generators with intentional
+   macro/meso/micro hierarchy: a few dominant irregular veins
+   or pockets, smaller branches, and restrained flecks. Host
+   rock remains legible; not a uniform net or repeated stripes.
+4. Measure the new shader with F5 Immediate, F1/F2 closed and
+   F3 ≥30 seconds at identical camera settings. Extra triplanar
+   samples or procedural field noise are **not free** and must
+   be measured before generalizing them.
+5. Seek native fixed-camera screenshots on granite and shale
+   at close and several-metres distance, including cap/side
+   joins and F10 off/on. No more screenshot requests for this
+   first review—the uploaded set is sufficient to set targets.
+
 ## What not to generalize yet
 
 The five masks are simple noise/curve-generated test patterns,
