@@ -2,6 +2,7 @@
 
 mod benchmark_log;
 mod debug_menu;
+mod frame_pacing;
 mod materials_p0;
 mod materials_v2;
 mod mesh;
@@ -14,6 +15,7 @@ mod texture_pack;
 
 use benchmark_log::ConsoleLog;
 use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
+use frame_pacing::FramePacer;
 use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
@@ -37,6 +39,7 @@ struct Game {
     renderer: Option<Renderer>,
     world: World,
     presentation: PresentationOptions,
+    frame_pacer: FramePacer,
     player: Player,
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
@@ -89,6 +92,7 @@ impl Game {
             renderer: None,
             world,
             presentation,
+            frame_pacer: FramePacer::new(presentation.fps_cap, now),
             player,
             pressed: HashSet::new(),
             mouse_captured: false,
@@ -279,6 +283,16 @@ impl ApplicationHandler for Game {
                 self.renderer = Some(renderer);
                 self.capture_mouse();
                 self.last_frame = Instant::now();
+                self.frame_pacer = FramePacer::new(self.presentation.fps_cap, self.last_frame);
+                self.console_log.record(format!(
+                    "PACING: configured {:?} FPS cap; event loop {}.",
+                    self.presentation.fps_cap,
+                    if self.presentation.fps_cap.is_some() {
+                        "WaitUntil"
+                    } else {
+                        "Poll"
+                    }
+                ));
                 self.console_log.record(benchmark_log::system_report());
                 self.console_log.record(format!(
                     "WORLD {} resident sections",
@@ -441,6 +455,7 @@ impl ApplicationHandler for Game {
                         .then(|| (self.console_log.lines(), self.console_log.generation()));
                     match renderer.draw(&self.player, menu, console) {
                         Ok(timings) => {
+                            self.frame_pacer.record_draw(Instant::now());
                             if self.world.is_streamed() {
                                 self.render_cpu_metrics
                                     .record(timings, is_moving, is_looking);
@@ -477,8 +492,17 @@ impl ApplicationHandler for Game {
         }
     }
 
-    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         let now = Instant::now();
+        if !self.frame_pacer.tick(now) {
+            if let Some(deadline) = self.frame_pacer.next_deadline() {
+                event_loop.set_control_flow(ControlFlow::WaitUntil(deadline));
+            }
+            return;
+        }
+        if let Some(deadline) = self.frame_pacer.next_deadline() {
+            event_loop.set_control_flow(ControlFlow::WaitUntil(deadline));
+        }
         let dt = now.duration_since(self.last_frame).as_secs_f32();
         let is_moving = self.is_moving();
         // Sum relative mouse motion between updates, not just cursor capture.
@@ -537,9 +561,13 @@ impl ApplicationHandler for Game {
                 self.streamed_meshing_cpu_ms = 0.0;
                 let report = self.stream_metrics.report_and_reset();
                 let draw_report = self.render_cpu_metrics.report_and_reset();
+                let pacing_report = self
+                    .frame_pacer
+                    .report_and_reset(now.duration_since(self.last_stream_report));
                 if self.frame_stats {
                     self.console_log.record(report);
                     self.console_log.record(draw_report);
+                    self.console_log.record(pacing_report);
                 }
                 self.last_stream_report = now;
             }
@@ -552,7 +580,6 @@ impl ApplicationHandler for Game {
 
 fn main() {
     let event_loop = EventLoop::new().expect("Could not initialize window event loop");
-    event_loop.set_control_flow(ControlFlow::Poll);
     let (streamed, presentation) = match PresentationOptions::parse(std::env::args().skip(1)) {
         Ok(options) => options,
         Err(error) => {
@@ -560,6 +587,11 @@ fn main() {
             return;
         }
     };
+    event_loop.set_control_flow(if presentation.fps_cap.is_some() {
+        ControlFlow::WaitUntil(Instant::now())
+    } else {
+        ControlFlow::Poll
+    });
     if let Err(error) = event_loop.run_app(&mut Game::new(streamed, presentation)) {
         eprintln!("Game event loop stopped: {error}");
     }

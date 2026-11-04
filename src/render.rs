@@ -160,13 +160,19 @@ impl Renderer {
         let effective_mode = presentation.resolve_mode(&caps.present_modes);
         let adapter_info = adapter.get_info();
         let presentation_report = format!(
-            "PRESENTATION: adapter {} ({:?}); requested {:?}, effective {:?}; supported {:?}; desired maximum frame latency {}; redraw ControlFlow::Poll (unchanged).{}",
+            "PRESENTATION: adapter {} ({:?}); requested {:?}, effective {:?}; supported {:?}; desired maximum frame latency {}; redraw {}; FPS cap {:?}.{}",
             adapter_info.name,
             adapter_info.backend,
             presentation.mode,
             effective_mode,
             caps.present_modes,
             presentation.max_frame_latency,
+            if presentation.fps_cap.is_some() {
+                "ControlFlow::WaitUntil"
+            } else {
+                "ControlFlow::Poll"
+            },
+            presentation.fps_cap,
             if effective_mode != presentation.mode {
                 " Requested mode unsupported; fell back to FIFO."
             } else {
