@@ -3,7 +3,7 @@
 
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
-    materials_p0, materials_v2,
+    materials_p0, materials_v2, ore_pattern_study,
     mesh::{build_chunk_mesh_with_stats, ExposedMeshStats, Vertex},
     texture_pack::TexturePack,
 };
@@ -30,6 +30,7 @@ struct CameraUniform {
     options: [f32; 4],
     eye_position: [f32; 4],
     surface: [f32; 4],
+    family: [f32; 4],
 }
 
 #[repr(C)]
@@ -177,6 +178,8 @@ pub struct Renderer {
     v2_preview_enabled: bool,
     grayscale_copper_available: bool,
     grayscale_copper_enabled: bool,
+    ore_pattern_index: usize,
+    ore_palette_index: usize,
     surface_preset: SurfacePreset,
     metallic_glints: bool,
     terrain_chunks: Vec<ChunkMesh>,
@@ -281,6 +284,7 @@ impl Renderer {
                 options: [0.0, 1.0, 0.0, 0.0],
                 eye_position: [0.0, 0.0, 0.0, 0.0],
                 surface: [0.0, 0.0, 0.0, 1.0],
+                family: [0.0; 4],
             }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
@@ -510,7 +514,7 @@ impl Renderer {
                     ],
                 });
                 println!(
-                    "V2 candidate preview ready: F8 toggles rock/copper against P0; F11 compares shader palette copper."
+                    "V2 candidate preview ready: F8 rocks/copper; F11 grayscale, F12 morphology, P palette."
                 );
                 Some((v2_texture, v2_bind_group))
             }
@@ -774,6 +778,8 @@ impl Renderer {
             v2_preview_enabled: false,
             grayscale_copper_available,
             grayscale_copper_enabled: false,
+            ore_pattern_index: 0,
+            ore_palette_index: 0,
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
             terrain_chunks,
@@ -805,6 +811,27 @@ impl Renderer {
         }
         self.grayscale_copper_enabled = !self.grayscale_copper_enabled;
         Some(self.grayscale_copper_enabled)
+    }
+
+    /// F12: change the shared grayscale ore mask, without changing its host
+    /// or pigment. Disabled unless the F11 A/B study is selected.
+    pub fn cycle_ore_pattern(&mut self) -> Option<&'static str> {
+        if !self.v2_preview_enabled || !self.grayscale_copper_enabled {
+            return None;
+        }
+        self.ore_pattern_index =
+            (self.ore_pattern_index + 1) % ore_pattern_study::FAMILY_NAMES.len();
+        Some(ore_pattern_study::FAMILY_NAMES[self.ore_pattern_index])
+    }
+
+    /// P: recolor the SAME selected grayscale mask; not gameplay ore state.
+    pub fn cycle_ore_palette(&mut self) -> Option<&'static str> {
+        if !self.v2_preview_enabled || !self.grayscale_copper_enabled {
+            return None;
+        }
+        self.ore_palette_index =
+            (self.ore_palette_index + 1) % ore_pattern_study::PALETTE_NAMES.len();
+        Some(ore_pattern_study::PALETTE_NAMES[self.ore_palette_index])
     }
 
     /// Change only the F8 material gallery, not saved weather or ecology.
@@ -880,6 +907,10 @@ impl Renderer {
             metal_glints: has_art.then_some(self.metallic_glints),
             gray_copper: (self.v2_preview_enabled && self.grayscale_copper_available)
                 .then_some(self.grayscale_copper_enabled),
+            ore_pattern: (self.v2_preview_enabled && self.grayscale_copper_enabled)
+                .then_some(ore_pattern_study::FAMILY_NAMES[self.ore_pattern_index]),
+            ore_palette: (self.v2_preview_enabled && self.grayscale_copper_enabled)
+                .then_some(ore_pattern_study::PALETTE_NAMES[self.ore_palette_index]),
         }
     }
 
@@ -1029,6 +1060,7 @@ impl Renderer {
                     conditions.frost,
                     if self.metallic_glints { 1.0 } else { 0.0 },
                 ],
+                family: [self.ore_pattern_index as f32, self.ore_palette_index as f32, 0.0, 0.0],
             }),
         );
         let frame = self.surface.get_current_texture()?;
