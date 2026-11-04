@@ -10,8 +10,9 @@ an implemented vegetation renderer or approved species roster.
 For research registry and species-to-asset bindings, use
 [Flora to assets](flora-to-assets.md); for game/editor boundary and
 authoritative edits, use [integration](integration.md).
-The standalone SCA research prototype remains in
-[draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30).
+The standalone headless [SCA research prototype](../src/space_colonization.rs)
+was merged through [PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30). It is
+not yet integrated with production vegetation rendering or growth.
 
 ## Illustrated structural references
 
