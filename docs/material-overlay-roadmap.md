@@ -1,10 +1,8 @@
 # Texture, material and overlay roadmap — revised after P2.2
 
 **Status:** planning revision, 2026-11-03. This document supersedes the
-*sequencing and completion claims* in [master art epic #14](
-https://github.com/sdhaight1-hash/Hexel-survival-game/issues/14); existing
-technical specifications and the [canonical style guide](
-../assets/STYLE_GUIDE.md) still govern implementation and visual approval.
+*sequencing and completion claims* in [master art epic #14](https://github.com/sdhaight1-hash/Hexel-survival-game/issues/14); existing
+technical specifications and the [canonical style guide](../assets/STYLE_GUIDE.md) still govern implementation and visual approval.
 Do not read an unchecked future feature as shipping functionality.
 
 ## Decision
