@@ -39,6 +39,18 @@ implementation; the project owner approves art and deliberate design changes.
 | How should visual contributors validate work? | [Visual contribution workflow](visual-contribution-guide.md) | [Style QA](../assets/STYLE_GUIDE.md) |
 | What does the first playable gallery do? | [P0 gallery](p0-material-gallery.md) | [First-person/texture history](first-person-textures.md) |
 
+## Illustrated documentation
+
+- [Original art-direction posters](../assets/style-infographics/README.md):
+  visual identity and geology remain in the style guide; the flora
+  architecture poster now appears in vegetation design.
+- [Editable technical infographics](../assets/diagrams/README.md):
+  material/overlay composition, optional SCA consumers, finite-water
+  conservation, and world generation with persistent edits.
+
+These are **illustrative diagrams**. The canonical prose and tested
+implementation determine actual contracts, quality and shipping status.
+
 ## Classification and status discipline
 
 - **Decided:** project direction or invariant agreed, not necessarily coded.
