@@ -151,6 +151,7 @@ pub struct StreamDelta {
     pub added: Vec<ChunkPos>,
     pub removed: Vec<ChunkPos>,
     pub generation_cpu_ms: f64,
+    pub pending: usize,
 }
 
 /// Opt-in first streamed-world prototype: 19 hexagonal Q/R columns and five
@@ -229,15 +230,23 @@ impl World {
     /// A missing resident neighbor must query the deterministic base and
     /// must never be interpreted as empty terrain during meshing.
     pub fn stream_around(&mut self, player_feet: Vec3) -> StreamDelta {
+        self.stream_around_budgeted(player_feet, usize::MAX)
+    }
+
+    /// Replace at most `max_new_chunks` resident CPU sections per call.
+    /// Keep old sections until replacements are ready; absent terrain still
+    /// samples the procedural source, including for collision and meshing.
+    pub fn stream_around_budgeted(
+        &mut self,
+        player_feet: Vec3,
+        max_new_chunks: usize,
+    ) -> StreamDelta {
         let Some(source) = self.terrain else {
             return StreamDelta::default();
         };
         let player_cell =
             CellPos::at_world_xz(player_feet.x, player_feet.z, player_feet.y.floor() as i32);
         let (center, _) = player_cell.chunk_and_local();
-        if self.stream_center == Some(center) {
-            return StreamDelta::default();
-        }
         let started = Instant::now();
         let mut requested = Vec::new();
         for dq in -STREAM_HORIZONTAL_RADIUS..=STREAM_HORIZONTAL_RADIUS {
@@ -263,26 +272,44 @@ impl World {
         // per-chunk geology or dependence on iteration order of HashMap.
         requested.sort_by_key(|(distance, height, pos)| (*distance, *height, pos.y, pos.q, pos.r));
         let wanted: HashSet<_> = requested.iter().map(|entry| entry.2).collect();
-        let mut removed: Vec<_> = self
+        if self.stream_center == Some(center)
+            && wanted.iter().all(|pos| self.chunks.contains_key(pos))
+        {
+            return StreamDelta::default();
+        }
+        let missing: Vec<_> = requested
+            .iter()
+            .map(|entry| entry.2)
+            .filter(|pos| !self.chunks.contains_key(pos))
+            .collect();
+        let mut obsolete: Vec<_> = self
             .chunks
             .keys()
             .copied()
             .filter(|pos| !wanted.contains(pos))
             .collect();
-        removed.sort_by_key(|pos| (pos.y, pos.r, pos.q));
-        self.chunks.retain(|pos, _| wanted.contains(pos));
-        let mut added = Vec::new();
-        for (_, _, pos) in requested {
-            if let std::collections::hash_map::Entry::Vacant(entry) = self.chunks.entry(pos) {
-                entry.insert(source.generate_chunk(pos));
-                added.push(pos);
-            }
+        obsolete.sort_by_key(|pos| (pos.y, pos.r, pos.q));
+        let count = missing.len().min(max_new_chunks);
+        let removed: Vec<_> = obsolete.into_iter().take(count).collect();
+        for &pos in &removed {
+            self.chunks.remove(&pos);
+        }
+        let mut added = Vec::with_capacity(count);
+        for pos in missing.into_iter().take(count) {
+            self.chunks.insert(pos, source.generate_chunk(pos));
+            added.push(pos);
         }
         self.stream_center = Some(center);
         StreamDelta {
             added,
             removed,
             generation_cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
+            pending: wanted.len().saturating_sub(
+                self.chunks
+                    .keys()
+                    .filter(|pos| wanted.contains(pos))
+                    .count(),
+            ),
         }
     }
 
@@ -433,6 +460,66 @@ mod tests {
         assert!(!moved.removed.is_empty());
         assert_eq!(world.chunk_count(), 95);
         assert_eq!(world.chunk_positions().collect::<HashSet<_>>().len(), 95);
+    }
+
+    #[test]
+    fn budgeted_streaming_replaces_one_section_per_tick_without_losing_residency() {
+        let mut world = World::streamed(42);
+        let origin = CellPos::new(7, 7, 220).center();
+        world.stream_around(origin);
+        let destination = CellPos::new(40, -20, 255).center();
+        let mut exchanged = 0;
+        for _ in 0..100 {
+            let delta = world.stream_around_budgeted(destination, 1);
+            assert!(delta.added.len() <= 1);
+            assert!(delta.removed.len() <= 1);
+            assert_eq!(delta.added.len(), delta.removed.len());
+            assert_eq!(world.chunk_count(), 95);
+            exchanged += delta.added.len();
+            if delta.pending == 0 {
+                break;
+            }
+        }
+        assert!(exchanged > 1);
+        assert_eq!(world.stream_around_budgeted(destination, 1).pending, 0);
+        let expected = {
+            let mut reference = World::streamed(42);
+            reference.stream_around(destination);
+            reference.chunk_positions().collect::<HashSet<_>>()
+        };
+        assert_eq!(world.chunk_positions().collect::<HashSet<_>>(), expected);
+    }
+
+    #[test]
+    fn budgeted_streaming_can_reverse_direction_without_stale_sections() {
+        let mut world = World::streamed(97);
+        let origin = CellPos::new(-1, -1, 223).center();
+        let destination = CellPos::new(200, -300, 223).center();
+        world.stream_around(origin);
+        for _ in 0..5 {
+            let delta = world.stream_around_budgeted(destination, 1);
+            assert_eq!(delta.added.len(), 1);
+            assert_eq!(world.chunk_count(), 95);
+        }
+        for _ in 0..100 {
+            let delta = world.stream_around_budgeted(origin, 1);
+            if delta.pending == 0 {
+                break;
+            }
+        }
+        let mut reference = World::streamed(97);
+        reference.stream_around(origin);
+        assert_eq!(
+            world.chunk_positions().collect::<HashSet<_>>(),
+            reference.chunk_positions().collect::<HashSet<_>>()
+        );
+        for cell in [
+            CellPos::new(-1, -1, 223),
+            CellPos::new(0, 0, 223),
+            CellPos::new(200, -300, 223),
+        ] {
+            assert_eq!(world.get(cell), reference.get(cell));
+        }
     }
 
     #[test]

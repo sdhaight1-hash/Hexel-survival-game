@@ -39,6 +39,7 @@ implementation; the project owner approves art and deliberate design changes.
 | How do I run the first moving streamed-world prototype? | [P3.2A streamed world](p3-2-streamed-world.md) | [World-scale foundation](world-scale-foundation.md) |
 | How do I use F1/F2/F3 and benchmark moving versus mouse panning? | [Debug console integration](debug-console-streamer-integration.md) | [CPU render timing](p3-render-cpu-stage-timing.md), [stream frame intervals](p3-streaming-frame-metrics.md) |
 | How can I A/B test the ~50 ms surface-acquire waits? | [Presentation A/B protocol](p3-presentation-mode-ab.md) | [CPU render timing](p3-render-cpu-stage-timing.md) |
+| How do I test capped Mailbox pacing against bounded section updates? | [Pacing findings and budgeted-streaming acceptance](p3-pacing-results-and-streaming-budget.md) | [P3 controlled frame pacing](p3-controlled-frame-pacing.md), [P3.2 streamer](p3-2-streamed-world.md) |
 | How do we move from the static demo to a 1,024 km streamed world? | [World-scale foundation](world-scale-foundation.md) | [World generation](world-generation.md) |
 | What is the selected world and water invariant? | [World generation](world-generation.md) | [Decisions](decisions.md), [Integration](integration.md) |
 | What is the next game/world milestone? | [Core roadmap](roadmap.md) | [Material/overlay roadmap](material-overlay-roadmap.md) |
