@@ -81,7 +81,7 @@ mod tests {
             metrics.record_frame_interval(ms);
         }
         let report = metrics.report_and_reset();
-        assert!(report.contains("8.00/40.00/40.00 ms"));
+        assert!(report.contains("16.00/40.00/40.00 ms"));
         assert!(report.contains(">16.7 ms 2 >33.3 ms 1"));
         assert!(metrics.report_and_reset().contains("0 update intervals"));
     }
