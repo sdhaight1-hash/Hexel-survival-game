@@ -60,6 +60,50 @@ does not distort the frame results.
 - No change to `World`, materials, textures, vertex mesh recipes,
   saved IDs, ecology, time progression, or gameplay behavior.
 
+## First native Windows run — observed behavior (2026-11-03)
+
+The project owner supplied a console trace from the **200-chunk**
+`feature/diagnostics-menu` session. The visible record supports the
+following outcomes:
+
+- Scene initialized **200 resident chunks**, **1,960,656 mesh
+  vertices**, **67.3 MiB** resident vertex buffers, and
+  **61.4 ms** reported CPU build/upload time.
+- `F1 diagnostics menu: OPEN` appeared; afterward F8, F11,
+  F3, F6, F4, F7, F9 and F10 actions all logged expected state
+  transitions, including multiple changes to the color/grayscale
+  copper comparison and the full surface-preset cycle.
+- `F1 diagnostics menu: CLOSED` appeared; subsequent chunk
+  submission counts varied with player position, consistent with
+  resumed first-person movement and distance culling.
+- F4 switched between **200/200** submitted chunks
+  (**1,960,656 vertices**) and **132/200** submitted chunks
+  (**1,281,522 vertices**) at the initial position, matching
+  the previous baseline. After returning to movement, nearby
+  submitted counts ranged around **129–132**.
+- Most FPS samples remained around **59.6–60.8 FPS** with
+  **~16.2–16.6 ms CPU draw/acquire/present** in the log, whether
+  F4 or F11 was selected. These numbers remain **V-sync limited**
+  and do not isolate the cost of the UI, the copper shader,
+  or the GPU.
+
+**Interpretation:** this is a successful **native functional smoke
+test**: no crash or unexpected error is shown, and the diagnostic
+actions drive visible console state changes while F1 is open and
+after it closes. However, the console cannot distinguish a mouse
+click from the matching keyboard shortcut. No screenshot, recorded
+mouse hitbox position, resize behavior, 1-chunk disabled-row review,
+or explicit keyboard-vs-click equivalence test was provided, so
+these remain **visual/input acceptance gates**, not approved features.
+
+**Benchmark caution:** F3 logging was enabled with the menu open for
+much of this trace, and multiple material/overlay modes changed
+within measurement windows. Do **not** treat the nearly identical
+V-sync-limited FPS as proof that the menu is free or that copper
+material shaders have equal GPU cost. Close F1 for valid frame-time
+comparisons, then use an opt-in uncapped presentation mode and,
+where supported, actual GPU timestamps in a separate slice.
+
 ## Acceptance checks
 
 1. Both the default one-chunk and `--benchmark-200` scenes launch,
