@@ -1,6 +1,7 @@
 //! Read-only runtime validation for the offline v2 material handoff.
 //! This does not replace the P0 gallery or assign transient GPU texture slots.
 
+use crate::{materials_p0, texture_codec, texture_pack::TexturePack};
 use serde::Deserialize;
 use std::{
     collections::HashSet,
@@ -78,7 +79,7 @@ fn valid_id(id: &str) -> bool {
     })
 }
 
-fn validated(index: Index, directory: &Path) -> Result<(usize, usize), String> {
+fn validated(index: &Index, directory: &Path) -> Result<(usize, usize), String> {
     if index.schema_version != 2 || index.note.trim().is_empty() {
         return Err("Invalid v2 material index header".into());
     }
@@ -167,9 +168,8 @@ fn require_texture(ids: &HashSet<&str>, id: &str) -> Result<(), String> {
     }
 }
 
-/// Absence of an index is normal until original production art is authored.
-/// An invalid *present* index is never silently accepted.
-pub fn inspect_default() -> Result<Option<(usize, usize)>, String> {
+/// Absence of a bake is normal. A present but invalid cache is reported.
+fn load_default() -> Result<Option<(Index, PathBuf)>, String> {
     let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/materials-v2");
     let path = directory.join("index.json");
     let bytes = match fs::read(&path) {
@@ -179,7 +179,158 @@ pub fn inspect_default() -> Result<Option<(usize, usize)>, String> {
     };
     let index: Index =
         serde_json::from_slice(&bytes).map_err(|e| format!("Invalid v2 index JSON: {e}"))?;
-    validated(index, &directory).map(Some)
+    validated(&index, &directory)?;
+    Ok(Some((index, directory)))
+}
+
+pub fn inspect_default() -> Result<Option<(usize, usize)>, String> {
+    load_default().map(|loaded| {
+        loaded.map(|(index, _)| (index.textures.len(), index.materials.len()))
+    })
+}
+
+/// Read an individually baked texture, mapped to the P0 gallery's 256px
+/// one-metre UV grid. Other physical repeat sizes are explicitly unsupported
+/// in this temporary preview, not silently stretched.
+fn gallery_texture(index: &Index, directory: &Path, id: &str) -> Result<Vec<u8>, String> {
+    let texture = index
+        .textures
+        .iter()
+        .find(|entry| entry.id == id)
+        .ok_or_else(|| format!("Unknown v2 gallery texture {id}"))?;
+    if texture.format != "bc7-rgba-srgb"
+        || texture.wrap != "repeat"
+        || texture.repeat_metres != [1.0, 1.0]
+    {
+        return Err(format!(
+            "V2 gallery supports only sRGB 1m-repeat color assets: {id}"
+        ));
+    }
+    let blocks = fs::read(directory.join(&texture.path))
+        .map_err(|e| format!("Cannot read v2 texture {id}: {e}"))?;
+    let source = texture_codec::decode_bc7(&blocks, texture.width, texture.height)?;
+    let size = materials_p0::TEXTURE_SIZE;
+    let mut output = vec![0u8; (size * size * 4) as usize];
+    for y in 0..size {
+        for x in 0..size {
+            let src_x = (x as u64 * texture.width as u64 / size as u64) as usize;
+            let src_y = (y as u64 * texture.height as u64 / size as u64) as usize;
+            let source_offset = (src_y * texture.width as usize + src_x) * 4;
+            let dest_offset = ((y * size + x) * 4) as usize;
+            output[dest_offset..dest_offset + 4]
+                .copy_from_slice(&source[source_offset..source_offset + 4]);
+        }
+    }
+    Ok(output)
+}
+
+/// The first gallery experiment uses one base texture across all eight
+/// rock faces. Distinct face recipes remain valid in v2 but require a
+/// future mesh/material-ID extension before this F8 comparison can show them.
+fn gallery_rock(index: &Index, directory: &Path, id: &str) -> Result<Option<Vec<u8>>, String> {
+    let Some(material) = index.materials.iter().find(|item| item.id == id) else {
+        return Ok(None);
+    };
+    if material.kind != "rock" || material.representation != "solid" {
+        return Err(format!("Unexpected v2 rock recipe: {id}"));
+    }
+    let faces = material.faces.as_ref().ok_or_else(|| format!("{id}: missing faces"))?;
+    let same_base = faces.top.base == faces.side.base && faces.top.base == faces.bottom.base;
+    let no_overlay = [&faces.top, &faces.side, &faces.bottom]
+        .iter()
+        .all(|face| face.overlay.is_none());
+    if !same_base || !no_overlay {
+        return Err(format!("{id}: F8 gallery needs a single unlayered rock base"));
+    }
+    gallery_texture(index, directory, &faces.top.base).map(Some)
+}
+
+fn gallery_copper(index: &Index, directory: &Path) -> Result<Option<Vec<u8>>, String> {
+    let Some(material) = index.materials.iter().find(|m| m.id == "ore.native_copper") else {
+        return Ok(None);
+    };
+    let overlays = material
+        .overlays
+        .as_ref()
+        .ok_or("Native copper v2 recipe has no overlay")?;
+    if overlays.side.as_deref() != Some(overlays.top.as_str()) || overlays.bottom.is_some() {
+        return Err("F8 copper preview needs one shared top/side overlay".into());
+    }
+    gallery_texture(index, directory, &overlays.top).map(Some)
+}
+
+fn srgb_to_linear(value: u8) -> f32 {
+    let v = value as f32 / 255.0;
+    if v <= 0.04045 {
+        v / 12.92
+    } else {
+        ((v + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+fn linear_to_srgb(v: f32) -> u8 {
+    let converted = if v <= 0.0031308 {
+        12.92 * v
+    } else {
+        1.055 * v.powf(1.0 / 2.4) - 0.055
+    };
+    (converted * 255.0).round().clamp(0.0, 255.0) as u8
+}
+
+/// Composite a transparent ore-only mask over the actual displayed host.
+fn composite_ore(base: &[u8], overlay: &[u8]) -> Vec<u8> {
+    let mut result = base.to_vec();
+    for (dst, ore) in result.chunks_exact_mut(4).zip(overlay.chunks_exact(4)) {
+        let alpha = ore[3] as f32 / 255.0;
+        if alpha == 0.0 {
+            continue;
+        }
+        if alpha == 1.0 {
+            dst[..3].copy_from_slice(&ore[..3]);
+        } else {
+            for c in 0..3 {
+                let host = srgb_to_linear(dst[c]);
+                let mineral = srgb_to_linear(ore[c]);
+                dst[c] = linear_to_srgb(host * (1.0 - alpha) + mineral * alpha);
+            }
+        }
+        dst[3] = 255;
+    }
+    result
+}
+
+/// Create a *separate*, opt-in RGBA preview array of the same 12 display
+/// slots as P0. Only granite, shale and shared copper-mask candidates are
+/// currently wired; all other P0 gallery materials remain unchanged.
+pub fn preview_layers(p0: &TexturePack<'_>) -> Result<Option<Vec<Vec<u8>>>, String> {
+    let Some((index, directory)) = load_default()? else {
+        return Ok(None);
+    };
+    let granite = gallery_rock(&index, &directory, "rock.granite")?;
+    let shale = gallery_rock(&index, &directory, "rock.shale")?;
+    let copper = gallery_copper(&index, &directory)?;
+    if granite.is_none() && shale.is_none() && copper.is_none() {
+        return Ok(None);
+    }
+    let mut layers: Vec<Vec<u8>> = (0..p0.layers)
+        .map(|layer| p0.decode_layer(layer))
+        .collect::<Result<_, _>>()?;
+    use materials_p0::Material;
+    if let Some(granite) = granite {
+        layers[Material::Granite as usize] = granite;
+    }
+    if let Some(shale) = shale {
+        layers[Material::Shale as usize] = shale;
+    }
+    if let Some(mask) = copper {
+        for (host, composite) in [
+            (Material::Granite, Material::GraniteCopper),
+            (Material::Shale, Material::ShaleCopper),
+        ] {
+            layers[composite as usize] = composite_ore(&layers[host as usize], &mask);
+        }
+    }
+    Ok(Some(layers))
 }
 
 #[cfg(test)]
@@ -197,7 +348,7 @@ mod tests {
 
     #[test]
     fn valid_empty_index_leaves_p0_available() {
-        assert_eq!(validated(empty(), Path::new(".")).unwrap(), (0, 0));
+        assert_eq!(validated(&empty(), Path::new(".")).unwrap(), (0, 0));
     }
 
     #[test]
@@ -224,7 +375,7 @@ mod tests {
             }),
             overlays: None,
         });
-        assert!(validated(index, Path::new(".")).is_err());
+        assert!(validated(&index, Path::new(".")).is_err());
     }
 
     #[test]
@@ -242,9 +393,18 @@ mod tests {
                 bottom: None,
             }),
         });
-        assert!(validated(index, Path::new(".")).is_err());
+        assert!(validated(&index, Path::new(".")).is_err());
         assert!(!valid_id("rock.Granite"));
         assert!(!valid_id("rock.granite.extra"));
+    }
+
+    #[test]
+    fn transparent_copper_preserves_host_and_opaque_copper_replaces_color() {
+        let base = [60u8, 80, 100, 255, 60, 80, 100, 255];
+        let overlay = [200u8, 110, 50, 0, 200, 110, 50, 255];
+        let out = composite_ore(&base, &overlay);
+        assert_eq!(&out[..4], &base[..4]);
+        assert_eq!(&out[4..], &[200, 110, 50, 255]);
     }
 
     #[test]
@@ -261,6 +421,6 @@ mod tests {
             compressed_bytes: 16,
             rgb_psnr_db: 30.0,
         });
-        assert!(validated(index, Path::new(".")).is_err());
+        assert!(validated(&index, Path::new(".")).is_err());
     }
 }
