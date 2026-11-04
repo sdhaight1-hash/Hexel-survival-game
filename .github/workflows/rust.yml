@@ -25,3 +25,5 @@ jobs:
         run: cargo test --all-targets
       - name: Validate production material v2 registry
         run: cargo run --quiet --bin material-baker -- validate
+      - name: Bake actual v2 candidate art
+        run: cargo run --quiet --bin material-baker -- bake
