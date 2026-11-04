@@ -5,6 +5,7 @@ mod debug_menu;
 mod materials_p0;
 mod materials_v2;
 mod mesh;
+mod presentation;
 mod render;
 mod render_cpu_metrics;
 mod stream_metrics;
@@ -17,6 +18,7 @@ use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
 };
+use presentation::PresentationOptions;
 use render::Renderer;
 use render_cpu_metrics::RenderCpuMetrics;
 use std::{collections::HashSet, sync::Arc, time::Instant};
@@ -34,6 +36,7 @@ struct Game {
     window: Option<Arc<Window>>,
     renderer: Option<Renderer>,
     world: World,
+    presentation: PresentationOptions,
     player: Player,
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
@@ -60,12 +63,12 @@ struct Game {
 
 impl Default for Game {
     fn default() -> Self {
-        Self::new(false)
+        Self::new(false, PresentationOptions::default())
     }
 }
 
 impl Game {
-    fn new(streamed: bool) -> Self {
+    fn new(streamed: bool, presentation: PresentationOptions) -> Self {
         let mut world = if streamed {
             World::streamed(42)
         } else {
@@ -85,6 +88,7 @@ impl Game {
             window: None,
             renderer: None,
             world,
+            presentation,
             player,
             pressed: HashSet::new(),
             mouse_captured: false,
@@ -264,8 +268,9 @@ impl ApplicationHandler for Game {
             Err(error) => eprintln!("V2 material cache rejected: {error}; P0 gallery remains active."),
         }
 
-        match pollster::block_on(Renderer::new(window.clone(), &self.world)) {
+        match pollster::block_on(Renderer::new(window.clone(), &self.world, self.presentation)) {
             Ok(renderer) => {
+                self.console_log.record(renderer.presentation_report());
                 self.window = Some(window);
                 self.renderer = Some(renderer);
                 self.capture_mouse();
@@ -544,10 +549,15 @@ impl ApplicationHandler for Game {
 fn main() {
     let event_loop = EventLoop::new().expect("Could not initialize window event loop");
     event_loop.set_control_flow(ControlFlow::Poll);
-    let streamed = std::env::args()
-        .skip(1)
-        .any(|arg| arg == "--streamed-world");
-    if let Err(error) = event_loop.run_app(&mut Game::new(streamed)) {
+    let (streamed, presentation) =
+        match PresentationOptions::parse(std::env::args().skip(1)) {
+            Ok(options) => options,
+            Err(error) => {
+                eprintln!("Invalid arguments: {error}");
+                return;
+            }
+        };
+    if let Err(error) = event_loop.run_app(&mut Game::new(streamed, presentation)) {
         eprintln!("Game event loop stopped: {error}");
     }
 }
