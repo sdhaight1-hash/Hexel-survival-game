@@ -194,13 +194,15 @@ impl Game {
         }
         let label = self.renderer.as_ref().map_or_else(
             || "not initialized".into(),
-            |r| benchmark_mode_label(
-                r.material_comparison_label(),
-                r.presentation_label(),
-                r.menu_snapshot(self.benchmark_logging),
-                self.menu_open,
-                self.console_open,
-            ),
+            |r| {
+                benchmark_mode_label(
+                    r.material_comparison_label(),
+                    r.presentation_label(),
+                    r.menu_snapshot(self.benchmark_logging),
+                    self.menu_open,
+                    self.console_open,
+                )
+            },
         );
         self.console_log
             .record(format_average(&label, "TRIAL FINAL", trial));
