@@ -5,6 +5,7 @@ mod debug_menu;
 mod materials_p0;
 mod materials_v2;
 mod mesh;
+mod ore_pattern_study;
 mod render;
 mod texture_codec;
 mod texture_pack;
