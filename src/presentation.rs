@@ -49,7 +49,9 @@ impl PresentationOptions {
                         "4" => Some(4),
                         "unbounded" => None,
                         _ => {
-                            return Err(format!("Invalid --stream-budget '{value}'; use 1, 2, 4 or unbounded"))
+                            return Err(format!(
+                                "Invalid --stream-budget '{value}'; use 1, 2, 4 or unbounded"
+                            ))
                         }
                     };
                 }
@@ -150,7 +152,12 @@ mod tests {
 
     #[test]
     fn parses_opt_in_stream_budgets() {
-        for (size, expected) in [("1", Some(1)), ("2", Some(2)), ("4", Some(4)), ("unbounded", None)] {
+        for (size, expected) in [
+            ("1", Some(1)),
+            ("2", Some(2)),
+            ("4", Some(4)),
+            ("unbounded", None),
+        ] {
             let (_, settings) = PresentationOptions::parse(
                 ["--stream-budget", size].into_iter().map(str::to_owned),
             )
