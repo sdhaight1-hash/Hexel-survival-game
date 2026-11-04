@@ -23,18 +23,19 @@ candidate effect is not a shipping feature.
 
 ## Visual companion infographics
 
-The three **original, full-size illustrated companion posters** below summarize
-the visual direction, geology/material rules, and plant-generation/rendering
-principles. They are **concept/reference diagrams**, not authoritative engine
-screenshots, final texture assets, or proof that proposed effects already
-exist. **The written specifications in this guide take precedence** if an
-illustration depicts a cubic-looking block, a billboard when a fixed
-cross-card is intended, an arbitrary texel-resolution number, glowing
-ore, or an unimplemented feature.
+Two original concept posters remain relevant to **visual direction**
+and are retained in this guide. They are illustrations, **not** actual
+engine screenshots, technical UV layouts or proof of a shipping feature.
+The style rules take priority over schematic block shapes, arbitrary
+texel counts, glowing mineral motifs or artistically exaggerated forms.
 
 - [Visual identity, palette and artistic pillars](style-infographics/visual-identity.webp)
-- [Terrain materials, face roles and ore readability](style-infographics/terrain-geology.webp)
-- [Flora rendering, growth algorithms and LOD](style-infographics/flora-architecture.webp)
+- [Terrain and geology: texture and ore readability](style-infographics/terrain-geology.webp)
+
+The third original poster—plant-generation techniques and LOD—is still
+relevant but now belongs with [vegetation system design](../docs/vegetation-visual-architecture.md), not the visual art standard.
+New **editable technical diagrams** live with their owning design
+documents under [assets/diagrams](diagrams/README.md).
 
 The files are stored under [`assets/style-infographics/`](style-infographics/).
 They are not production-game material atlases and should not be sampled,
@@ -253,7 +254,9 @@ the [P2.2 gallery record](../docs/p2-2-reactive-surfaces.md).
 
 ## 6. Soil, grass and vegetation
 
-![Vegetation architecture infographic: cutout cards, 3D meshes, hybrid flora, plant life state, procedural structure generation, and LOD](style-infographics/flora-architecture.webp)
+For the original illustrated vegetation-structure poster, see
+[vegetation visual architecture](../docs/vegetation-visual-architecture.md).
+Species shape and texture standards below remain binding.
 
 
 
