@@ -92,11 +92,16 @@ The first command checks all 55 references against the original inventory,
 state/role validity, paths, actual RGBA PNG data and physical repeat fields.
 The second produces a **deterministically ID-sorted** set of individual
 `target/materials-v2/<texture-id>.bc7` files and an `index.json`
-report for **registered candidate/approved source texture assets**.
+manifest for registered candidate/approved source textures **and** their
+stable material recipes. Each exported material recipe retains its
+`id`, `kind`, `status`, `representation`, and explicit top/side/bottom
+face or transparent-overlay texture IDs. Pending `needs_art` records are
+excluded from the runtime-facing recipe list without losing them from
+the authoring catalog.
 
 **Currently there are no registered production texture assets.** The
-bake command therefore prints that no new art is available and does not
-manufacture replacement images.
+bake command therefore reports that no new art is available and writes an
+**empty v2 index** without manufacturing replacement images.
 
 As soon as one new material source is authored, the same tool can compress
 rectangular or square color/overlay inputs with a **BC7 encoder**. It decodes
@@ -122,7 +127,8 @@ The P1 tool writes **individual** textures with different dimensions;
 those cannot be placed in one fixed-size GPU array unchanged.
 
 A subsequent **separate, testable renderer slice** must consume this v2
-index, group assets by compatible texture formats/dimensions or use
+index (which now contains the necessary material-to-texture face mappings),
+group assets by compatible texture formats/dimensions or use
 atlases, and map stable material/overlay IDs to GPU resources. Only then
 should we replace the P0 gallery's hardcoded material selection.
 
