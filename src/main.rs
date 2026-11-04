@@ -1,6 +1,7 @@
 //! One native 16×16×16 chunk viewed through a first-person camera.
 
 mod materials_p0;
+mod materials_v2;
 mod mesh;
 mod render;
 mod texture_codec;
@@ -106,6 +107,14 @@ impl ApplicationHandler for Game {
                 return;
             }
         };
+
+        match materials_v2::inspect_default() {
+            Ok(None | Some((0, 0))) => println!("V2 materials: no production assets; P0 gallery remains active."),
+            Ok(Some((textures, materials))) => println!(
+                "V2 materials: validated {textures} texture file(s) and {materials} recipe(s); P0 gallery remains active until GPU binding is implemented."
+            ),
+            Err(error) => eprintln!("V2 material cache rejected: {error}; P0 gallery remains active."),
+        }
 
         match pollster::block_on(Renderer::new(window.clone(), &self.world)) {
             Ok(renderer) => {

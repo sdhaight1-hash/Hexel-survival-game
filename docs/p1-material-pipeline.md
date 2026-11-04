@@ -135,6 +135,21 @@ should we replace the P0 gallery's hardcoded material selection.
 Do not conflate an offline BC7 file with a streamed GPU texture or a
 persisted geological resource: the files are generated caches.
 
+## Runtime read-only integration
+
+At game startup, the executable now checks for
+`target/materials-v2/index.json` if a v2 bake exists. It validates the
+manifest version, stable IDs, declared material face/overlay references,
+BC7 dimensions, byte lengths and safe local filenames. A missing index is
+expected until candidate artwork is authored; an invalid index is reported
+without crashing or replacing the playable P0 material gallery.
+
+**This is not yet GPU material binding.** The current renderer continues
+to use its embedded 12-layer P0 pack. The v2 check exists to validate the
+handoff and detect broken asset caches before we add GPU resource assignment.
+Use `cargo run --release --bin material-baker -- bake` to create the v2
+index; creating the file does not itself activate new textures.
+
 ## Next acceptance gates
 
 1. Author **one** approved-quality soil base with top/side transition and
