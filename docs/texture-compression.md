@@ -79,8 +79,10 @@ A separate [P1 material pipeline](p1-material-pipeline.md) now supports
 registered *new* variable-resolution RGBA8 inputs (including rectangular
 tiles). The `material-baker` tool performs BC7 encoding, independent
 software decode/quality checks, and exports stable ID-named blocks plus a
-JSON index to `target/materials-v2`. It is **not loaded by the P0 game**:
-the existing embedded 12-layer P0 pack and native BC7/CPU fallback remain
+JSON index to `target/materials-v2`. The runtime now **validates** a present v2 index at startup and
+can show three candidate materials in a narrow separate F8 preview;
+it does **not generally bind v2 recipes to GPU materials**. The
+existing embedded 12-layer P0 pack and native BC7/CPU fallback remain
 untouched. No P1 production sources are approved yet.
 
 ## Design limits and next texture-compression work
