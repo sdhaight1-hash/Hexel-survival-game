@@ -448,7 +448,7 @@ mod tests {
         use materials_p0::Material;
         assert_eq!(
             layers.len(),
-            materials_p0::LAYER_COUNT + ore_pattern_study::FAMILY_NAMES.len()
+            materials_p0::LAYER_COUNT + 1 + ore_pattern_study::GENERATED_PATTERNS
         );
         let gray = &layers[materials_p0::LAYER_COUNT];
         assert!(gray
