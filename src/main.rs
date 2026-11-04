@@ -268,7 +268,11 @@ impl ApplicationHandler for Game {
             Err(error) => eprintln!("V2 material cache rejected: {error}; P0 gallery remains active."),
         }
 
-        match pollster::block_on(Renderer::new(window.clone(), &self.world, self.presentation)) {
+        match pollster::block_on(Renderer::new(
+            window.clone(),
+            &self.world,
+            self.presentation,
+        )) {
             Ok(renderer) => {
                 self.console_log.record(renderer.presentation_report());
                 self.window = Some(window);
@@ -549,14 +553,13 @@ impl ApplicationHandler for Game {
 fn main() {
     let event_loop = EventLoop::new().expect("Could not initialize window event loop");
     event_loop.set_control_flow(ControlFlow::Poll);
-    let (streamed, presentation) =
-        match PresentationOptions::parse(std::env::args().skip(1)) {
-            Ok(options) => options,
-            Err(error) => {
-                eprintln!("Invalid arguments: {error}");
-                return;
-            }
-        };
+    let (streamed, presentation) = match PresentationOptions::parse(std::env::args().skip(1)) {
+        Ok(options) => options,
+        Err(error) => {
+            eprintln!("Invalid arguments: {error}");
+            return;
+        }
+    };
     if let Err(error) = event_loop.run_app(&mut Game::new(streamed, presentation)) {
         eprintln!("Game event loop stopped: {error}");
     }
