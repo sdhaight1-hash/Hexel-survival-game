@@ -104,6 +104,16 @@ does not prove 1 m of real-world relief fits into each Y level.
 - Bedrock and deposits are conditioned by tectonic region: volcanic provinces,
   orogenic belts, sediment basins, fault systems and intrusions. Mineral stocks
   are finite; mining must not replenish them.
+- Ore deposits are **world-owned finite 3D structures**, not independent
+  per-chunk ore rolls or cosmetic shader-only veins. Sections query the
+  same stable deposit descriptors across Q/R and vertical Y boundaries;
+  ore grade/clusters and persistent depletion are independent of loading
+  order. Geological variants include dipping hydrothermal veins with
+  spider splays, stockwork, disseminated halos and stratabound
+  replacements. See [researched ore-generation contract](ore-deposit-geology-and-continuity.md).
+- The 1,024 km torus requires a future **canonical hex-lattice wrap
+  transform** shared by mineral descriptors and gameplay. Independent
+  Q/R modulo is not an acceptable substitute.
 - Soil properties, moisture, water supply, climate, elevation and geology
   determine biomes and species eligibility. Ecotones should be gradients
   unless a physical boundary explains the abrupt change.

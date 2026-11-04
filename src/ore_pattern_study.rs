@@ -2,13 +2,14 @@
 //! Five deliberately distinct, periodic 256px C/G tiles are generated once
 //! for the optional F8 gallery. Coverage (alpha) is independent from tone (RGB).
 
-pub const FAMILY_NAMES: [&str; 6] = [
+pub const FAMILY_NAMES: [&str; 7] = [
     "SOURCE",
     "HAIRLINE",
     "NODULES",
     "STOCKWORK",
     "RIBBONS",
     "SCATTER",
+    "WORLD VEIN",
 ];
 pub const PALETTE_NAMES: [&str; 3] = ["COPPER", "HEMATITE", "MOONSILVER"];
 pub const GENERATED_PATTERNS: usize = 5;
@@ -166,7 +167,10 @@ mod tests {
 
     #[test]
     fn pattern_and_palette_lists_are_explicitly_bounded() {
-        assert_eq!(FAMILY_NAMES.len(), GENERATED_PATTERNS + 1);
+        // Six existing texture masks remain unchanged; the seventh mode
+        // is generated in WGSL from world position, not a texture layer.
+        assert_eq!(FAMILY_NAMES.len(), GENERATED_PATTERNS + 2);
+        assert_eq!(FAMILY_NAMES[6], "WORLD VEIN");
         assert_eq!(PALETTE_NAMES.len(), 3);
     }
 }

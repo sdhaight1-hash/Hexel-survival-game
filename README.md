@@ -58,7 +58,7 @@ the mouse.
 | F9 | Diagnostic dry/wet/moss/frost/mixed states in F8 gallery |
 | F10 | Diagnostic native-copper glints ON/OFF in F8 gallery |
 | F11 | Compare authored-color copper vs grayscale source + shader palette, F8 gallery only |
-| F12 | Cycle original-derived + five new grayscale ore-pattern studies (requires F8 + F11) |
+| F12 | Cycle six original texture masks plus P2.4 WORLD VEIN (continuous world-space 3D preview; requires F8 + F11) |
 | P | Cycle Copper / Hematite / Moonsilver display palettes (requires F8 + F11) |
 
 The [F1 diagnostics menu](docs/diagnostics-menu.md) displays current
@@ -136,7 +136,8 @@ state as live survival-game state.
   and art-approval standard only.
 - [Core engineering roadmap](docs/roadmap.md) and
   [material/overlay roadmap](docs/material-overlay-roadmap.md).
-- [Ore-pattern family gallery](docs/ore-pattern-family-gallery.md): five new grayscale coverage masks, three pigment ramps, F12/P art controls.
+- [P2.4 world-space vein prototype](docs/p2-4-worldspace-mineral-vein.md): seventh F12 option with 3D position-based coverage across cap/side seams, pending native visual/GPU approval.
+- [Ore-pattern family gallery](docs/ore-pattern-family-gallery.md): five original grayscale coverage masks, three pigment ramps, F12/P art controls.
 - [F11 grayscale copper comparison](docs/p2-3-grayscale-copper-gallery.md): original A/B art fixture (not a new material format).
 - [Material contract](docs/material-authoring-contract.md),
   [P1 catalog and baker](docs/p1-material-pipeline.md), and

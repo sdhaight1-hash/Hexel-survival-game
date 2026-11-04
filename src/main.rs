@@ -385,7 +385,7 @@ impl ApplicationHandler for Game {
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
                 println!("F10: toggle native-copper metallic highlights (F8).");
                 println!("F11: compare original full-color copper vs shader-colored grayscale copper (F8).");
-                println!("F12: cycle six grayscale ore masks | P: cycle copper / hematite / moonsilver pigment (F8+F11).");
+                println!("F12: cycle six grayscale masks + WORLD VEIN (3D) | P: copper / hematite / moonsilver (F8+F11).");
                 println!("F3: toggle 3-second FPS / CPU frame / visible chunk stats.");
                 if self.world.is_benchmark() {
                     println!("F4: toggle 112m distance culling vs all 200 resident chunk draws.");

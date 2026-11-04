@@ -161,6 +161,10 @@ generator to general geology or resource-ownership logic.
    joins and F10 off/on. No more screenshot requests for this
    first review—the uploaded set is sufficient to set targets.
 
+## Subsequent experiment: P2.4 world-space vein
+
+After this visual review, a **seventh F12 option, WORLD VEIN**, is available in the stacked [P2.4 implementation](p2-4-worldspace-mineral-vein.md). It uses a 3D world-position field rather than adding a seventh texture mask. The six original tile-based patterns, this screenshot review, and their findings remain valid historical baselines. The new method has not yet passed native art/performance review.
+
 ## What not to generalize yet
 
 The five masks are simple noise/curve-generated test patterns,
