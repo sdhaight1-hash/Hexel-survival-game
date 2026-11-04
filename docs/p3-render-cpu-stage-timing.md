@@ -26,6 +26,21 @@ RENDER CPU: N successful draws; draw p95 moving M ms (Nm), idle I ms (Ni); peak 
 - Full result is recorded in the existing `target/benchmark-session.log` and F2 clipboard workflow.
 - The streamer's deterministic terrain, 95-section residency, gameplay physics, existing P0/F8 material appearance and renderer's submission strategy are **unchanged**.
 
+## Mouse-pan experiment (Is_Looking)
+
+The new `Is_Looking` flag is **relative mouse movement**, not mouse capture or character motion. Only captured `DeviceEvent::MouseMotion` contributes; the absolute `|dx| + |dy|` from all mouse events since the previous update is sampled, and at least 1.0 raw mouse-delta unit marks that update as looking. Movement while F1/F2 is open or capture is released does not count. This threshold is for noise suppression, not a rotation-speed estimate. The last sampled flag is shown on the three-second `STREAM:` line; it is **only the last update**, not a label for the entire three seconds.
+
+With F3, each successful `Renderer::draw` is categorized by the latest movement-input state and mouse-look state, giving **four exclusive groups** in `LOOK CPU:`:
+
+| Group | Keyboard movement input | Relative mouse input |
+| --- | --- | --- |
+| idle+still | None | None |
+| idle+look | None | Panning |
+| move+still | W/A/S/D or Space | None |
+| move+look | W/A/S/D or Space | Panning |
+
+Each group reports sample count, draw CPU p95 and **surface acquisition CPU p95**. The report also gives looking vs no-look draw p95. The samples are reset every reporting window and the full record is copied by F2. Empty-group p95 is printed as 0.00 by the current diagnostic convention; **that means no data, not zero latency**. Mouse motion is accumulated from event callbacks and sampled at the update callback, so exact event-to-draw alignment is approximate. Changes in camera view or GPU work can still affect surface acquisition, but this comparison alone cannot establish causality or measure actual GPU time.
+
 ## Test
 
 Use the same machine/window resolution and F3 enabled:
