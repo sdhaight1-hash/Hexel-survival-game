@@ -11,14 +11,8 @@ use crate::{
     hex_torus_candidate::{Axial64, HEX_ROW_METRES, PERIOD_Q, PERIOD_R, R_PERIOD_Q_OFFSET},
 };
 
-const NEIGHBORS_BY_MESH_SIDE: [(i64, i64); 6] = [
-    (0, 1),
-    (-1, 1),
-    (-1, 0),
-    (0, -1),
-    (1, -1),
-    (1, 0),
-];
+const NEIGHBORS_BY_MESH_SIDE: [(i64, i64); 6] =
+    [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)];
 const HEX_CORNER_RADIUS: f64 = 0.577_350_269_189_625_8;
 
 #[derive(Clone, Copy)]
@@ -45,11 +39,15 @@ fn center_delta(cell: Axial64, origin: Axial64, metric: PhysicalMetric) -> DVec2
 
 fn corner_delta(side: usize, metric: PhysicalMetric) -> DVec2 {
     let angle = (30.0 + side as f64 * 60.0).to_radians();
-    let regular = DVec2::new(HEX_CORNER_RADIUS * angle.cos(), HEX_CORNER_RADIUS * angle.sin());
+    let regular = DVec2::new(
+        HEX_CORNER_RADIUS * angle.cos(),
+        HEX_CORNER_RADIUS * angle.sin(),
+    );
     match metric {
-        PhysicalMetric::GeographicAffine => {
-            DVec2::new(regular.x, regular.y * CandidateProjection::north_scale_ratio())
-        }
+        PhysicalMetric::GeographicAffine => DVec2::new(
+            regular.x,
+            regular.y * CandidateProjection::north_scale_ratio(),
+        ),
         PhysicalMetric::RegularHex | PhysicalMetric::HybridCentersOnly => regular,
     }
 }
@@ -127,12 +125,8 @@ fn vertical_hex_face_alignment_and_nearby_camera_coordinates_remain_precise() {
     assert_eq!(local_neighbor.to_array(), [1.0, 0.0, 0.0]);
     assert_eq!(
         p.equivalent().candidate_chunk(16),
-        CandidateCellId::new(
-            p.q + PERIOD_Q + R_PERIOD_Q_OFFSET,
-            p.r + PERIOD_R,
-            p.y,
-        )
-        .equivalent()
-        .candidate_chunk(16)
+        CandidateCellId::new(p.q + PERIOD_Q + R_PERIOD_Q_OFFSET, p.r + PERIOD_R, p.y,)
+            .equivalent()
+            .candidate_chunk(16)
     );
 }
