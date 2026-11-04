@@ -56,9 +56,18 @@ impl PrototypeTerrain {
     /// Materialize only the requested 16³ chunk. Does not depend on or mutate
     /// any neighboring chunk, so generation order cannot affect its contents.
     pub fn generate_chunk(&self, pos: ChunkPos) -> Chunk {
-        let base_q = pos.q.checked_mul(CHUNK_SIDE).expect("chunk Q exceeds i32 cell range");
-        let base_r = pos.r.checked_mul(CHUNK_SIDE).expect("chunk R exceeds i32 cell range");
-        let base_y = pos.y.checked_mul(CHUNK_SIDE).expect("chunk Y exceeds i32 cell range");
+        let base_q = pos
+            .q
+            .checked_mul(CHUNK_SIDE)
+            .expect("chunk Q exceeds i32 cell range");
+        let base_r = pos
+            .r
+            .checked_mul(CHUNK_SIDE)
+            .expect("chunk R exceeds i32 cell range");
+        let base_y = pos
+            .y
+            .checked_mul(CHUNK_SIDE)
+            .expect("chunk Y exceeds i32 cell range");
         let mut chunk = Chunk::default();
         for y in 0..CHUNK_SIDE {
             for r in 0..CHUNK_SIDE {
@@ -141,10 +150,22 @@ mod tests {
         for pos in [
             ChunkPos { q: 0, r: 0, y: 13 },
             ChunkPos { q: 1, r: 1, y: 14 },
-            ChunkPos { q: -1, r: -1, y: 13 },
+            ChunkPos {
+                q: -1,
+                r: -1,
+                y: 13,
+            },
             ChunkPos { q: 1, r: -1, y: 15 },
-            ChunkPos { q: 62_500, r: -62_500, y: 13 },
-            ChunkPos { q: -62_500, r: 62_500, y: 15 },
+            ChunkPos {
+                q: 62_500,
+                r: -62_500,
+                y: 13,
+            },
+            ChunkPos {
+                q: -62_500,
+                r: 62_500,
+                y: 15,
+            },
         ] {
             assert_chunk_matches_absolute_cells(&generator, pos);
         }
@@ -158,7 +179,11 @@ mod tests {
             ChunkPos { q: 0, r: 0, y: 13 },
             ChunkPos { q: 0, r: 1, y: 14 },
             ChunkPos { q: 1, r: 1, y: 14 },
-            ChunkPos { q: 6_400, r: -9_000, y: 13 },
+            ChunkPos {
+                q: 6_400,
+                r: -9_000,
+                y: 13,
+            },
         ];
         let original: Vec<_> = sections
             .iter()
@@ -179,7 +204,13 @@ mod tests {
     #[test]
     fn exact_boundaries_are_not_independently_seeded() {
         let generator = PrototypeTerrain::new(99);
-        for (q, r) in [(15, 15), (16, 16), (-1, -1), (0, 0), (1_000_015, -1_000_016)] {
+        for (q, r) in [
+            (15, 15),
+            (16, 16),
+            (-1, -1),
+            (0, 0),
+            (1_000_015, -1_000_016),
+        ] {
             let elevation = generator.surface_y(q, r);
             for y in [elevation - 3, elevation - 1, elevation, elevation + 1] {
                 let cell = CellPos::new(q, r, y);
@@ -198,8 +229,12 @@ mod tests {
         let same = PrototypeTerrain::new(42);
         let different = PrototypeTerrain::new(99);
         let positions = [(0, 0), (255, -1), (-1_020, 531), (500_000, -500_000)];
-        assert!(positions.iter().all(|&(q, r)| first.surface_y(q, r) == same.surface_y(q, r)));
-        assert!(positions.iter().any(|&(q, r)| first.surface_y(q, r) != different.surface_y(q, r)));
+        assert!(positions
+            .iter()
+            .all(|&(q, r)| first.surface_y(q, r) == same.surface_y(q, r)));
+        assert!(positions
+            .iter()
+            .any(|&(q, r)| first.surface_y(q, r) != different.surface_y(q, r)));
         assert_eq!(PROTOTYPE_TERRAIN_REVISION, 1);
     }
 }
