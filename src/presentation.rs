@@ -14,7 +14,7 @@ impl Default for PresentationOptions {
             mode: wgpu::PresentMode::Fifo,
             max_frame_latency: 2,
             fps_cap: None,
-            stream_budget: None,
+            stream_budget: Some(1),
         }
     }
 }
@@ -47,8 +47,11 @@ impl PresentationOptions {
                         "1" => Some(1),
                         "2" => Some(2),
                         "4" => Some(4),
+                        "unbounded" => None,
                         _ => {
-                            return Err(format!("Invalid --stream-budget '{value}'; use 1, 2 or 4"))
+                            return Err(format!(
+                                "Invalid --stream-budget '{value}'; use 1, 2, 4 or unbounded"
+                            ))
                         }
                     };
                 }
@@ -97,7 +100,25 @@ mod tests {
         assert_eq!(settings.mode, wgpu::PresentMode::Fifo);
         assert_eq!(settings.max_frame_latency, 2);
         assert_eq!(settings.fps_cap, None);
-        assert_eq!(settings.stream_budget, None);
+        assert_eq!(settings.stream_budget, Some(1));
+    }
+
+    #[test]
+    fn streamed_world_defaults_to_one_section_and_allows_unbounded_override() {
+        let (streamed, settings) =
+            PresentationOptions::parse(["--streamed-world".to_owned()]).unwrap();
+        assert!(streamed);
+        assert_eq!(settings.stream_budget, Some(1));
+        assert_eq!(settings.mode, wgpu::PresentMode::Fifo);
+        assert_eq!(settings.max_frame_latency, 2);
+        assert_eq!(settings.fps_cap, None);
+        let (_, unlimited) = PresentationOptions::parse(
+            ["--streamed-world", "--stream-budget", "unbounded"]
+                .into_iter()
+                .map(str::to_owned),
+        )
+        .unwrap();
+        assert_eq!(unlimited.stream_budget, None);
     }
 
     #[test]
@@ -131,12 +152,17 @@ mod tests {
 
     #[test]
     fn parses_opt_in_stream_budgets() {
-        for (size, expected) in [("1", 1), ("2", 2), ("4", 4)] {
+        for (size, expected) in [
+            ("1", Some(1)),
+            ("2", Some(2)),
+            ("4", Some(4)),
+            ("unbounded", None),
+        ] {
             let (_, settings) = PresentationOptions::parse(
                 ["--stream-budget", size].into_iter().map(str::to_owned),
             )
             .unwrap();
-            assert_eq!(settings.stream_budget, Some(expected));
+            assert_eq!(settings.stream_budget, expected);
         }
     }
 

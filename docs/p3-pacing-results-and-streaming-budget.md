@@ -34,3 +34,31 @@
 - During ordinary travel, preserve 95 resident CPU sections; queue/backlog observable in F2 logs; chunk updates per tick do not exceed the selected count.
 - Unit tests exercise startup, transitions, repeated ticks and mid-transition reversal. CI passes. Native Windows test must compare moving/looking `STREAM FRAME` long intervals and single-update peaks against original baseline at identical trajectory.
 - Do **not** claim this section-count budget is a strict millisecond cap or a complete fix for isolated single-mesh spikes. A future async/budgeted mesh worker design should depend on native measurements.
+
+## Follow-up native A/B: bounded 1 versus unbounded (2026-11-04)
+
+Player-supplied Windows F2 logs directly compared `--streamed-world --present-mode mailbox --fps-cap 60` with and without `--stream-budget 1` on the same machine. Traversals were not synchronized deterministic replays, so treat these as **observed extremes**, not matched per-frame samples.
+
+| Metric | Unbounded baseline | Budget 1 |
+| --- | --- | --- |
+| Worst recorded **single** generation+mesh/buffer CPU stream update | **37.49 ms** | **3.76 ms** |
+| Update intervals >33.3ms in moving windows | **2** | **0** |
+| Typical achieved CPU draw rate | **~58.5/s** | **~58.5/s** |
+| Highest moving update interval p95 | **17.76 ms** | **17.53 ms** |
+| Most chunks exchanged in one 3-second window | **175 each way** | **50 each way** |
+| Most stream operations reported in one 3-second window | **7** | **50** |
+| CPU-resident sections at report points | **95** | **95** |
+
+**Primary outcome:** worst observed single streaming update was approximately **90% smaller** in budget-1 mode. The player reported **no noticeable terrain popping, holes, flicker or delayed loading**. This is promising visual feedback, not a guarantee of correctness under rapid travel, reversal, or other GPU drivers.
+
+**Important distinction:** chunk counts, queue length and CPU time summed over a three-second window can remain substantial. Replacing 25 sections over 25 ticks spreads work; it does not remove it. Previous `pending 0` messages were emitted only at three-second intervals, so they did **not** reveal peak instantaneous backlog or time to catch up.
+
+## Hardening and default decision (PR #56)
+
+On this evidence, **the `--streamed-world` default changes to `--stream-budget 1`** after its initial synchronous 95-section bootstrap. `--stream-budget 2|4` remain experimental alternatives, and `--stream-budget unbounded` recovers the original all-at-once CPU/GPU section replacement for comparisons. Present mode remains FIFO, latency 2, uncapped by default; the optional Mailbox/60 mode remains independently selectable.
+
+The `STREAM:` report adds **peak pending** target sections observed **after each update** during the reporting window, **completed backlog episodes** since the last report, **longest backlog drain time** (ms) and the current **active backlog age** (ms). A backlog episode begins when a tick ends with any pending sections and ends when a tick reaches zero; if the player changes target repeatedly while the backlog is active, the measured interval includes all those retargets. This is not a per-target generation latency and does not capture the first chunk handled inside the initial tick. At 3-second boundaries, peak/completed/longest counters reset; an active episode retains its start time.
+
+Additional unit tests use rapid target reversals, center-priority checks, deterministic restoration, stable 95-section residency and a simulated GPU-residency membership set driven by the exact `StreamDelta` added/removed operations. In debug builds the real GPU sync function also asserts that added sections are CPU-resident, removed sections no longer reside, and every resident GPU mesh belongs to a CPU-resident section. Empty CPU chunks intentionally have no GPU mesh, so GPU buffer count is **not** expected to equal 95. These tests are contract checks, not substitute native Vulkan correctness measurements.
+
+**Remaining gate:** run native 60-cap movement/panning and rapid reversal on the new default; confirm that peak/active backlog drains, generated meshes visually catch up, and there is no popping/flickering/terrain ghosting. Do not claim a guaranteed millisecond budget, GPU frame-time measurement, or complete elimination of streaming spikes.

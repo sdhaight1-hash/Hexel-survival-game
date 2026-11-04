@@ -77,10 +77,13 @@ one-chunk gallery, preserving material-acceptance comparisons.
   aren't implemented/saved yet. The game does not claim that
   depletion survives unload/restart.
 - **No async workers:** CPU section generation and GPU buffer
-  creation occur synchronously only when the player enters a new
-  16-cell section. This can cause visible hitches; the 3-second
-  CPU breakdown is intended to reveal them. Bounded work queues,
-  workers and frame budgets should be added after native timings.
+  creation still run synchronously on the event thread. After the
+  initial 95-section bootstrap, the current streamer defaults to
+  **one newly resident section per update** (configurable by
+  `--stream-budget 1|2|4|unbounded`), substantially reducing the
+  observed worst individual CPU streaming spike. This is **not** a
+  strict millisecond deadline or background worker pool; refer to the
+  [native A/B and hardening report](p3-pacing-results-and-streaming-budget.md).
 - **No advanced culling:** All nonempty resident GPU buffers are
   submitted for rendering, not frustum- or occlusion-culled.
   The 95-section resident cap is a **memory** bound, not a claim
@@ -112,9 +115,10 @@ one-chunk gallery, preserving material-acceptance comparisons.
 
 - Camera-relative rendering, high-precision player coordinates
   and a chosen world-manifest/torus mapping.
-- Bounded worker/scheduling queue, pending vs ready section states
-  and collision-prioritized generation, with frame-time/hitch
-  measurement.
+- Optional background worker queue and an explicit pending/ready
+  state for generated and uploaded sections, if validated native
+  profiling shows a need beyond the current one-section-per-tick
+  synchronous budget; preserve collision-prioritized source sampling.
 - Mid/far seed-derived terrain LOD, frustum rejection,
   incremental invalidation and persistent edited blocks.
 
