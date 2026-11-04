@@ -16,3 +16,6 @@ pub mod space_colonization;
 pub mod surface_layers;
 pub mod world;
 pub mod worldgen_foundation;
+
+#[cfg(test)]
+mod seam_integration_candidate_tests;
