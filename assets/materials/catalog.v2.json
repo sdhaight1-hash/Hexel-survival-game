@@ -1,7 +1,41 @@
 {
   "schema_version": 2,
-  "notes": "55 legacy art identities, ALL pending replacement. No finished production texture assets are declared. Do not mark the 208 research-only flora records production-ready. P0 renderer/BC7 pack remain unchanged.",
-  "texture_assets": [],
+  "notes": "55 legacy identities retained. 3 original prototype candidate materials (granite, shale, copper overlay) registered for first-person art and BC7 preview, NOT approved. Remaining 52 require authored production art.",
+  "texture_assets": [
+    {
+      "id": "rock.granite_candidate",
+      "path": "assets/production/rock/granite_candidate.png",
+      "usage": "albedo",
+      "color_space": "srgb",
+      "repeat_metres": [
+        1,
+        1
+      ],
+      "wrap": "repeat"
+    },
+    {
+      "id": "rock.shale_candidate",
+      "path": "assets/production/rock/shale_candidate.png",
+      "usage": "albedo",
+      "color_space": "srgb",
+      "repeat_metres": [
+        1,
+        1
+      ],
+      "wrap": "repeat"
+    },
+    {
+      "id": "ore.native_copper_candidate",
+      "path": "assets/production/ore/native_copper_candidate.png",
+      "usage": "overlay",
+      "color_space": "srgb",
+      "repeat_metres": [
+        1,
+        1
+      ],
+      "wrap": "repeat"
+    }
+  ],
   "materials": [
     {
       "id": "soil.bony",
@@ -123,10 +157,23 @@
     {
       "id": "rock.shale",
       "kind": "rock",
-      "status": "needs_art",
+      "status": "candidate",
       "legacy_reference": "assets/textures/rock/sedimentary/shale.png",
-      "representation": null,
-      "faces": null,
+      "representation": "solid",
+      "faces": {
+        "top": {
+          "base": "rock.shale_candidate",
+          "overlay": null
+        },
+        "side": {
+          "base": "rock.shale_candidate",
+          "overlay": null
+        },
+        "bottom": {
+          "base": "rock.shale_candidate",
+          "overlay": null
+        }
+      },
       "overlays": null
     },
     {
@@ -186,10 +233,23 @@
     {
       "id": "rock.granite",
       "kind": "rock",
-      "status": "needs_art",
+      "status": "candidate",
       "legacy_reference": "assets/textures/rock/metamorphic_igneous/granite.png",
-      "representation": null,
-      "faces": null,
+      "representation": "solid",
+      "faces": {
+        "top": {
+          "base": "rock.granite_candidate",
+          "overlay": null
+        },
+        "side": {
+          "base": "rock.granite_candidate",
+          "overlay": null
+        },
+        "bottom": {
+          "base": "rock.granite_candidate",
+          "overlay": null
+        }
+      },
       "overlays": null
     },
     {
@@ -267,11 +327,15 @@
     {
       "id": "ore.native_copper",
       "kind": "ore",
-      "status": "needs_art",
+      "status": "candidate",
       "legacy_reference": "assets/textures/ore/native_copper.png",
-      "representation": null,
+      "representation": "overlay",
       "faces": null,
-      "overlays": null
+      "overlays": {
+        "top": "ore.native_copper_candidate",
+        "side": "ore.native_copper_candidate",
+        "bottom": null
+      }
     },
     {
       "id": "ore.malachite",

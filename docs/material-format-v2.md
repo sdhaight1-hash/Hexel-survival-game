@@ -1,8 +1,10 @@
 # Hexel material format v2 — P0 prototype and proposed production contract
 
 **Status:** the v2 JSON **authoring registry, validation and offline
-per-source BC7 baker** are now implemented. The **runtime v2 loader**
-and final packed/streamed GPU material layout are not implemented.
+per-source BC7 baker** are implemented, with startup cache validation and
+an opt-in F8 preview for the first three candidate rock/ore recipes.
+A **general-purpose v2 renderer** and production packed/streamed GPU
+material layout are not implemented.
 See [P1 material pipeline](p1-material-pipeline.md) for actual schema and
 commands. The example farther below remains illustrative, not a live
 registered approved asset.
@@ -13,6 +15,13 @@ forest floor and native copper), seam-blends the source surfaces into
 256px tiles, then composes grass and ore masks **at build time**.
 The resulting reference colors are compressed into an embedded BC7 pack,
 with a CPU-decoded RGBA fallback where GPU BC7 isn't supported.
+
+Three **new original, unapproved** 128px candidate PNGs under
+`assets/production/` provide a first end-to-end gallery comparison
+for granite, shale and an ore-only copper overlay. F8 toggles that
+candidate set (after a v2 offline bake) against the P0 textures,
+without changing the underlying world. Read
+[P1 material pipeline](p1-material-pipeline.md) for exact limitations.
 
 All 55 legacy atlas crops remain unchanged. These derived P0 color tiles
 are now generated at **build time**, not startup, and remain neither a new

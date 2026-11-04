@@ -1,24 +1,25 @@
 # P1 material registry and offline baker
 
-**Implementation status:** P1 *authoring/validation and independent BC7 source baking*
-foundation. **Not** a runtime v2 material loader, full 55-material visual
-replacement, vegetation renderer, P1 completion claim, or new approved artwork.
-The P0 16³ scene, F6/F7 controls, 12-layer compressed gallery and original
-55 reference PNGs remain unchanged.
+**Implementation status:** v2 authoring/validation, independent BC7 baking,
+read-only runtime index validation and a narrow opt-in F8 rock/ore visual
+comparison are implemented. **Not** a general-purpose v2 renderer, full
+55-material replacement, vegetation renderer, P1 completion claim, or
+approved production artwork. The P0 16³ scene, existing F6/F7 controls,
+embedded 12-layer BC7 gallery and original 55 reference PNGs remain intact.
 
 ## First inventory: 55 original references, zero approved replacements
 
 The new `assets/materials/catalog.v2.json` inventories every source from
 `assets/textures/manifest.json`, exactly once:
 
-| Class | Pending identities | Representation when new art is ready |
-| --- | ---: | --- |
-| Soil | 5 | Solid with top/side/bottom face assignments |
-| Forest floor | 1 | Organic *ground cover*, not an intrinsic soil fertility |
-| Rock | 23 | Solid; oriented strata and appropriate cap/side textures |
-| Ore | 16 | Transparent inclusions over the **actual** host rock |
-| Minerals | 10 | Either solid strata or overlaid seams/crystals, explicitly selected |
-| **Total** | **55** | **All currently `needs_art`** |
+| Class | Identities | Candidate | Pending | Representation |
+| --- | ---: | ---: | ---: | --- |
+| Soil | 5 | 0 | 5 | Solid with top/side/bottom face assignments |
+| Forest floor | 1 | 0 | 1 | Organic ground cover |
+| Rock | 23 | 2 | 21 | Solid; oriented cap/side textures |
+| Ore | 16 | 1 | 15 | Transparent inclusions over host rock |
+| Minerals | 10 | 0 | 10 | Solid or overlaid seams/crystals |
+| **Total** | **55** | **3** | **52** | **Zero approved** |
 
 No source is silently reclassified as production-ready. IDs such as
 `soil.low_fertility`, `rock.granite`, `ore.native_copper` and
@@ -99,9 +100,11 @@ face or transparent-overlay texture IDs. Pending `needs_art` records are
 excluded from the runtime-facing recipe list without losing them from
 the authoring catalog.
 
-**Currently there are no registered production texture assets.** The
-bake command therefore reports that no new art is available and writes an
-**empty v2 index** without manufacturing replacement images.
+Three original **experimental** 128×128 RGBA image assets are registered:
+granite, shale and an ore-only copper alpha overlay. They are deliberately
+tagged `candidate`, **not `approved`**. The baker compiles these three
+independently and retains the 52 other identities as `needs_art`.
+The empty-index behavior still applies when a catalog has no candidates.
 
 As soon as one new material source is authored, the same tool can compress
 rectangular or square color/overlay inputs with a **BC7 encoder**. It decodes
@@ -144,11 +147,45 @@ BC7 dimensions, byte lengths and safe local filenames. A missing index is
 expected until candidate artwork is authored; an invalid index is reported
 without crashing or replacing the playable P0 material gallery.
 
-**This is not yet GPU material binding.** The current renderer continues
-to use its embedded 12-layer P0 pack. The v2 check exists to validate the
-handoff and detect broken asset caches before we add GPU resource assignment.
+**The startup check is not itself GPU binding.** A separate opt-in F8
+candidate gallery now exercises three explicitly supported materials
+through an independent RGBA preview array. The default renderer retains
+the embedded P0 BC7 pack. The v2 check still detects broken caches before
+the gallery preview is created.
 Use `cargo run --release --bin material-baker -- bake` to create the v2
 index; creating the file does not itself activate new textures.
+
+## First in-game v2 candidate comparison (F8)
+
+From the repository root, run the **offline bake** once after updating the
+source art, then launch the game:
+
+```sh
+cargo run --release --bin material-baker -- bake
+cargo run --release
+```
+
+Press **F8** to toggle the initial v2 candidate rock/ore view and the original
+P0 gallery. P0 still powers the soil/grass fixture and remains available when
+a candidate cache is missing, broken or unsupported. The F8 preview uses a
+separate uncompressed 12-layer RGBA8 array to keep the original GPU-compressed
+P0 array intact; production array packing is **not** solved by this fixture.
+
+Supported v2 recipes in this first slice are only `rock.granite`,
+`rock.shale` and `ore.native_copper`. The rock recipe must reuse one sRGB
+albedo across top/side/bottom and have no per-face overlay. Copper must use
+the same transparent top/side image. Textures may be independently sized, but
+for this comparison each must be a 1m × 1m repeat. The preview resamples
+each to the pre-existing 256px gallery slots. Unsupported recipes are reported
+and the game remains on P0; **this limitation is not a constraint on the
+general v2 material format**.
+
+The copper-only alpha mask composites over whichever granite/shale base is
+currently selected. This is a first-person visual QA fixture, not a simulated
+ore occurrence or approved geological texture. Candidate pixels should be
+evaluated at 1m, 3m and 8m under neutral light and in shadow before promoting
+anything to `approved`. Neither the source artwork nor the art style has
+passed that human review yet.
 
 ## Next acceptance gates
 

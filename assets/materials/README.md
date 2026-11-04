@@ -2,8 +2,9 @@
 
 **Current catalogs:** `catalog.v1.json` is the historical 32px prototype.
 `catalog.v2.json` is the **new authoring inventory of all 55 source
-identities**. Every v2 entry is currently `needs_art`; none has an
-approved production face set or overlay file.
+identities**. Three original exploratory artwork entries (`rock.granite`,
+`rock.shale`, `ore.native_copper`) are `candidate` for the F8 gallery,
+and 52 remain `needs_art`. **None is approved** as production art.
 
 The v2 material pipeline accepts RGB albedo and transparent overlays stored
 as **RGBA8 PNG**, allows independent rectangular source image dimensions

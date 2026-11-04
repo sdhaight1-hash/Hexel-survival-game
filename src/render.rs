@@ -2,7 +2,7 @@
 //! No terrain, movement or world-state logic lives inside this module.
 
 use crate::{
-    materials_p0,
+    materials_p0, materials_v2,
     mesh::{build_chunk_mesh, Vertex},
     texture_pack::TexturePack,
 };
@@ -54,6 +54,8 @@ pub struct Renderer {
     texels_per_metre: u32,
     material_bind_group: wgpu::BindGroup,
     _material_texture: wgpu::Texture,
+    v2_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
+    v2_preview_enabled: bool,
     terrain_buffer: wgpu::Buffer,
     terrain_vertices: u32,
     crosshair_buffer: wgpu::Buffer,
@@ -291,6 +293,78 @@ impl Renderer {
                 },
             ],
         });
+        // Optional F8 candidate-art comparison. It never replaces or edits
+        // the embedded, GPU-compressed P0 texture array.
+        let v2_materials = match materials_v2::preview_layers(&packed) {
+            Ok(Some(layers)) => {
+                let v2_texture = device.create_texture(&wgpu::TextureDescriptor {
+                    label: Some("V2 candidate gallery preview (RGBA8)"),
+                    size: wgpu::Extent3d {
+                        width: packed.width,
+                        height: packed.height,
+                        depth_or_array_layers: packed.layers as u32,
+                    },
+                    mip_level_count: 1,
+                    sample_count: 1,
+                    dimension: wgpu::TextureDimension::D2,
+                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                    view_formats: &[],
+                });
+                for (layer, pixels) in layers.iter().enumerate() {
+                    queue.write_texture(
+                        wgpu::TexelCopyTextureInfo {
+                            texture: &v2_texture,
+                            mip_level: 0,
+                            origin: wgpu::Origin3d {
+                                x: 0,
+                                y: 0,
+                                z: layer as u32,
+                            },
+                            aspect: wgpu::TextureAspect::All,
+                        },
+                        pixels,
+                        wgpu::TexelCopyBufferLayout {
+                            offset: 0,
+                            bytes_per_row: Some(packed.width * 4),
+                            rows_per_image: Some(packed.height),
+                        },
+                        wgpu::Extent3d {
+                            width: packed.width,
+                            height: packed.height,
+                            depth_or_array_layers: 1,
+                        },
+                    );
+                }
+                let v2_view = v2_texture.create_view(&wgpu::TextureViewDescriptor {
+                    dimension: Some(wgpu::TextureViewDimension::D2Array),
+                    ..Default::default()
+                });
+                let v2_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("V2 candidate gallery bind group"),
+                    layout: &material_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::TextureView(&v2_view),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::Sampler(&material_sampler),
+                        },
+                    ],
+                });
+                println!(
+                    "V2 candidate preview ready: F8 toggles rock/copper comparison against P0."
+                );
+                Some((v2_texture, v2_bind_group))
+            }
+            Ok(None) => None,
+            Err(error) => {
+                eprintln!("V2 preview unavailable ({error}); P0 gallery remains active.");
+                None
+            }
+        };
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("World shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("world_shader.wgsl").into()),
@@ -438,6 +512,8 @@ impl Renderer {
             texels_per_metre: 128,
             material_bind_group,
             _material_texture: material_texture,
+            v2_materials,
+            v2_preview_enabled: false,
             terrain_buffer,
             terrain_vertices: mesh.len() as u32,
             crosshair_buffer,
@@ -445,6 +521,14 @@ impl Renderer {
             _depth_texture: depth_texture,
             depth_view,
         })
+    }
+
+    /// Toggle a validated candidate rock/ore comparison without changing P0.
+    /// Returns None when no compatible candidate cache has been baked.
+    pub fn toggle_v2_preview(&mut self) -> Option<bool> {
+        self.v2_materials.as_ref()?;
+        self.v2_preview_enabled = !self.v2_preview_enabled;
+        Some(self.v2_preview_enabled)
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
@@ -530,7 +614,15 @@ impl Renderer {
             });
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            pass.set_bind_group(1, &self.material_bind_group, &[]);
+            let material_group = if self.v2_preview_enabled {
+                self.v2_materials
+                    .as_ref()
+                    .map(|(_, group)| group)
+                    .unwrap_or(&self.material_bind_group)
+            } else {
+                &self.material_bind_group
+            };
+            pass.set_bind_group(1, material_group, &[]);
             pass.set_vertex_buffer(0, self.terrain_buffer.slice(..));
             pass.draw(0..self.terrain_vertices, 0..1);
             pass.set_pipeline(&self.crosshair_pipeline);

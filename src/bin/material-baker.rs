@@ -688,7 +688,7 @@ mod tests {
     }
 
     #[test]
-    fn repo_catalog_has_all_original_materials_but_none_is_auto_approved() {
+    fn repo_catalog_has_55_sources_and_only_three_unapproved_candidates() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
         let catalog: Catalog = serde_json::from_slice(
             &fs::read(root.join("assets/materials/catalog.v2.json")).unwrap(),
@@ -699,10 +699,27 @@ mod tests {
                 .unwrap();
         validate(&catalog, &legacy, root).unwrap();
         assert_eq!(legacy.len(), 55);
+        assert_eq!(
+            catalog
+                .materials
+                .iter()
+                .filter(|item| item.status == "needs_art")
+                .count(),
+            52
+        );
+        assert_eq!(
+            catalog
+                .materials
+                .iter()
+                .filter(|item| item.status == "candidate")
+                .count(),
+            3
+        );
         assert!(catalog
             .materials
             .iter()
-            .all(|item| item.status == "needs_art"));
-        assert!(material_recipes(&catalog).is_empty());
+            .all(|item| item.status != "approved"));
+        assert_eq!(catalog.texture_assets.len(), 3);
+        assert_eq!(material_recipes(&catalog).len(), 3);
     }
 }

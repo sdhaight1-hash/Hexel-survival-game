@@ -111,7 +111,7 @@ impl ApplicationHandler for Game {
         match materials_v2::inspect_default() {
             Ok(None | Some((0, 0))) => println!("V2 materials: no production assets; P0 gallery remains active."),
             Ok(Some((textures, materials))) => println!(
-                "V2 materials: validated {textures} texture file(s) and {materials} recipe(s); P0 gallery remains active until GPU binding is implemented."
+                "V2 materials: validated {textures} texture file(s) and {materials} recipe(s). F8 preview is available when compatible gallery candidates exist."
             ),
             Err(error) => eprintln!("V2 material cache rejected: {error}; P0 gallery remains active."),
         }
@@ -130,6 +130,7 @@ impl ApplicationHandler for Game {
                 println!("Chunk edges are temporary barriers; torus wrapping is NOT implemented.");
                 println!("P0 material gallery faces your initial spawn at r=9..12.");
                 println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
+                println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");
@@ -190,6 +191,14 @@ impl ApplicationHandler for Game {
                                         "P0 checker scale: {} texels/metre",
                                         renderer.cycle_density()
                                     );
+                                    return;
+                                }
+                                KeyCode::F8 => {
+                                    match renderer.toggle_v2_preview() {
+                                        Some(true) => println!("V2 candidate gallery: ON"),
+                                        Some(false) => println!("V2 candidate gallery: OFF (P0)"),
+                                        None => println!("V2 gallery unavailable: bake compatible candidate textures first."),
+                                    }
                                     return;
                                 }
                                 _ => {}

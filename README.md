@@ -130,6 +130,8 @@ production-ready.
 
 - `F6`: toggle a checker grid for spotting stretching and face seams.
 - `F7`: cycle **checker diagnostic** at 64 / 128 / 256 texels per metre.
+- `F8`: switch between the default P0 gallery and the opt-in baked v2
+  candidate granite, shale and copper preview (after running the v2 baker).
 - The middle display row is one metre higher so vertical transitions can be
   inspected in first-person view.
 
@@ -140,7 +142,8 @@ The overarching P0–P7 geology/flora texture program is [issue #14](https://git
 ## P1 material authoring and offline BC7 tooling
 
 The new [P1 material pipeline](docs/p1-material-pipeline.md) inventories **all
-55 legacy geology and organic-cover sources** as needing re-authoring.
+55 legacy geology and organic-cover sources**. Three have unapproved candidate
+artwork and the other 52 remain pending.
 No old atlas crop has been promoted to production art. A versioned
 `assets/materials/catalog.v2.json` defines stable IDs, distinct hexel
 top/side/bottom material recipes and independent cover/ore overlays.
@@ -149,8 +152,11 @@ Validate the catalog with `cargo run --bin material-baker -- validate`.
 Once new art has been approved for registration, bake it with
 `cargo run --release --bin material-baker -- bake`; files go to
 `target/materials-v2`. This tool supports **rectangular and square RGBA**
-textures with appropriate physical repeat scales and emits BC7. The playable
-P0 scene is unchanged while runtime v2 binding is developed.
+textures with appropriate physical repeat scales and emits BC7. Three **unapproved original candidate** art assets are now registered:
+granite, shale, and native-copper transparent overlay. The default P0
+display is unchanged; the separate F8 gallery preview shows candidates
+only after a successful v2 bake. It does not yet support arbitrary v2
+materials, full per-face role variation or streamed texture resources.
 
 ## Tests and engineering roadmap
 

@@ -5,6 +5,15 @@ an elevated sample strip inside the existing one-chunk first-person world.
 `F6` toggles the checker for detecting UV distortion and six-side seam
 problems; `F7` cycles diagnostic checker scales of 64/128/256 texels/m.
 
+**F8 candidate comparison:** First run
+`cargo run --release --bin material-baker -- bake`; then launch
+`cargo run --release`. F8 toggles an independent preview of newly
+authored **candidate** granite, shale and transparent copper over both
+rock hosts. P0 soil and grass previews are unchanged. F8 is unavailable
+if the offline bake has not been produced or fails validation.
+The candidate textures are intentionally small 128px stylized studies,
+resampled to 256px for the test board and **not final or approved art**.
+
 Try looking almost horizontally at the raised row `r=10` to examine the
 side faces, then stand back and look down at the caps. The soil bands run
 from bare to full grass cover; four adjacent columns show granite, granite

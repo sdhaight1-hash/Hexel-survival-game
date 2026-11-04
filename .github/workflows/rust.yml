@@ -21,7 +21,9 @@ jobs:
         run: python3 scripts/validate_material_catalog.py
       - name: Validate flora research registry
         run: python3 scripts/validate_flora_registry.py
-      - name: Run unit tests
-        run: cargo test --all-targets
       - name: Validate production material v2 registry
         run: cargo run --quiet --bin material-baker -- validate
+      - name: Bake actual v2 candidate art
+        run: cargo run --quiet --bin material-baker -- bake
+      - name: Run unit tests against baked candidate art
+        run: cargo test --all-targets
