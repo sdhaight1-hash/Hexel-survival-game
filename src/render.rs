@@ -14,7 +14,12 @@ use hexel_survival_game::{
     surface_layers::SurfacePreset,
     world::{ChunkPos, StreamDelta, World},
 };
-use std::{borrow::Cow, collections::{HashMap, VecDeque}, sync::Arc, time::Instant};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, VecDeque},
+    sync::Arc,
+    time::Instant,
+};
 use wgpu::util::DeviceExt;
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -736,13 +741,16 @@ impl Renderer {
     ) -> Result<(), wgpu::SurfaceError> {
         if let Some((snapshot, hovered)) = menu {
             if self.menu_cache != Some((snapshot, hovered)) {
-                let vertices = debug_menu::geometry(self.config.width, self.config.height, snapshot, hovered);
+                let vertices =
+                    debug_menu::geometry(self.config.width, self.config.height, snapshot, hovered);
                 self.menu_vertex_count = vertices.len() as u32;
-                self.menu_buffer = Some(self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Cached diagnostics menu triangles"),
-                    contents: bytemuck::cast_slice(&vertices),
-                    usage: wgpu::BufferUsages::VERTEX,
-                }));
+                self.menu_buffer = Some(self.device.create_buffer_init(
+                    &wgpu::util::BufferInitDescriptor {
+                        label: Some("Cached diagnostics menu triangles"),
+                        contents: bytemuck::cast_slice(&vertices),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    },
+                ));
                 self.menu_cache = Some((snapshot, hovered));
             }
         } else if self.menu_cache.is_some() {
@@ -752,14 +760,20 @@ impl Renderer {
         }
         if let Some((lines, generation)) = console {
             if self.console_cache_generation != Some(generation) {
-                let vertices = debug_menu::console_geometry(self.config.width, self.config.height, lines);
+                let vertices =
+                    debug_menu::console_geometry(self.config.width, self.config.height, lines);
                 self.console_vertex_count = vertices.len() as u32;
-                self.console_buffer = if vertices.is_empty() { None } else {
-                    Some(self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Cached bottom benchmark log"),
-                        contents: bytemuck::cast_slice(&vertices),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    }))
+                self.console_buffer = if vertices.is_empty() {
+                    None
+                } else {
+                    Some(
+                        self.device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: Some("Cached bottom benchmark log"),
+                                contents: bytemuck::cast_slice(&vertices),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            }),
+                    )
                 };
                 self.console_cache_generation = Some(generation);
             }
