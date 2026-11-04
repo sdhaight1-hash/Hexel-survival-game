@@ -305,7 +305,10 @@ impl World {
             removed,
             generation_cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
             pending: wanted.len().saturating_sub(
-                self.chunks.keys().filter(|pos| wanted.contains(pos)).count(),
+                self.chunks
+                    .keys()
+                    .filter(|pos| wanted.contains(pos))
+                    .count(),
             ),
         }
     }
