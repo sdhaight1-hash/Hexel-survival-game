@@ -122,6 +122,8 @@ inventory test. GitHub Actions also runs
 The original `scripts/validate_material_catalog.py` still checks the
 historical 32px gallery. It is not a production-resolution rule.
 
+**External validation:** the [industry material-variation study](material-variation-industry-research.md) separates Hytale/Vintage Story/Eco evidence from material-instance, palette-LUT and stochastic-tiling research. Any later v2 extension still needs measured GPU sample/BC7/BC4 costs and artist approval; no format change is made by the study.
+
 ## Future family/palette extension — proposed, not in v2 schema
 
 A **material-family recipe** is not limited to ores. If validated,
