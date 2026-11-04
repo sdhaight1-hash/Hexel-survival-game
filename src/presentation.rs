@@ -4,6 +4,8 @@ pub struct PresentationOptions {
     pub mode: wgpu::PresentMode,
     pub max_frame_latency: u32,
     pub fps_cap: Option<u32>,
+    /// Maximum new CPU sections and matching GPU meshes per streamed-world update.
+    pub stream_budget: Option<usize>,
 }
 
 impl Default for PresentationOptions {
@@ -12,6 +14,7 @@ impl Default for PresentationOptions {
             mode: wgpu::PresentMode::Fifo,
             max_frame_latency: 2,
             fps_cap: None,
+            stream_budget: None,
         }
     }
 }
@@ -36,6 +39,15 @@ impl PresentationOptions {
                                 "Unknown presentation mode '{value}'; use fifo, fifo-relaxed, mailbox or immediate"
                             ));
                         }
+                    };
+                }
+                "--stream-budget" => {
+                    let value = args.next().ok_or("--stream-budget needs a value")?;
+                    options.stream_budget = match value.as_str() {
+                        "1" => Some(1),
+                        "2" => Some(2),
+                        "4" => Some(4),
+                        _ => return Err(format!("Invalid --stream-budget '{value}'; use 1, 2 or 4")),
                     };
                 }
                 "--fps-cap" => {
@@ -83,6 +95,7 @@ mod tests {
         assert_eq!(settings.mode, wgpu::PresentMode::Fifo);
         assert_eq!(settings.max_frame_latency, 2);
         assert_eq!(settings.fps_cap, None);
+        assert_eq!(settings.stream_budget, None);
     }
 
     #[test]
@@ -115,6 +128,16 @@ mod tests {
     }
 
     #[test]
+    fn parses_opt_in_stream_budgets() {
+        for (size, expected) in [("1", 1), ("2", 2), ("4", 4)] {
+            let (_, settings) =
+                PresentationOptions::parse(["--stream-budget", size].into_iter().map(str::to_owned))
+                    .unwrap();
+            assert_eq!(settings.stream_budget, Some(expected));
+        }
+    }
+
+    #[test]
     fn unsupported_mode_falls_back_to_fifo() {
         let settings = PresentationOptions {
             mode: wgpu::PresentMode::Immediate,
@@ -143,6 +166,10 @@ mod tests {
             vec!["--fps-cap", "0"],
             vec!["--fps-cap", "30"],
             vec!["--fps-cap", "garbage"],
+            vec!["--stream-budget"],
+            vec!["--stream-budget", "0"],
+            vec!["--stream-budget", "9"],
+            vec!["--stream-budget", "garbage"],
         ] {
             assert!(PresentationOptions::parse(args.into_iter().map(str::to_owned)).is_err());
         }
