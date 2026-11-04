@@ -99,6 +99,28 @@ real species must remain identifiable without relying exclusively
 on hue. This proposal changes no records in the existing
 research-only flora registry and introduces no unapproved visuals.
 
+### Optional fantasy phenotype without cloning species records
+
+For an approved willow visual, one variant might specify
+`leaf_palette_id: foliage.willow.blue` while retaining its
+`species_id`, geometry, trunk material, persistence and biological
+rules. **This is illustrative only**, not an active flora-catalog
+field. If blue foliage signifies a distinct fantasy species with
+different habitat, growth, harvested resources or interactions,
+approve and register that as a **new species identity** instead.
+
+Seasonal autumn recoloring is another candidate palette recipe.
+Winter-bare branches and snow/frost coverage additionally need
+leaf-retention, structure and environmental state, not just a white
+palette. A fantastical luminous canopy requires an intentional
+emissive-material/lighting designation; unusual hue alone must not
+make vegetation glow.
+
+The user-supplied tree images are concept references and remain in
+the conversation; they have **not** been installed as repo source
+art, given a provenance license for distribution or approved as
+production assets.
+
 ## Registry data / source cautions
 
 `assets/flora/reference_registry.v1.json` holds **208 historical research
