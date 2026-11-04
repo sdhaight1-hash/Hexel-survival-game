@@ -144,6 +144,7 @@ impl Chunk {
 #[derive(Default)]
 pub struct World {
     chunks: HashMap<ChunkPos, Chunk>,
+    benchmark: bool,
 }
 
 impl World {
@@ -180,7 +181,60 @@ impl World {
         }
         let mut chunks = HashMap::new();
         chunks.insert(ChunkPos::default(), chunk);
-        Self { chunks }
+        Self {
+            chunks,
+            benchmark: false,
+        }
+    }
+
+    /// Optional static 20x10x1 chunk surface for visual/CPU benchmarks.
+    /// This is not streaming, persisted worldgen, or a toroidal boundary.
+    /// Keep the original material-reference chunk at the origin unchanged.
+    pub fn benchmark(seed: u32) -> Self {
+        let mut world = Self::demo(seed);
+        world.benchmark = true;
+        for cr in -5..5 {
+            for cq in -10..10 {
+                if cq == 0 && cr == 0 {
+                    continue;
+                }
+                let mut chunk = Chunk::default();
+                for r in 0..CHUNK_SIDE {
+                    for q in 0..CHUNK_SIDE {
+                        let global_q = cq * CHUNK_SIDE + q;
+                        let global_r = cr * CHUNK_SIDE + r;
+                        let (top, exposed_rock) = benchmark_surface(seed, global_q, global_r);
+                        for y in 0..=top {
+                            let block = if y == top {
+                                if exposed_rock {
+                                    Block::Rock
+                                } else {
+                                    Block::Grass
+                                }
+                            } else if y >= top - 2 {
+                                Block::Soil
+                            } else {
+                                Block::Rock
+                            };
+                            chunk.set([q as usize, r as usize, y as usize], block);
+                        }
+                    }
+                }
+                world.chunks.insert(ChunkPos { q: cq, r: cr, y: 0 }, chunk);
+            }
+        }
+        world
+    }
+
+    pub fn is_benchmark(&self) -> bool {
+        self.benchmark
+    }
+
+    /// Deterministic iteration order for stable mesh and benchmark builds.
+    pub fn chunk_positions(&self) -> Vec<ChunkPos> {
+        let mut positions: Vec<_> = self.chunks.keys().copied().collect();
+        positions.sort_by_key(|pos| (pos.r, pos.q, pos.y));
+        positions
     }
 
     pub fn get(&self, pos: CellPos) -> Block {
@@ -214,6 +268,22 @@ impl World {
             .find(|&y| data.get([local[0], local[1], y]).is_solid())
             .map(|y| (y + 1) as f32 * HEXEL_HEIGHT)
     }
+}
+
+fn benchmark_surface(seed: u32, q: i32, r: i32) -> (i32, bool) {
+    let qf = q as f32;
+    let rf = r as f32;
+    // Low-frequency, continuous authored-test topography with large
+    // rock/grass regions. No claim of realistic geology or climate.
+    let phase = seed as f32 * 0.004;
+    let wave = (qf * 0.036 + phase).sin() * 2.4
+        + (rf * 0.053 - phase).cos() * 1.8
+        + ((qf + rf) * 0.018 + phase).sin() * 1.3;
+    let top = (5.0 + wave).round() as i32;
+    let rock_signal = (qf * 0.029 + phase).sin()
+        + (rf * 0.041).cos()
+        + ((qf - rf) * 0.021).sin();
+    (top.clamp(2, CHUNK_SIDE - 3), rock_signal > 0.7)
 }
 
 fn demo_surface(seed: u32, q: i32, r: i32) -> i32 {
@@ -306,6 +376,45 @@ mod tests {
         assert_eq!(world.get(CellPos::new(9, 10, 3)), Block::Grass);
         assert_eq!(world.get(CellPos::new(12, 10, 3)), Block::Rock);
         assert_eq!(world.get(CellPos::new(14, 10, 3)), Block::Rock);
+    }
+
+    #[test]
+    fn benchmark_is_200_horizontal_chunks_with_stable_terrain_and_origin_gallery() {
+        let a = World::benchmark(42);
+        let b = World::benchmark(42);
+        assert!(a.is_benchmark());
+        assert!(!World::demo(42).is_benchmark());
+        assert_eq!(a.chunk_count(), 200);
+        assert_eq!(a.chunk_positions(), b.chunk_positions());
+        assert_eq!(a.chunk_positions().len(), 200);
+        assert!(a.chunk(ChunkPos::default()).is_some());
+        assert!(a.chunk(ChunkPos { q: -10, r: -5, y: 0 }).is_some());
+        assert!(a.chunk(ChunkPos { q: 9, r: 4, y: 0 }).is_some());
+        assert!(a.chunk(ChunkPos { q: 10, r: 0, y: 0 }).is_none());
+        for pos in [CellPos::new(8, 10, 3), CellPos::new(14, 10, 3),
+            CellPos::new(-45, 18, 5), CellPos::new(88, -42, 3)] {
+            assert_eq!(a.get(pos), b.get(pos));
+        }
+        let reference = World::demo(42);
+        for q in 0..CHUNK_SIDE {
+            for r in 0..CHUNK_SIDE {
+                for y in 0..CHUNK_SIDE {
+                    let p = CellPos::new(q, r, y);
+                    assert_eq!(a.get(p), reference.get(p));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn benchmark_chunks_are_not_independent_islands() {
+        let world = World::benchmark(42);
+        for (q, r) in [(15, 8), (16, 8), (-1, 0), (0, -1), (80, 40)] {
+            let c = CellPos::new(q, r, 0);
+            assert!(world.get(c).is_solid());
+            assert!(world.contains_demo_footprint(c.center().x, c.center().z));
+            assert!(world.support_top(c.center().x, c.center().z).is_some());
+        }
     }
 
     #[test]
