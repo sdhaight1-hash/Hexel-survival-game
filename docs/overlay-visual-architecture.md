@@ -111,7 +111,24 @@ ordinary authored masks, geological faults and other deterministic sources
 remain equally valid. The merged headless SCA prototype is research code, not a dependency
 of the overlay renderer or an implemented feature-mask generator.
 
-## Candidate: shared grayscale pattern families and mineral-specific palettes
+## Shared authored patterns versus specialized material consumers
+
+The grayscale-family proposal extends **beyond mineral overlays**:
+rock/soil bases, bark, leaf surfaces, and seasonal/biological covers
+can also reuse certain tonal patterns and palette ramps. But this
+document is specifically the **surface-overlay consumer** of that
+larger model. The [material-authoring contract](material-authoring-contract.md)
+owns shared IDs, mask semantics and palette recipes; the
+[vegetation architecture](vegetation-visual-architecture.md) owns bark
+orientation, species silhouettes and foliage transparency.
+
+An opaque granite surface does not need ore-like alpha coverage;
+a leaf-card alpha silhouette is not an ore inclusion mask; and bark
+striation should be aligned with local wood geometry rather than
+world-space geology. Reuse compatible *data representation*, not
+one universal mask projection or shader for every material.
+
+## Candidate: grayscale mineral patterns and palette response (overlay consumer)
 
 **Status:** proposed representation and art/benchmark comparison only.
 Today F8 composites a **colored** native-copper RGBA overlay on the CPU;
