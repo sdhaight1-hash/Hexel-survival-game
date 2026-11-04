@@ -116,6 +116,56 @@ universal production packing contract.
 design contract. The overlay-path proof and the optional SCA adapter
 remain **future gates**, not working production components.
 
+## Proposed variation model (pending visual/technical proof)
+
+The recent material study boards compared five visual variations for
+low-fertility soil/grass, granite, shale, native copper and wet/moss/
+frost/mixed conditions. **These were concept comparisons**, not five
+approved production PNGs per material. Explore **curated families**
+rather than authoring every colored combination.
+
+Prefer **shared grayscale masks / tonal patterns with shader-driven
+mineral-specific palettes** where it reduces content duplication
+without making different ores indistinguishable. The new palette
+should include color distribution and appropriate surface response,
+not one universal flat tint. Reserve dedicated colored assets for
+species/host appearances that require them. Pair a pattern family
+with deterministic geology/region-aware selection; the same pattern
+must not randomly change on each chunk rebuild.
+
+**This is a candidate extension, not implemented P1/P2.** Do not
+commit a five-variants-per-identity requirement, a schema revision,
+BC4, atlas, new GPU array architecture or a full palette renderer
+until one small art/CPU/GPU proof passes. The present v2 catalog,
+baker and F8/F9/F10 preview are intentionally unchanged.
+
+**Add to Gate A:** evaluate the existing copper full-color baseline
+against a grayscale coverage+detail mask with at least one
+mineral-specific multi-stop color ramp, and reject designs that
+erase rock/ore identity. Use the five-option boards as choices,
+not mandatory production source files.
+
+**Add to Gate B:** after the general v2 stable-ID binding, test
+three-to-five curated grayscale members as a **family** in one
+bounded fixture, explicit face recipes, fallback, stable IDs,
+versioned manifest and deterministic weights. Test raw texture
+bytes, GPU residency and sample count; do not assume BC4 support.
+
+**Add to Gate C:** let a region-owned **continuous ore feature mask**
+determine coverage while grayscale tiles supply internal detail;
+sample the same field on neighboring caps/sides. Validate no ore
+outside eligible hosts, no per-hexel reseeding and no stock inferred
+from colors. Keep the simple fault/spline source as the baseline;
+optional SCA remains Gate D.
+
+**Approval:** one source pattern may be compatible with multiple
+ore species, but a material family must have enough unique shape,
+value, finish and oxidation cues to meet the
+[style guide](../assets/STYLE_GUIDE.md). If two ores read as mere
+recolors at 3m, the abstraction fails even if it saves memory.
+See [the proposed authoring contract](material-authoring-contract.md)
+and [overlay composition design](overlay-visual-architecture.md).
+
 ## Revised dependencies and phase gates
 
 The historic **P0–P7 labels remain as milestones** for issue/PR continuity,
