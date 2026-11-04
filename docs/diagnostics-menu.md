@@ -26,6 +26,10 @@ font should **not** be interpreted as the final game UI style.
 ## Usage
 
 - Press **F1** to open the developer menu and release the mouse.
+- **F2** opens a separate bottom-docked running log with Ctrl+C/click
+  copy and continuous `target/benchmark-session.log` recording.
+  F2/Esc closes it; F1 and F2 are mutually exclusive overlays.
+  See [log and averages protocol](benchmark-history-console.md).
 - Click a row to change the same runtime setting as its displayed F-key.
 - **F1 or Esc** closes the menu and recaptures first-person mouse look.
 - **F3, F4, F5, F6, F7, F8, F9, F10 and F11** remain working hotkeys.
