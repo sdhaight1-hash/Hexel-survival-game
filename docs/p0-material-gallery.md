@@ -28,7 +28,8 @@ P0 now uses the **original high-resolution soil, granite, shale, forest-floor
 and native-copper crops already committed to GitHub** instead of simplistic
 procedural rocks. Cropped source detail is seam-reduced into 256px materials
 at startup, while grass-cover masks and copper-to-host composites are
-baked deterministically. The original source PNGs are never overwritten.
+baked deterministically at **build time**, not while launching the game.
+The original source PNGs are never overwritten.
 
 This is still a **quality-refinement prototype**, not a finished licensed,
 seam-certified production tile set. The forest-floor luminance is tinted for
