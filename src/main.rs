@@ -206,7 +206,9 @@ impl ApplicationHandler for Game {
                                 KeyCode::F9 => {
                                     match renderer.cycle_surface_preset() {
                                         Some(name) => println!("F8 surface preset: {name}"),
-                                        None => println!("F9 unavailable: bake v2 candidate art first."),
+                                        None => {
+                                            println!("F9 unavailable: bake v2 candidate art first.")
+                                        }
                                     }
                                     return;
                                 }
@@ -214,7 +216,9 @@ impl ApplicationHandler for Game {
                                     match renderer.toggle_metallic_glints() {
                                         Some(true) => println!("F8 copper metallic glints: ON"),
                                         Some(false) => println!("F8 copper metallic glints: OFF"),
-                                        None => println!("F10 unavailable: bake v2 candidate art first."),
+                                        None => println!(
+                                            "F10 unavailable: bake v2 candidate art first."
+                                        ),
                                     }
                                     return;
                                 }
@@ -293,8 +297,8 @@ mod shader_tests {
     #[test]
     fn p2_surface_shader_parses_and_validates() {
         let source = include_str!("world_shader.wgsl");
-        let module = naga::front::wgsl::parse_str(source)
-            .expect("P2.2 world shader must parse as WGSL");
+        let module =
+            naga::front::wgsl::parse_str(source).expect("P2.2 world shader must parse as WGSL");
         naga::valid::Validator::new(
             naga::valid::ValidationFlags::all(),
             naga::valid::Capabilities::all(),
