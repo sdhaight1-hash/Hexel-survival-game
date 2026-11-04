@@ -380,6 +380,19 @@ cuboid-only modeling restriction. The older textureless-voxel exploration
 supports geometry-driven silhouettes, **not** rejection of bark, leaf
 or terrain textures.
 
+**Seasonal color transitions must feel grown, not switched.**
+A tree may blend between approved spring/summer/autumn pigment
+palettes across the game year, including imaginative blue or silver
+foliage phenotypes. Preserve coherent canopy shading, recognizable
+species form and regional mood throughout intermediate colors;
+avoid abrupt global hue swaps and visually muddy transitions.
+Evergreen and fantasy species need not share the same calendar.
+**Leaf loss, snow/frost and bare branches are separate visual states**
+and must not be faked by making all foliage white or invisible
+through a color ramp. Shader keyframes, world-time evaluation and
+asset schema belong in the [vegetation architecture](../docs/vegetation-visual-architecture.md), not in this art guide.
+
+
 ### Structural appearance and movement
 
 Species **silhouette**, branch rhythm, crown shape, leaf arrangement,
