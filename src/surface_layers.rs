@@ -88,8 +88,8 @@ mod tests {
             current = current.next();
         }
         assert_eq!(
-            visited,
-            [
+            visited.as_slice(),
+            &[
                 SurfacePreset::Dry,
                 SurfacePreset::Wet,
                 SurfacePreset::Moss,
