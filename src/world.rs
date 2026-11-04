@@ -232,11 +232,8 @@ impl World {
         let Some(source) = self.terrain else {
             return StreamDelta::default();
         };
-        let player_cell = CellPos::at_world_xz(
-            player_feet.x,
-            player_feet.z,
-            player_feet.y.floor() as i32,
-        );
+        let player_cell =
+            CellPos::at_world_xz(player_feet.x, player_feet.z, player_feet.y.floor() as i32);
         let (center, _) = player_cell.chunk_and_local();
         if self.stream_center == Some(center) {
             return StreamDelta::default();
@@ -264,9 +261,7 @@ impl World {
         }
         // Center-first, deterministic generation order. No randomized
         // per-chunk geology or dependence on iteration order of HashMap.
-        requested.sort_by_key(|(distance, height, pos)| {
-            (*distance, *height, pos.y, pos.q, pos.r)
-        });
+        requested.sort_by_key(|(distance, height, pos)| (*distance, *height, pos.y, pos.q, pos.r));
         let wanted: HashSet<_> = requested.iter().map(|entry| entry.2).collect();
         let mut removed: Vec<_> = self
             .chunks
@@ -278,9 +273,7 @@ impl World {
         self.chunks.retain(|pos, _| wanted.contains(pos));
         let mut added = Vec::new();
         for (_, _, pos) in requested {
-            if let std::collections::hash_map::Entry::Vacant(entry) =
-                self.chunks.entry(pos)
-            {
+            if let std::collections::hash_map::Entry::Vacant(entry) = self.chunks.entry(pos) {
                 entry.insert(source.generate_chunk(pos));
                 added.push(pos);
             }
