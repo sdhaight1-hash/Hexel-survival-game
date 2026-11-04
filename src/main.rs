@@ -4,6 +4,7 @@ mod materials_p0;
 mod materials_v2;
 mod mesh;
 mod render;
+mod stream_metrics;
 mod texture_codec;
 mod texture_pack;
 
@@ -13,6 +14,7 @@ use hexel_survival_game::{
 };
 use render::Renderer;
 use std::{collections::HashSet, sync::Arc, time::Instant};
+use stream_metrics::StreamFrameMetrics;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -37,6 +39,7 @@ struct Game {
     streamed_uploaded_bytes: u64,
     streamed_generation_cpu_ms: f64,
     streamed_meshing_cpu_ms: f64,
+    stream_metrics: StreamFrameMetrics,
 }
 
 impl Default for Game {
@@ -77,6 +80,7 @@ impl Game {
             streamed_uploaded_bytes: 0,
             streamed_generation_cpu_ms: 0.0,
             streamed_meshing_cpu_ms: 0.0,
+            stream_metrics: StreamFrameMetrics::default(),
         }
     }
 
@@ -161,7 +165,7 @@ impl ApplicationHandler for Game {
                     println!(
                         "No static terrain boundary. Q/R/Y streaming ON. No torus wrap, edits, caves, distant LOD or camera rebasing yet."
                     );
-                    println!("STREAM prints 3-second resident/generation/mesh/upload counters.");
+                    println!("STREAM prints 3-second resident/generation/mesh/upload counters and per-update CPU peaks plus frame interval percentiles.");
                 } else {
                     println!("Hexel Survival: one 16×16×16 chunk, deterministic demo seed 42.");
                     println!(
@@ -320,6 +324,10 @@ impl ApplicationHandler for Game {
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         let now = Instant::now();
         let dt = now.duration_since(self.last_frame).as_secs_f32();
+        if self.world.is_streamed() {
+            self.stream_metrics
+                .record_frame_interval(f64::from(dt) * 1000.0);
+        }
         self.last_frame = now;
         self.player.step(&self.world, self.input(), dt);
         if self.world.is_streamed() {
@@ -328,12 +336,16 @@ impl ApplicationHandler for Game {
                 self.streamed_generated += delta.added.len();
                 self.streamed_evicted += delta.removed.len();
                 self.streamed_generation_cpu_ms += delta.generation_cpu_ms;
+                let mut mesh_upload_ms = 0.0;
                 if let Some(renderer) = self.renderer.as_mut() {
                     let result = renderer.sync_stream(&self.world, &delta);
                     self.streamed_meshes += result.meshed_buffers;
                     self.streamed_uploaded_bytes += result.uploaded_bytes;
                     self.streamed_meshing_cpu_ms += result.cpu_ms;
+                    mesh_upload_ms = result.cpu_ms;
                 }
+                self.stream_metrics
+                    .record_stream_update(delta.generation_cpu_ms, mesh_upload_ms);
             }
             if now.duration_since(self.last_stream_report).as_secs_f64() >= 3.0 {
                 let (gpu_meshes, submitted_vertices) = self
@@ -359,6 +371,7 @@ impl ApplicationHandler for Game {
                 self.streamed_uploaded_bytes = 0;
                 self.streamed_generation_cpu_ms = 0.0;
                 self.streamed_meshing_cpu_ms = 0.0;
+                println!("{}", self.stream_metrics.report_and_reset());
                 self.last_stream_report = now;
             }
         }
