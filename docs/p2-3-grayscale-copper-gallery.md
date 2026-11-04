@@ -91,6 +91,47 @@ Record measurements before approving future packing:
   grayscale conversion, while the existing Naga test checks WGSL
   parsing and semantic validation. CI is not visual acceptance.
 
+## Actual F11 visual feedback and next art proof
+
+**User review, 2026-11-03:** after toggling F11 repeatedly over both hosts
+and comparing F9/F10 conditions, the change is **slight copper color
+variation**, not an obvious difference in pattern or richness. This is
+**expected** from the implementation and is **not visual approval**.
+
+- Both modes use the *same single ore-only coverage footprint*.
+- F11 derives grayscale tonal detail from the original colored copper
+  candidate, then applies one fixed shader color ramp.
+- The host texture remains exactly the same. Neither mode selects
+  multiple patterns, changes ore morphology, blends seasonal palettes,
+  nor generates continuous cross-hexel deposits.
+- Passing Rust and WGSL tests demonstrates correct code/data wiring,
+  not improved art or a production-ready family system.
+
+**Next controlled material-family gallery:** curate **three to five
+genuinely distinct authored grayscale coverage/detail patterns**,
+e.g. hairline, nodules, stockwork, ribbons and scattered inclusions;
+then choose compatible palettes for copper, one non-copper mineral and
+one optional fictional metal. Allow independent pattern, palette and
+surface-response selection while preserving granite/shale hosts and
+the original full-color source as a baseline. Reject patterns that
+make all ores indistinguishable, and keep real ore stock independent
+from display masks. Do not equate five art-study concepts with five
+already installed source textures.
+
+**Benchmark prerequisite:** the current one-chunk material strip is
+too small for meaningful visual repetition, traversal or rendering
+comparison. Build an *optional*, deterministic **200-horizontal-chunk
+(20 × 10, one vertical section)** static scene with the original
+reference gallery preserved at the origin. Generate exposed faces
+per chunk using neighboring-chunk visibility, give rock/copper visual
+fixtures repeated *outside* the origin, and gather stable timing,
+mesh-count and visible-chunk statistics. Keep P0/single-chunk default
+as a baseline and retain the same camera/settings for A/B testing.
+This scene is **not** streaming, procedural global terrain, a torus,
+real ore worldgen, approved assets or a GPU performance benchmark
+unless actual GPU timing is measured. Do not bake 200 copies of
+the same texture.
+
 ## Future work deliberately excluded
 
 Keep the broader family/schema/seasonal architecture in
