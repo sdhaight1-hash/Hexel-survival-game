@@ -1,4 +1,4 @@
-//! A single, deterministic 16x16x16 demo chunk on an axial hexagonal grid.
+//! A deterministic 16³ demo chunk and optional static 200-chunk benchmark.
 //!
 //! This is a locally flat chunk. Geographic torus periods and playable
 //! hex-lattice seam translations have NOT been chosen or implemented.
