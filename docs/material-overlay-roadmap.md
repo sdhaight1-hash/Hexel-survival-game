@@ -166,6 +166,26 @@ recolors at 3m, the abstraction fails even if it saves memory.
 See [the proposed authoring contract](material-authoring-contract.md)
 and [overlay composition design](overlay-visual-architecture.md).
 
+**Cross-material extension:** grayscale detail/palette families
+are an option for rocks, non-ore minerals, bark, leaves, grass,
+soil and thin organic/seasonal cover—not only embedded ore. Reuse
+compatible textures, but **do not** automatically replace unique
+stone strata, bark growth direction, foliage geometry/silhouette
+and species pigmentation with a shared recolored bitmap. Internal
+leaf detail, leaf **cutout alpha** and exposed ore coverage are
+different fields with different shader/geometry responsibilities.
+
+**Extended proof after the copper baseline:** A/B-test (a) two
+granite/shale base variants against their original authored color,
+(b) two species-specific bark recipes on suitable trunk/branch
+geometry, and (c) one leaf silhouette with two seasonal color
+ramps, independently of actual season simulation. Preserve source
+and gameplay identity and test coherent clustering, correct
+orientation, color in linear space, texture residency, shader
+samples, alpha mips and recognition at player scale. Keep these
+as small independent fixtures; do not postpone P2.3 copper/vein
+continuity for a complete flora system.
+
 ## Revised dependencies and phase gates
 
 The historic **P0–P7 labels remain as milestones** for issue/PR continuity,
