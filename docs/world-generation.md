@@ -115,6 +115,19 @@ does not prove 1 m of real-world relief fits into each Y level.
 *Design invariant: all water transfer must remain balanced. The game
 does not yet have a global/regional/local water solver.*
 
+**Seasonal material-palette boundary (proposed):** the game-year
+clock belongs to world simulation; regional climate and approved
+species rules can eventually map that clock to local phenology.
+The renderer may interpolate **derived color palettes** using that
+phase, but pigment colors are not the authority for temperature,
+snow mass, water transfers, plant health or leaf retention. Do
+not hardcode globally synchronized Earth-like spring/summer/autumn/
+winter timing onto the proposed periodic synthetic world. Until
+climate and time systems exist, a diagnostic seasonal slider is
+only an art fixture; see [vegetation visual architecture](vegetation-visual-architecture.md) and the
+[material authoring proposal](material-authoring-contract.md).
+
+
 ## Water conservation is mandatory
 
 There are **no infinite source blocks**. Planetary water is accounted for
