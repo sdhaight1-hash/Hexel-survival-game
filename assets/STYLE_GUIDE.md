@@ -213,6 +213,22 @@ granite grains. Do not use it as the final ore visual standard.
 - Ore hidden behind opaque rock **must not appear through the rock** merely
   because an occurrence is nearby.
 
+**Curated variation, not random recoloring (candidate direction):**
+the same rock or ore family may use several reviewed surface-detail and
+pattern variants to avoid obvious repetition. Grayscale shape/tonal
+studies can be shared and colored through a mineral-specific palette,
+but **color alone must not define species identity**. Galena, native
+copper, gold and iron-bearing minerals still need distinct morphology,
+value hierarchy, weathering and appropriate reflective response.
+Some species will require their own artwork instead of a reused pattern.
+Nearby appearances should feel geologically related, not like random
+colored tiles. Visual grade, host recognition and neutral-light mining
+readability remain the acceptance standard. Detailed storage, palette
+and mask contracts belong in
+[material authoring](../docs/material-authoring-contract.md) and
+[overlay architecture](../docs/overlay-visual-architecture.md), not
+in this style guide.
+
 **Initial approval test:** copper on **granite and shale**, three candidate
 visual families (**veins / clusters / hybrid**) and poor–medium–rich
 prominence. Favor a **hybrid** only after in-game side-by-side comparison;
