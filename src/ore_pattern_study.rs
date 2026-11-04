@@ -3,7 +3,12 @@
 //! for the optional F8 gallery. Coverage (alpha) is independent from tone (RGB).
 
 pub const FAMILY_NAMES: [&str; 6] = [
-    "SOURCE", "HAIRLINE", "NODULES", "STOCKWORK", "RIBBONS", "SCATTER",
+    "SOURCE",
+    "HAIRLINE",
+    "NODULES",
+    "STOCKWORK",
+    "RIBBONS",
+    "SCATTER",
 ];
 pub const PALETTE_NAMES: [&str; 3] = ["COPPER", "HEMATITE", "MOONSILVER"];
 pub const GENERATED_PATTERNS: usize = 5;
@@ -33,9 +38,8 @@ fn noise(u: f32, v: f32, grid: i32, seed: u32) -> f32 {
     let fy = y - y.floor();
     let fx = fx * fx * (3.0 - 2.0 * fx);
     let fy = fy * fy * (3.0 - 2.0 * fy);
-    let sample = |dx: i32, dy: i32| {
-        hash((ix + dx).rem_euclid(grid), (iy + dy).rem_euclid(grid), seed)
-    };
+    let sample =
+        |dx: i32, dy: i32| hash((ix + dx).rem_euclid(grid), (iy + dy).rem_euclid(grid), seed);
     let bottom = sample(0, 0) * (1.0 - fx) + sample(1, 0) * fx;
     let top = sample(0, 1) * (1.0 - fx) + sample(1, 1) * fx;
     bottom * (1.0 - fy) + top * fy
@@ -110,12 +114,7 @@ pub fn generate(pattern: usize) -> Vec<u8> {
             let v = y as f32 / TILE_SIZE as f32;
             let (tone, coverage) = sample(pattern, u, v);
             let gray = linear_to_srgb(tone);
-            bytes.extend_from_slice(&[
-                gray,
-                gray,
-                gray,
-                (coverage * 255.0).round() as u8,
-            ]);
+            bytes.extend_from_slice(&[gray, gray, gray, (coverage * 255.0).round() as u8]);
         }
     }
     bytes
@@ -134,7 +133,11 @@ mod tests {
             assert!(pixels.iter().all(|p| p[0] == p[1] && p[1] == p[2]));
             let covered = pixels.iter().filter(|p| p[3] >= 64).count();
             assert!(covered > 100, "pattern {} has no useful coverage", i + 1);
-            assert!(covered < pixels.len() / 2, "pattern {} covers too much host", i + 1);
+            assert!(
+                covered < pixels.len() / 2,
+                "pattern {} covers too much host",
+                i + 1
+            );
             assert!(pixels.iter().any(|p| p[3] == 0));
             assert_eq!(*pattern, generate(i + 1));
         }
