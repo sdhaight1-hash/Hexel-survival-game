@@ -35,6 +35,7 @@ implementation; the project owner approves art and deliberate design changes.
 | How does vegetation look and render? | [Style guide](../assets/STYLE_GUIDE.md) for look; [vegetation architecture](vegetation-visual-architecture.md) for structure | [Flora research/assets](flora-to-assets.md), [flora registry](../assets/flora/README.md) |
 | What rendering effects are built or planned? | [Rendering and asset pipeline](rendering-and-asset-pipeline.md) | [P2.2 surface preview](p2-2-reactive-surfaces.md), [compression](texture-compression.md) |
 | Which voxel worldgen, LOD, hex grid and meshing references inform the architecture? | [Worldgen reference review](worldgen-streaming-reference-review.md) | [World-scale foundation](world-scale-foundation.md) |
+| How do pre-generated geography, Vintage Story climate palettes, Hytale WorldGen and TanTanDev techniques fit together? | [Worldgen/climate/rendering synthesis](worldgen-climate-rendering-reference-synthesis.md) | [World generation](world-generation.md), [earlier reference review](worldgen-streaming-reference-review.md) |
 | How do I run the first moving streamed-world prototype? | [P3.2A streamed world](p3-2-streamed-world.md) | [World-scale foundation](world-scale-foundation.md) |
 | How do we move from the static demo to a 1,024 km streamed world? | [World-scale foundation](world-scale-foundation.md) | [World generation](world-generation.md) |
 | What is the selected world and water invariant? | [World generation](world-generation.md) | [Decisions](decisions.md), [Integration](integration.md) |
