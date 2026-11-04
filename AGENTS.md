@@ -1,22 +1,50 @@
 # Repository guidance for coding and asset agents
 
-For **any art, texture, shader, rendering, terrain visuals, flora visuals,
-UI visual style or promotional imagery task**, read
-[`assets/STYLE_GUIDE.md`](assets/STYLE_GUIDE.md) **before** changing assets
-or code. It is the canonical art-direction and visual QA baseline.
+Start at [documentation map](docs/README.md) to find **one
+canonical source per topic**. For **any** visual, art, texture,
+shader, terrain appearance, flora look, UI, lighting or
+promotional imagery task, first read
+[canonical style guide](assets/STYLE_GUIDE.md).
+It is the **visual direction and approval baseline**; do **not**
+store implementation architecture, milestone status or work logs
+there unless they establish an enduring artistic rule.
 
-Keep implementation status honest: the 16³ P0 gallery and its BC7 path are
-real; the P1 authoring catalog/baker is real, but the P1 runtime catalog
-loader, new approved material replacements, dynamic style toggle,
-ecosystems, planet streaming and cinematic lighting suite are **not**
-complete. Do not invent or silently "approve" assets.
+For changes to specific systems use:
 
-For related technical requirements consult:
-- `docs/material-authoring-contract.md` and `docs/p1-material-pipeline.md`
-- `docs/flora-to-assets.md` and `docs/material-format-v2.md`
-- `docs/texture-compression.md` and `docs/world-generation.md`
+- [Material contract](docs/material-authoring-contract.md) and
+  [P1 pipeline](docs/p1-material-pipeline.md): stable IDs, actual
+  authoring/baking interfaces and resource ownership.
+- [Overlay visual architecture](docs/overlay-visual-architecture.md)
+  and [material/overlay roadmap](docs/material-overlay-roadmap.md):
+  current P0–P2.2 status, planned cross-hexel masks and optional SCA
+  feature-generator integration.
+- [Flora assets](docs/flora-to-assets.md) and
+  [vegetation architecture](docs/vegetation-visual-architecture.md):
+  species research, authoring references, structure/LOD and
+  world-persistence boundaries.
+- [Rendering and asset pipeline](docs/rendering-and-asset-pipeline.md):
+  hardware, shaders, alpha, compression and performance proposals.
+- [World generation](docs/world-generation.md),
+  [integration](docs/integration.md), [decisions](docs/decisions.md)
+  and [core roadmap](docs/roadmap.md): coordinates, world authority,
+  persisted edits, finite resources and future world systems.
+- [Visual contribution workflow](docs/visual-contribution-guide.md):
+  review evidence, QA checklist and owner approvals.
 
-Prefer small, validated changes; preserve stable IDs, gameplay authority
-and existing functionality. For visual work, include first-person
-readability and performance/format checks. The user resolves any
-conflicts with the canonical style guide.
+**Implementation status:** the 16³ P0 gallery, BC7 path, P1 catalog/
+offline baker/index validator, opt-in F8 gallery and F9/F10
+diagnostic effects are implemented. **General v2 GPU material
+binding, continuous world-space mineral masks, living ecosystem,
+planet streaming, finite water and cinematic lighting are not.**
+The SCA research prototype resides on
+[draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
+not the default branch. The 55-source v2 catalog has **three
+candidates, 52 needs-art and zero approved production artwork**.
+
+Prefer small, validated changes. Preserve stable IDs, gameplay
+authority, resource conservation, chunk/feature ownership,
+source/baked asset boundaries and existing behavior. A green
+test suite never constitutes visual approval; require first-person
+1m/3m/8m evidence and performance/format checks for visual changes.
+Do not silently change canonical decisions; the user resolves
+style/architecture conflicts and approves production art.
