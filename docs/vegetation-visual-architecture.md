@@ -174,6 +174,54 @@ These tests are proposals only; the current one-chunk prototype
 has no living tree renderer, weather-driven accumulation or
 general shader recoloring.
 
+### Seasonal palette arrays: continuous appearance from world time
+
+**Design proposal:** the renderer can interpolate between a small
+ordered array of *approved seasonal pigment ramps* while retaining
+one grayscale leaf-detail pattern and the same leaf/canopy geometry
+where appropriate. This avoids rebaking separate full-color leaf
+textures merely to move from spring green to summer dark green
+to autumn yellow/orange. It also allows a fictional blue-leaf willow
+to move through its own coherent turquoise, silver-blue and
+deep-indigo seasonal palette instead of inheriting an unrelated
+Earth-tree autumn sequence.
+
+The proposed data flow is:
+
+```text
+authoritative world time / annual phase
+    + regional climate and species-specific phenology
+    + approved phenotype palette keyframes
+    -> cyclic keyframe pair and interpolation factor
+    -> shaded leaf/needle/grass pigment
+```
+
+The example spring/summer/autumn/winter names are **artist labels**,
+not an assertion that all Hexal regions have synchronized Earth-like
+seasons. The species-specific phenology may introduce latitude-like
+phase offsets, temperature-dependent onset, hysteresis or an
+evergreen fixed palette later; such rules need an actual climate
+model before they become simulation facts.
+
+**No fade-to-white shortcut:** a bare winter tree has lost or
+retained specific foliage geometry; a frosted crown has a separate
+accumulation mask and surface response; a snowy forest has snow
+coverage on branches and ground. Treat leaf retention and cover
+as independent inputs to the palette shader. Likewise, a blue
+willow remains distinguishable through its branch and leaf silhouette.
+
+**First bounded acceptance test:** one deciduous broadleaf, one
+evergreen and one fantasy-blue willow. Show phase 0, 0.25, 0.5,
+0.75 and the wrap from 0.99 to 0.01 in the same camera/light
+conditions, plus a continuous time sweep. Test species-specific
+palette behavior, correct pigment ramps, no sudden year-boundary
+color pop, no silhouette/alpha corruption, and stable output after
+save/reload or jumping a full year. Compare direct per-keyframe
+linear-light color interpolation with optional authored easing.
+Do not claim season, snow, plant growth or live palette shaders
+currently exist in the game.
+
+
 ## Rendering, alpha and vegetation performance
 
 - **Cards:** use double-sided, fixed-orientation alpha-cutout where
