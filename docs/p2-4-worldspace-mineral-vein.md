@@ -128,6 +128,12 @@ a newly introduced mineable mineral type.
   These support fracture-network variety, not a claim that all
   copper deposits naturally look identical.
 
+The follow-on [geological research and cross-chunk ore contract](ore-deposit-geology-and-continuity.md)
+expands P2.5 beyond appearance: finite 3D deposit descriptors,
+horizontal/vertical chunk continuity, branching and clustering,
+host-specific mineralization, ore-grade conservation and the
+still-unresolved toroidal hex-lattice seam transform.
+
 **Status: design target only.** No P2.5 spider-vein implementation,
 shader/material change, GPU benchmark or native art approval is
 claimed by these notes.
