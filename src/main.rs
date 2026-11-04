@@ -284,7 +284,15 @@ impl ApplicationHandler for Game {
                 self.capture_mouse();
                 self.last_frame = Instant::now();
                 self.frame_pacer = FramePacer::new(self.presentation.fps_cap, self.last_frame);
-                self.console_log.record(format!("PACING: configured {:?} FPS cap; event loop {}.", self.presentation.fps_cap, if self.presentation.fps_cap.is_some() { "WaitUntil" } else { "Poll" }));
+                self.console_log.record(format!(
+                    "PACING: configured {:?} FPS cap; event loop {}.",
+                    self.presentation.fps_cap,
+                    if self.presentation.fps_cap.is_some() {
+                        "WaitUntil"
+                    } else {
+                        "Poll"
+                    }
+                ));
                 self.console_log.record(benchmark_log::system_report());
                 self.console_log.record(format!(
                     "WORLD {} resident sections",
@@ -553,7 +561,9 @@ impl ApplicationHandler for Game {
                 self.streamed_meshing_cpu_ms = 0.0;
                 let report = self.stream_metrics.report_and_reset();
                 let draw_report = self.render_cpu_metrics.report_and_reset();
-                let pacing_report = self.frame_pacer.report_and_reset(now.duration_since(self.last_stream_report));
+                let pacing_report = self
+                    .frame_pacer
+                    .report_and_reset(now.duration_since(self.last_stream_report));
                 if self.frame_stats {
                     self.console_log.record(report);
                     self.console_log.record(draw_report);
