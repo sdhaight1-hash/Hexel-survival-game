@@ -571,11 +571,13 @@ impl Renderer {
                 continue;
             }
             uploaded_bytes += (mesh.len() * std::mem::size_of::<Vertex>()) as u64;
-            let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Streamed hexel faces"),
-                contents: bytemuck::cast_slice(&mesh),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
+            let buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Streamed hexel faces"),
+                    contents: bytemuck::cast_slice(&mesh),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
             self.terrain_meshes.insert(
                 pos,
                 TerrainGpuMesh {
@@ -595,7 +597,10 @@ impl Renderer {
     pub fn terrain_counts(&self) -> (usize, u64) {
         (
             self.terrain_meshes.len(),
-            self.terrain_meshes.values().map(|mesh| u64::from(mesh.vertices)).sum(),
+            self.terrain_meshes
+                .values()
+                .map(|mesh| u64::from(mesh.vertices))
+                .sum(),
         )
     }
 
