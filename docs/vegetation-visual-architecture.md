@@ -13,6 +13,19 @@ authoritative edits, use [integration](integration.md).
 The standalone SCA research prototype remains in
 [draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30).
 
+## Illustrated structural references
+
+![Original vegetation architecture concept poster showing cutout foliage cards, 3D geometry, hybrid representations, branch-generation strategies and LOD](../assets/style-infographics/flora-architecture.webp)
+
+*Original concept illustration, retained from the former overloaded style
+guide. Its geometry and examples are illustrative, not current runtime
+features or canonical leaf-card/hexel dimensions. The written contracts
+below control actual implementation.*
+
+[Space-colonization reuse diagram](../assets/diagrams/spatial-growth-consumers.svg)
+shows where selected vines, roots and exceptional branches can consume
+shared skeleton geometry without becoming mandatory for common flora.
+
 ## Plant structure generation is separate from appearance and ecology
 
 **Core architectural rule:** *where a plant can grow*, *which structure
