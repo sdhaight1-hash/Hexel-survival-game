@@ -121,10 +121,6 @@ mod tests {
             ..mixed
         }
         .is_valid());
-        assert!(!SurfaceConditions {
-            moss: 1.2,
-            ..mixed
-        }
-        .is_valid());
+        assert!(!SurfaceConditions { moss: 1.2, ..mixed }.is_valid());
     }
 }
