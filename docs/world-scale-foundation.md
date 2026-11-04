@@ -1,6 +1,6 @@
 # World-scale foundation: from static material gallery to a streamed planet
 
-**Status:** independent main-based foundation roadmap plus first headless source of deterministic terrain. This work does not depend on pending material/ore-art PRs.
+**Status:** independent main-based foundation roadmap, headless deterministic terrain and an **opt-in moving-residency traversal prototype** (separate P3.2A PR). Does not depend on pending material/ore-art PRs.
 The **target remains a 1,024 km × 1,024 km geographic torus**, as
 recorded in [world-generation.md](world-generation.md). The playable
 hex-lattice wrapping transform is not yet chosen. A different rectangular
@@ -110,6 +110,17 @@ pathfinding before enabling world seams.
   meshed, culled and submitted chunks plus build/upload timings.
 - Begin with the simple P3.0 heightfield, then replace its
   geometry source when real geographic tiles are available.
+
+### P3.2A moving residency implemented (opt-in prototype)
+
+The first [interactive moving streamer](p3-2-streamed-world.md) uses a
+bounded 19 Q/R-column × five Y-section (95-section) working set,
+on-demand seed-based original blocks, and incremental GPU mesh
+allocation/eviction. Collision queries resolve unloaded neighbors
+from the same deterministic heightfield, not false air. No global
+camera rebase, saved edits, distant LOD, async queue or torus mapping
+is implied by this milestone. The single-chunk gallery remains the
+default acceptance fixture.
 
 ### P3.3 — Persistence and correctness
 - Immutable base terrain is derived from seed/version; edits,
