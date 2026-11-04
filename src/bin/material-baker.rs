@@ -602,6 +602,7 @@ mod tests {
         assert_eq!(result.unwrap(), 2);
         let index: serde_json::Value =
             serde_json::from_slice(&fs::read(out.join("index.json")).unwrap()).unwrap();
+        assert_eq!(index["materials"].as_array().unwrap().len(), 0);
         assert_eq!(index["textures"][0]["id"], "test.large");
         assert_eq!(index["textures"][1]["id"], "test.small");
         assert_eq!(index["textures"][0]["width"], 256);
@@ -696,5 +697,6 @@ mod tests {
             .materials
             .iter()
             .all(|item| item.status == "needs_art"));
+        assert!(material_recipes(&catalog).is_empty());
     }
 }
