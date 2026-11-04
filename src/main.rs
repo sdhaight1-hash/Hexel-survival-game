@@ -174,7 +174,16 @@ impl Game {
     }
 
     fn finish_benchmark_trial(&mut self) {
-        let trial = self.benchmark_history.trial();
+        let mut trial = self.benchmark_history.trial();
+        if self.benchmark_frames > 0 {
+            trial.add(BenchSample {
+                seconds: self.benchmark_window_start.elapsed().as_secs_f64(),
+                frames: u64::from(self.benchmark_frames),
+                cpu_draw_ms_total: self.benchmark_draw_ms_total,
+                gpu_pass_ms_total: self.benchmark_gpu_ms_total,
+                gpu_samples: u64::from(self.benchmark_gpu_samples),
+            });
+        }
         if trial.frames == 0 {
             return;
         }
@@ -635,6 +644,22 @@ fn frame_percentile_ms(sorted: &[f64], percentile: usize) -> f64 {
 #[cfg(test)]
 mod benchmark_stats_tests {
     use super::*;
+
+    #[test]
+    fn averages_reflect_weighted_frame_and_gpu_sample_counts() {
+        let sample = BenchSample {
+            seconds: 30.0,
+            frames: 51000,
+            cpu_draw_ms_total: 25500.0,
+            gpu_pass_ms_total: 3.6,
+            gpu_samples: 12,
+        };
+        let message = format_average("F8 | IMMEDIATE", "ROLLING 30S", sample);
+        assert!(message.contains("30.0s / 51000 frames"));
+        assert!(message.contains("1700.0 FPS wall"));
+        assert!(message.contains("0.500 ms CPU draw"));
+        assert!(message.contains("0.300 ms sampled GPU pass (12 samples)"));
+    }
 
     #[test]
     fn frame_percentiles_use_observed_sorted_intervals() {
