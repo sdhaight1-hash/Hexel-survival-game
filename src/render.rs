@@ -59,6 +59,8 @@ pub struct Renderer {
     _material_texture: wgpu::Texture,
     v2_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
     v2_preview_enabled: bool,
+    grayscale_copper_available: bool,
+    grayscale_copper_enabled: bool,
     surface_preset: SurfacePreset,
     metallic_glints: bool,
     terrain_buffer: wgpu::Buffer,
@@ -302,14 +304,16 @@ impl Renderer {
         });
         // Optional F8 candidate-art comparison. It never replaces or edits
         // the embedded, GPU-compressed P0 texture array.
+        let mut grayscale_copper_available = false;
         let v2_materials = match materials_v2::preview_layers(&packed) {
             Ok(Some(layers)) => {
+                grayscale_copper_available = layers.len() > packed.layers as usize;
                 let v2_texture = device.create_texture(&wgpu::TextureDescriptor {
                     label: Some("V2 candidate gallery preview (RGBA8)"),
                     size: wgpu::Extent3d {
                         width: packed.width,
                         height: packed.height,
-                        depth_or_array_layers: packed.layers as u32,
+                        depth_or_array_layers: layers.len() as u32,
                     },
                     mip_level_count: 1,
                     sample_count: 1,
@@ -362,7 +366,7 @@ impl Renderer {
                     ],
                 });
                 println!(
-                    "V2 candidate preview ready: F8 toggles rock/copper comparison against P0."
+                    "V2 candidate preview ready: F8 toggles rock/copper against P0; F11 compares shader palette copper."
                 );
                 Some((v2_texture, v2_bind_group))
             }
@@ -521,6 +525,8 @@ impl Renderer {
             _material_texture: material_texture,
             v2_materials,
             v2_preview_enabled: false,
+            grayscale_copper_available,
+            grayscale_copper_enabled: false,
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
             terrain_buffer,
@@ -537,7 +543,20 @@ impl Renderer {
     pub fn toggle_v2_preview(&mut self) -> Option<bool> {
         self.v2_materials.as_ref()?;
         self.v2_preview_enabled = !self.v2_preview_enabled;
+        if !self.v2_preview_enabled {
+            self.grayscale_copper_enabled = false;
+        }
         Some(self.v2_preview_enabled)
+    }
+
+    /// A/B copper: F8 original full-color composite vs F11 shared grayscale
+    /// mask and shader palette. Only available with F8 and a copper source.
+    pub fn toggle_grayscale_copper(&mut self) -> Option<bool> {
+        if !self.v2_preview_enabled || !self.grayscale_copper_available {
+            return None;
+        }
+        self.grayscale_copper_enabled = !self.grayscale_copper_enabled;
+        Some(self.grayscale_copper_enabled)
     }
 
     /// Change only the F8 material gallery, not saved weather or ecology.
@@ -597,7 +616,11 @@ impl Renderer {
                     if self.debug_checker { 1.0 } else { 0.0 },
                     self.texels_per_metre as f32 / materials_p0::REFERENCE_TEXELS_PER_METRE,
                     if self.v2_preview_enabled { 1.0 } else { 0.0 },
-                    0.0,
+                    if self.v2_preview_enabled && self.grayscale_copper_enabled {
+                        1.0
+                    } else {
+                        0.0
+                    },
                 ],
                 eye_position: [eye.x, eye.y, eye.z, 0.0],
                 surface: [
