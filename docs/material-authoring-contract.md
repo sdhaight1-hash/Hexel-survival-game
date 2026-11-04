@@ -170,6 +170,49 @@ samples and measured texture-memory effects before choosing the
 production representation. See [P1 pipeline](p1-material-pipeline.md)
 and [overlay visual architecture](overlay-visual-architecture.md).
 
+## Fantasy material variants and phenotype identity (proposal)
+
+The shared pattern/palette system must support **fictional materials**
+and **fictional flora** with the same explicit contracts as natural
+ones. A reusable grayscale pattern does not need a real-world
+material counterpart; it needs stable identity, a vetted compatible
+morphology, physically or artistically deliberate surface response,
+and correct world-state ownership.
+
+- A **palette variant** changes approved appearance within the same
+  geological material or biological species (for example, a seasonal
+  blue/purple pigment ramp on a particular willow asset). Keep
+  material/species IDs unchanged if gameplay properties and underlying
+  identity are unchanged.
+- A **distinct fantasy material/species** gets a new authoritative ID
+  when its properties, habitat, gathering products, damage response,
+  chemical behavior, light emission or growth/life rules truly differ.
+  Do not silently create a gameplay species merely by tinting a leaf.
+- A **structural variant** changes a silhouette, crystal form, wood
+  grain, leaf mesh/cutout or ore deposit geometry. This requires
+  appropriate shape assets or structural generation; grayscale
+  recoloring alone cannot supply it.
+- An **environmental state** changes cover, surface moisture, snow,
+  frost, health or seasonal pigment. These remain independent from
+  an asset's base recipe and from the finite-water/climate authority.
+- A **light-emitting fantasy material** needs an explicit emissive
+  property and corresponding gameplay/lighting contract if it should
+  illuminate the world. Unusual color never implies emission.
+
+The user's five illustrated tree examples—autumn broadleaf,
+blue-green broadleaf, drooping blue willow, winter-bare/frosted
+branches and a snowy grove—motivate this separation. They do **not**
+prove that the screenshots share one geometry or texture source.
+Nothing in this proposal turns those reference images into
+production art, registers new fantasy species or adds texture assets.
+
+**Versioning rule:** persist stable material/species identity and
+authoritative world changes, while palette/pattern IDs are
+versioned derived-art recipes. Preserve visual selection across
+rebuilds and world reloads. A missing optional pattern may fall
+back visually, but cannot silently change resource identity,
+species, harvested state or emission.
+
 ## Asset locations and gates
 
 - Existing categorized source art and 32px previews are in `assets/textures`.
