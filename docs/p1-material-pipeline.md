@@ -124,6 +124,25 @@ historical 32px gallery. It is not a production-resolution rule.
 
 ## Future family/palette extension — proposed, not in v2 schema
 
+A **material-family recipe** is not limited to ores. If validated,
+the same abstraction could bind compatible grayscale grain and
+weathering detail for rocks, longitudinal ridge/flake patterns for
+tree bark, internal pigment/vein detail for leaves, and condition
+masks for ground cover. Each use case keeps its own coordinate frame,
+geometry/opacity role, source provenance, palette/lighting response
+and fallback to bespoke art. Do **not** force base albedo and
+leaf-silhouette alpha through an ore-only `C/G` definition or one
+shader entry point.
+
+Flora species must refer to **stable approved asset/material IDs**
+via the [flora authoring contract](flora-to-assets.md), never temporary
+GPU array layers. Color-ramp season changes do not need new full
+texture assets, but distinct leaf shapes, bark normals and growth
+geometry still need real authored data. Establish the general v2
+stable-ID material lookup before extending its schema.
+
+
+
 **Decision for research:** compare curated **material/overlay families**
 with reusable linear grayscale coverage and tonal-detail fields plus
 mineral-specific palette and surface response. The current
@@ -137,7 +156,7 @@ A possible *later, versioned* extension would track:
 - stable family ID; vetted variant IDs and weights/eligibility;
 - optional single-channel **linear** coverage C and tonal detail G,
   or deliberately packed channels with explicit channel semantics;
-- a mineral-specific palette ramp (not necessarily flat RGB tint),
+- a material/species-specific palette ramp (not necessarily flat RGB tint),
   separate roughness/metallic/normal or height response;
 - face role, physical repeat, deterministic region/feature selection
   and the provenance/approval of each variant;
