@@ -25,7 +25,7 @@ cargo run --release --bin material-baker -- bake
 cargo run --release -- --benchmark-200
 ```
 
-Press **F3** for periodic CPU frame/visible-chunk statistics and
+Press **F3** for periodic CPU frame/submitted-chunk statistics and
 **F4** to toggle nearby-chunk culling against all 200 resident
 chunks. Keep the camera fixed when comparing **F8/F11**. These
 statistics include vsync and are **not GPU shader timings**.
@@ -47,13 +47,20 @@ the mouse.
 | --- | --- |
 | W / A / S / D, mouse | Movement and looking |
 | Space / Left Ctrl / Left Shift | Jump / sprint / sneak |
-| Esc / left click | Release / recapture cursor |
+| Esc / left click | Release / recapture cursor (Esc closes F1 menu first) |
+| F1 | Clickable developer diagnostics menu; F1 / Esc closes it |
+| F3 / F4 | Frame stats / nearby-chunk culling (F4 available in 200-chunk mode) |
 | F6 | Toggle hex-face UV checker |
 | F7 | Cycle checker scale (64 / 128 / 256 texels per metre) |
 | F8 | P0 versus three unapproved v2 candidate rock/ore previews |
 | F9 | Diagnostic dry/wet/moss/frost/mixed states in F8 gallery |
 | F10 | Diagnostic native-copper glints ON/OFF in F8 gallery |
 | F11 | Compare authored-color copper vs grayscale source + shader palette, F8 gallery only |
+
+The [F1 diagnostics menu](docs/diagnostics-menu.md) displays current
+F3–F11 values; clicking its rows triggers the **same code path** as
+the hotkeys. The menu is an unpaused debug overlay: close it while
+recording benchmarks.
 
 For F8–F10 preview candidates, first validate/bake the new material
 catalog if no current cache exists:
