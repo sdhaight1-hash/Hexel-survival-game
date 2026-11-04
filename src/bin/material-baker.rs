@@ -702,10 +702,8 @@ mod tests {
             let mut seam_sum = 0usize;
             for i in 0..side {
                 for channel in 0..4 {
-                    seam_sum +=
-                        pixel(0, i)[channel].abs_diff(pixel(side - 1, i)[channel]) as usize;
-                    seam_sum +=
-                        pixel(i, 0)[channel].abs_diff(pixel(i, side - 1)[channel]) as usize;
+                    seam_sum += pixel(0, i)[channel].abs_diff(pixel(side - 1, i)[channel]) as usize;
+                    seam_sum += pixel(i, 0)[channel].abs_diff(pixel(i, side - 1)[channel]) as usize;
                 }
             }
             let seam_delta = seam_sum as f32 / (side * 8) as f32;
@@ -715,10 +713,7 @@ mod tests {
             );
 
             if ore {
-                let visible = rgba
-                    .chunks_exact(4)
-                    .filter(|pixel| pixel[3] > 32)
-                    .count();
+                let visible = rgba.chunks_exact(4).filter(|pixel| pixel[3] > 32).count();
                 let coverage = visible as f32 / (side * side) as f32;
                 assert!(
                     (0.06..0.30).contains(&coverage),
@@ -740,9 +735,9 @@ mod tests {
                     for y in 0..side {
                         for x in 0..side {
                             for channel in 0..3 {
-                                difference += pixel(x, y)[channel].abs_diff(
-                                    pixel((x + step) % side, (y + step) % side)[channel],
-                                ) as usize;
+                                difference += pixel(x, y)[channel]
+                                    .abs_diff(pixel((x + step) % side, (y + step) % side)[channel])
+                                    as usize;
                             }
                         }
                     }
