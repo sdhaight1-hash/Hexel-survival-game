@@ -55,13 +55,42 @@ fn cap_uv(position: Vec3) -> [f32; 2] {
     [position.x, position.z]
 }
 
-/// Meshes visible faces of a section. Neighbor checks query the world, so
-/// future adjacent chunks can hide the shared faces correctly.
+/// Counts *meshed exposed* world geometry; it does NOT know whether a
+/// triangle passes camera/frustum/occlusion tests or produces screen pixels.
+#[derive(Default, Clone, Copy, Debug)]
+pub struct ExposedMeshStats {
+    pub solid_hexels: u32,
+    pub exposed_hexels: u32,
+    pub cap_faces: u32,
+    pub side_faces: u32,
+}
+
+impl ExposedMeshStats {
+    pub fn exposed_faces(self) -> u32 {
+        self.cap_faces + self.side_faces
+    }
+
+    pub fn triangles(self) -> u32 {
+        self.cap_faces * 6 + self.side_faces * 2
+    }
+}
+
+/// Keep the original mesh API for existing callers/tests.
 pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
+    build_chunk_mesh_with_stats(world, chunk).0
+}
+
+/// Mesh a section and count the exact same exposed faces being emitted.
+/// Neighbor tests read the world, so chunk seams are excluded correctly.
+pub fn build_chunk_mesh_with_stats(
+    world: &World,
+    chunk: ChunkPos,
+) -> (Vec<Vertex>, ExposedMeshStats) {
     if world.chunk(chunk).is_none() {
-        return Vec::new();
+        return (Vec::new(), ExposedMeshStats::default());
     }
     let mut vertices = Vec::new();
+    let mut stats = ExposedMeshStats::default();
     let material_for_face: fn(Block, CellPos, HexFace) -> Material = if world.is_benchmark() {
         materials_p0::for_benchmark_face
     } else {
@@ -79,6 +108,8 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                 if !block.is_solid() {
                     continue;
                 }
+                stats.solid_hexels += 1;
+                let mut has_exposed_face = false;
                 let center = cell.center();
                 let bottom = cell.y as f32;
                 let top = bottom + 1.0;
@@ -95,6 +126,8 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     .get(CellPos::new(cell.q, cell.r, cell.y + 1))
                     .is_solid()
                 {
+                    has_exposed_face = true;
+                    stats.cap_faces += 1;
                     let cap = Vec3::new(center.x, top, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -112,6 +145,8 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     .get(CellPos::new(cell.q, cell.r, cell.y - 1))
                     .is_solid()
                 {
+                    has_exposed_face = true;
+                    stats.cap_faces += 1;
                     let cap = Vec3::new(center.x, bottom, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -132,6 +167,8 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     {
                         continue;
                     }
+                    has_exposed_face = true;
+                    stats.side_faces += 1;
                     let j = (side + 1) % 6;
                     let a = Vec3::new(ring[side].x, bottom, ring[side].z);
                     let b = Vec3::new(ring[j].x, bottom, ring[j].z);
@@ -162,10 +199,14 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                         tint,
                     );
                 }
+                if has_exposed_face {
+                    stats.exposed_hexels += 1;
+                }
             }
         }
     }
-    vertices
+    debug_assert_eq!(vertices.len(), stats.triangles() as usize * 3);
+    (vertices, stats)
 }
 
 #[cfg(test)]
@@ -185,6 +226,19 @@ mod tests {
                 && v.material < materials_p0::LAYER_COUNT as u32
         }));
         assert!(build_chunk_mesh(&world, ChunkPos { q: 1, r: 0, y: 0 }).is_empty());
+    }
+
+    #[test]
+    fn exposed_counts_match_generated_triangles_for_single_and_benchmark_chunks() {
+        for world in [World::demo(42), World::benchmark(42)] {
+            for pos in world.chunk_positions().into_iter().take(4) {
+                let (mesh, stats) = build_chunk_mesh_with_stats(&world, pos);
+                assert_eq!(mesh.len(), stats.triangles() as usize * 3);
+                assert!(stats.exposed_hexels <= stats.solid_hexels);
+                assert!(stats.exposed_faces() >= stats.exposed_hexels);
+                assert!(stats.side_faces > 0);
+            }
+        }
     }
 
     #[test]
