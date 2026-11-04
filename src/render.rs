@@ -660,6 +660,8 @@ impl Renderer {
     /// An empty mesh still belongs to the resident CPU set, but needs no buffer.
     pub fn sync_stream(&mut self, world: &World, delta: &StreamDelta) -> StreamGpuUpdate {
         let start = Instant::now();
+        debug_assert!(delta.removed.iter().all(|&pos| world.chunk(pos).is_none()));
+        debug_assert!(delta.added.iter().all(|&pos| world.chunk(pos).is_some()));
         for pos in &delta.removed {
             self.terrain_meshes.remove(pos);
         }
@@ -687,6 +689,10 @@ impl Renderer {
             );
             meshed_buffers += 1;
         }
+        debug_assert!(self
+            .terrain_meshes
+            .keys()
+            .all(|&pos| world.chunk(pos).is_some()));
         StreamGpuUpdate {
             meshed_buffers,
             uploaded_bytes,
