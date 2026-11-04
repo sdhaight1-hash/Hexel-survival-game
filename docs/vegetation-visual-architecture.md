@@ -97,6 +97,133 @@ validated, not measured universal botanical constants.
   Hexel Survival scene uses **Q/R/Y (Y-up)**. Any import must convert
   coordinates and units explicitly and check periodic boundary rules.
 
+**Research context:** [Industry material and seasonal color study](material-variation-industry-research.md) documents official Vintage Story climate/season map hooks, Unity/SpeedTree per-tree position-based color variation, Unreal material curve/global-parameter sharing, and USGS species-specific phenology. These are useful reference **principles**, not production-ready Hexal code or proven interchangeable plant shaders.
+
+## Candidate: reusable grayscale bark and foliage material families
+
+The [proposed material-family model](material-authoring-contract.md)
+also applies to authored plant visuals, **without** making every
+species a recolor of the same texture.
+
+- **Bark:** a small compatible family of grayscale fissure, ridge,
+  plate, flake or weathering patterns may be colorized for several
+  species/ages. Local longitudinal and radial coordinates are
+  significant; bark texture must not rotate independently on every
+  branch. Cut-log **end grain** is a separate material face/recipe.
+- **Leaves / needles:** a mask can capture internal vein/pigment detail,
+  with a species/season palette applied by shader. The **silhouette
+  opacity or cutout mask is separate**: tinting one generic blob does
+  not create a birch, oak, willow or needle cluster. Two-sided
+  transmission, alpha-aware mipmaps and geometry/LOD remain distinct.
+- **Grass, moss and fungi:** some fine texture patterns and color ramps
+  can be shared, but actual tuft height, growth form, fruiting body,
+  spawn/harvest status and species identity must come from world state
+  and authored geometry.
+- **Variation selection:** stable species ID, instance seed, age,
+  season, health and region context can choose a permitted palette
+  and vetted pattern subset. Seasonal appearance can change without
+  rebaking geometry; saved harvested trees never reappear because a
+  material variant changed.
+
+**First visual proof:** apply two or three *compatible* grayscale bark
+details to one approved trunk mesh and a second species with different
+bark geometry; apply a seasonal palette to one leaf silhouette while
+retaining exactly the same leaf coverage/shape. Compare with full-color
+authored textures and record whether species readability and GPU
+cost improve. Keep authored exceptions where the abstraction fails.
+
+This is *not* a committed new flora renderer, live palette binding,
+approved botanical asset family or general vegetation spawn system.
+See [flora asset contracts](flora-to-assets.md) and
+[the material pipeline](p1-material-pipeline.md).
+
+### Fantasy palette and seasonal examples
+
+The recent five reference screenshots motivate a focused pair of
+tests. A **drooping blue-leaf willow** should retain a recognizable
+weeping silhouette, canopy clusters and trunk/bark anatomy while an
+approved blue/cyan palette modifies only appropriate leaf pigment
+and shader response. An autumn broadleaf can shift pigment while
+retaining leaf silhouettes. Neither proves a new species must be
+created: a palette morph is still the existing species unless
+habitat, behavior, harvest products or growth rules justify a
+separate authoritative species identity.
+
+A frost-covered sparse tree and a snowy grove illustrate a
+**different** axis: bare branches, snow adhesion, frost coverage,
+possible snow mass/geometry, and winter lighting. These cannot be
+implemented correctly by setting an ordinary leaf-albedo palette
+to white. Seasonal geometry/leaf retention and weather cover
+require independent material/structure/state inputs.
+
+This gives a small *fantasy and season* art test:
+
+1. Reuse one willow structure with natural and fantasy-blue leaf
+   palettes; verify matching silhouette, root/branch ownership and
+   readable leaves in neutral light and shadow.
+2. Compare one broadleaf tree with approved green and warm autumn
+   pigment ramps, holding geometry and internal grayscale detail
+   constant to isolate the effect of coloration.
+3. Compare bare, frosted and snow-covered tree states with
+   **separate** cover geometry/masks and leaf-retention choices,
+   rather than a single white color multiplier.
+4. Check canopy depth, two-sided foliage lighting, texture/mip
+   behavior and art-coherent color grading in moving first-person
+   inspection; distinguish shader savings from simply using fewer
+   source textures.
+
+These tests are proposals only; the current one-chunk prototype
+has no living tree renderer, weather-driven accumulation or
+general shader recoloring.
+
+### Seasonal palette arrays: continuous appearance from world time
+
+**Design proposal:** the renderer can interpolate between a small
+ordered array of *approved seasonal pigment ramps* while retaining
+one grayscale leaf-detail pattern and the same leaf/canopy geometry
+where appropriate. This avoids rebaking separate full-color leaf
+textures merely to move from spring green to summer dark green
+to autumn yellow/orange. It also allows a fictional blue-leaf willow
+to move through its own coherent turquoise, silver-blue and
+deep-indigo seasonal palette instead of inheriting an unrelated
+Earth-tree autumn sequence.
+
+The proposed data flow is:
+
+```text
+authoritative world time / annual phase
+    + regional climate and species-specific phenology
+    + approved phenotype palette keyframes
+    -> cyclic keyframe pair and interpolation factor
+    -> shaded leaf/needle/grass pigment
+```
+
+The example spring/summer/autumn/winter names are **artist labels**,
+not an assertion that all Hexal regions have synchronized Earth-like
+seasons. The species-specific phenology may introduce latitude-like
+phase offsets, temperature-dependent onset, hysteresis or an
+evergreen fixed palette later; such rules need an actual climate
+model before they become simulation facts.
+
+**No fade-to-white shortcut:** a bare winter tree has lost or
+retained specific foliage geometry; a frosted crown has a separate
+accumulation mask and surface response; a snowy forest has snow
+coverage on branches and ground. Treat leaf retention and cover
+as independent inputs to the palette shader. Likewise, a blue
+willow remains distinguishable through its branch and leaf silhouette.
+
+**First bounded acceptance test:** one deciduous broadleaf, one
+evergreen and one fantasy-blue willow. Show phase 0, 0.25, 0.5,
+0.75 and the wrap from 0.99 to 0.01 in the same camera/light
+conditions, plus a continuous time sweep. Test species-specific
+palette behavior, correct pigment ramps, no sudden year-boundary
+color pop, no silhouette/alpha corruption, and stable output after
+save/reload or jumping a full year. Compare direct per-keyframe
+linear-light color interpolation with optional authored easing.
+Do not claim season, snow, plant growth or live palette shaders
+currently exist in the game.
+
+
 ## Rendering, alpha and vegetation performance
 
 - **Cards:** use double-sided, fixed-orientation alpha-cutout where

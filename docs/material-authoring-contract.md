@@ -76,6 +76,212 @@ Similarly, do not create a distinct opaque ore image for every rock × ore ×
 grade combination. Reuse host-rock textures and transparent ore overlays,
 and allow procedural variation/grade-specific masks later.
 
+## Candidate extension: shared grayscale pattern families and material recipes
+
+**Proposal, not an implemented registry format.** Keep **stable material
+identity** (e.g. `ore.native_copper`), **appearance variant** (e.g.
+`inclusion.nodular_02`), **mineral palette/material response** and
+**world-state occurrence** as distinct IDs/data. An approved family
+may reference a curated subset of reusable patterns with weights and
+compatibility constraints. A different GPU array layer is an
+implementation detail, never an authoritative species, rock or ore ID.
+
+This is a **cross-domain authored-material tool**, not an ore-specific
+renderer. The same underlying decomposition can support:
+
+| Consumer | Reusable grayscale/detail information | Must remain specific |
+| --- | --- | --- |
+| Rock / mineral base | Crystalline speckling, grain, erosion, stratification *within compatible geology* | Rock species, correct bedding direction, chemical color, roughness/normal and true face geometry |
+| Embedded ore | Exposed inclusion/vein coverage C, internal detail G | Authorized occurrence/grade/stock, mineral morphology and metal/dielectric response |
+| Tree bark | Grooves, ridges, chips, scars, age-related tonal fields | Species trunk/branch form, longitudinal orientation, wood/cut-end face role and bark normal depth |
+| Leaf / needle / grass | Internal veins, pigmentation gradients, blemishes and seasonal tonal masks | Species silhouette/alpha cutout, venation topology, two-sided/transmitted-light appearance, plant instance and life state |
+| Soil / organic cover | Clods, particles, fine organic detail, patch coverage | Soil identity, climate/moisture authority, root/stone geometry and genuine biome context |
+| Environmental overlay | Wetness, frost, moss/lichen, soot or scuff coverage | Real world-state inputs, geometry where thick, physically sensible material response |
+
+**Opaque base vs alpha-cutout vs overlay:** an opaque rock or bark
+material normally uses a full-coverage albedo/tonal field. A leaf-card
+**silhouette alpha** defines the visible leaf geometry; its internal
+grayscale pigment and vein detail are separate. An ore inclusion's
+**coverage** is gated by actual geology. These mask types must not be
+interchanged just because they are all grayscale.
+
+**Pattern orientation is meaningful:** bark streaks track the tree's
+local trunk/branch frame; leaf veins track leaf UV/geometry; shale
+bedding follows geologic strata; a regional ore vein follows feature-
+local coordinates. A single world-space hash for every material will
+make directional structures incoherent.
+
+**Palettes can vary without new bitmaps** (seasonal leaf pigmentation,
+rock oxidation, species color morphs), but cutout edges, normal/height
+and translucency do not follow automatically from recoloring. No
+palette step may change flora species identity or authoritative
+geological resource quantity.
+
+An overlay need not store a full-colored RGBA image per ore species.
+For suitably compatible minerals, author **linear single-channel
+coverage** and optionally a **separate linear grayscale tonal/detail
+field**, then supply a mineral-specific small color ramp and reflectance
+parameters:
+
+- **Coverage:** `c ∈ [0,1]` means exposed mineral fraction at a face
+  sample, after host/occurrence/grade/feature eligibility and occlusion.
+  No authorized occurrence means `c = 0` regardless of artwork.
+- **Detail:** `g ∈ [0,1]` controls mineral-internal dark/mid/light
+  structure. Darkness in `g` must **not** automatically make the mineral
+  transparent. This can be omitted for flat-color stylized motifs.
+- **Palette:** one color or preferably a few mineral-specific ramp
+  stops, interpreted in a correct color space. A single RGB multiply
+  is a baseline comparison, not an adequate universal material model.
+- **Response:** roughness, metalness, localized highlights, oxidation
+  and normal/height appearance are material-specific and separately
+  controlled. Normal maps cannot be derived by merely tinting gray.
+- **Morphology:** a given ore family may allow some hairline,
+  disseminated, nodular, ribbon or stockwork patterns, but never every
+  pattern indiscriminately. Real geological eligibility and host
+  constraints remain owned by gameplay/geology.
+- **Determinism:** select family member from world seed + stable region/
+  feature ID + coordinates and fixed weights/context; the selection must
+  not change with camera frame, chunk request/rebuild order or cache
+  eviction. Persist edits and resource depletion separately.
+- **Continuity:** a structural vein uses a *world- or feature-space*
+  geometry mask; a tileable grayscale pattern supplies finer detail
+  inside it. Randomly picking an independent vein image per hexel is
+  not a substitute for continuous geology.
+
+The combination is *derived appearance*:
+`surface = blend(host_albedo, palette(g), c)` as a conceptual color
+equation. In production, composition and physically appropriate
+lighting occur in linear space and cover/condition layers must also
+be applied. A colorized ore pixel cannot create or replenish stock.
+
+Do **not** require five unique variants per one of all 55 inventoried
+materials: five is a useful *comparison-board target* for a few
+representative families. Share pattern sets when visual/geological
+similarity is justified, and permit an authored full-color exception
+where color variation or patterned chemistry is essential. Do not
+pre-bake every rock × ore × pattern × grade × wetness permutation.
+
+The next proof is **one grayscale ore-pattern family, native copper on
+both granite and shale**, compared with the existing transparent
+full-color copper overlay. Keep its stable ore ID and the v2 P0
+fallback. Require visually distinct grade states, copper recognition
+when highlights are disabled, host preservation, bounded added GPU
+samples and measured texture-memory effects before choosing the
+production representation. See [P1 pipeline](p1-material-pipeline.md)
+and [overlay visual architecture](overlay-visual-architecture.md).
+
+## Fantasy material variants and phenotype identity (proposal)
+
+The shared pattern/palette system must support **fictional materials**
+and **fictional flora** with the same explicit contracts as natural
+ones. A reusable grayscale pattern does not need a real-world
+material counterpart; it needs stable identity, a vetted compatible
+morphology, physically or artistically deliberate surface response,
+and correct world-state ownership.
+
+- A **palette variant** changes approved appearance within the same
+  geological material or biological species (for example, a seasonal
+  blue/purple pigment ramp on a particular willow asset). Keep
+  material/species IDs unchanged if gameplay properties and underlying
+  identity are unchanged.
+- A **distinct fantasy material/species** gets a new authoritative ID
+  when its properties, habitat, gathering products, damage response,
+  chemical behavior, light emission or growth/life rules truly differ.
+  Do not silently create a gameplay species merely by tinting a leaf.
+- A **structural variant** changes a silhouette, crystal form, wood
+  grain, leaf mesh/cutout or ore deposit geometry. This requires
+  appropriate shape assets or structural generation; grayscale
+  recoloring alone cannot supply it.
+- An **environmental state** changes cover, surface moisture, snow,
+  frost, health or seasonal pigment. These remain independent from
+  an asset's base recipe and from the finite-water/climate authority.
+- A **light-emitting fantasy material** needs an explicit emissive
+  property and corresponding gameplay/lighting contract if it should
+  illuminate the world. Unusual color never implies emission.
+
+The user's five illustrated tree examples—autumn broadleaf,
+blue-green broadleaf, drooping blue willow, winter-bare/frosted
+branches and a snowy grove—motivate this separation. They do **not**
+prove that the screenshots share one geometry or texture source.
+Nothing in this proposal turns those reference images into
+production art, registers new fantasy species or adds texture assets.
+
+**Versioning rule:** persist stable material/species identity and
+authoritative world changes, while palette/pattern IDs are
+versioned derived-art recipes. Preserve visual selection across
+rebuilds and world reloads. A missing optional pattern may fall
+back visually, but cannot silently change resource identity,
+species, harvested state or emission.
+
+## Seasonal palette keyframes and time-driven interpolation (proposal)
+
+**Seasonal palettes are arrays of keyframes and small color ramps, not
+full copies of every source texture.** A versioned material-family
+recipe may associate a species/biome phenotype with ordered
+`(phase, ramp)` entries for spring, summer, autumn and winter, or
+with a different number of meaningful keyframes. Each ramp may have
+several tonal stops so one grayscale pigment field supports nuanced
+colors across the leaf. A grayscale detail field, cutout silhouette,
+normal information and species/asset ID remain separate.
+
+**Proposed evaluation:**
+
+```text
+global cyclic world-year phase ∈ [0, 1)
+    -> species / region phenology mapping (may shift, hold or skip phases)
+    -> find the two neighboring seasonal palette keyframes
+    -> normalized interpolation fraction between their phase positions
+    -> interpolate corresponding ramp stops in a specified color space
+    -> apply ramp to grayscale pigment/tonal detail
+    -> perform material lighting and independent frost/snow/cover effects
+```
+
+For adjacent keyframes `A` and `B` and local phase fraction `t`,
+`ramp(t) = (1-t) * rampA + t * rampB` (conceptually per matching
+ramp stop). Handle the **last → first keyframe** as a wrap-around,
+not an abrupt jump at a new game year. Linear-light RGB is a
+well-defined baseline; artist-oriented perceptual interpolation
+(e.g. OkLab) is a *comparison option*, provided conversions and
+clamping are explicit. Do not interpolate encoded sRGB bytes as
+though they were linear intensities. Time easing is a tunable
+appearance curve, not a replacement for plant phenology.
+
+**Ownership and timing:** gameplay/world time and eventually
+climate/phenology supply the annual phase and locally relevant
+growth-season parameters; the renderer consumes derived palette
+weights. A tree's approved species/phenotype, lifespan, health and
+harvest state remain authoritative. Local latitude-like forcing,
+temperature/elevation, water stress, biome and any hemispheric-style
+offset must be based on actual Hexal geography rules, *not*
+silently hardcoded Earth seasons. Region/species offsets should be
+stable across unloaded chunks, saves and replays.
+
+**Different visual processes must not be collapsed:**
+- **Pigment change:** shade the same leaves with a gradually
+  evolving palette, including fantasy blue/silver/red phenotypes.
+- **Deciduous leaf loss or budding:** alter approved leaf-instance
+  retention/coverage and, where needed, geometry with separate
+  stable thresholds/curves. Simply alpha-fading every leaf can
+  cause sorting, mip or silhouette artifacts.
+- **Snow/frost/wetness:** remain independently simulated or
+  supplied environment coverage and may occlude pigments.
+- **Evergreens, dormant vegetation and nonseasonal fantasy
+  species:** may use a flat ramp, short transition or unique
+  seasonal curve. Four equal quarters are **not mandatory**.
+- **Player time jumps:** palette, structure and environmental
+  state must be reconstructible from authoritative time and
+  persistent state without relying on frame-by-frame accumulation.
+
+**Runtime boundary:** when implemented, prefer a small world-time
+uniform and species/instance recipe parameters to updating thousands
+of colored PNGs or CPU-rebaking meshes each frame. Do not change
+the current `catalog.v2.json` schema, BC7 bake formats or saved
+species IDs in this documentation PR. Before selecting shader
+palette representations, test moving-camera near/far art quality,
+year-wrap continuity, deterministic reload, GPU cost and
+season-specific geometry/cover alignment.
+
+
 ## Asset locations and gates
 
 - Existing categorized source art and 32px previews are in `assets/textures`.

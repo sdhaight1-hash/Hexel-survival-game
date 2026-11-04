@@ -116,6 +116,113 @@ universal production packing contract.
 design contract. The overlay-path proof and the optional SCA adapter
 remain **future gates**, not working production components.
 
+**Evidence baseline:** the [industry research study](material-variation-industry-research.md) compares official Hytale tint providers, Vintage Story's climate/season colormaps, Eco's ecological authority and material/foliage techniques from Unreal, Unity/SpeedTree, Godot, Mojang, and graphics research. It distinguishes verified shipped mechanisms from draft Hexal proposals; **do not** interpret those precedents as approval of our live shader architecture.
+
+## Proposed variation model (pending visual/technical proof)
+
+The recent material study boards compared five visual variations for
+low-fertility soil/grass, granite, shale, native copper and wet/moss/
+frost/mixed conditions. **These were concept comparisons**, not five
+approved production PNGs per material. Explore **curated families**
+rather than authoring every colored combination.
+
+Prefer **shared grayscale masks / tonal patterns with shader-driven
+mineral-specific palettes** where it reduces content duplication
+without making different ores indistinguishable. The new palette
+should include color distribution and appropriate surface response,
+not one universal flat tint. Reserve dedicated colored assets for
+species/host appearances that require them. Pair a pattern family
+with deterministic geology/region-aware selection; the same pattern
+must not randomly change on each chunk rebuild.
+
+**This is a candidate extension, not implemented P1/P2.** Do not
+commit a five-variants-per-identity requirement, a schema revision,
+BC4, atlas, new GPU array architecture or a full palette renderer
+until one small art/CPU/GPU proof passes. The present v2 catalog,
+baker and F8/F9/F10 preview are intentionally unchanged.
+
+**Add to Gate A:** evaluate the existing copper full-color baseline
+against a grayscale coverage+detail mask with at least one
+mineral-specific multi-stop color ramp, and reject designs that
+erase rock/ore identity. Use the five-option boards as choices,
+not mandatory production source files.
+
+**Add to Gate B:** after the general v2 stable-ID binding, test
+three-to-five curated grayscale members as a **family** in one
+bounded fixture, explicit face recipes, fallback, stable IDs,
+versioned manifest and deterministic weights. Test raw texture
+bytes, GPU residency and sample count; do not assume BC4 support.
+
+**Add to Gate C:** let a region-owned **continuous ore feature mask**
+determine coverage while grayscale tiles supply internal detail;
+sample the same field on neighboring caps/sides. Validate no ore
+outside eligible hosts, no per-hexel reseeding and no stock inferred
+from colors. Keep the simple fault/spline source as the baseline;
+optional SCA remains Gate D.
+
+**Approval:** one source pattern may be compatible with multiple
+ore species, but a material family must have enough unique shape,
+value, finish and oxidation cues to meet the
+[style guide](../assets/STYLE_GUIDE.md). If two ores read as mere
+recolors at 3m, the abstraction fails even if it saves memory.
+See [the proposed authoring contract](material-authoring-contract.md)
+and [overlay composition design](overlay-visual-architecture.md).
+
+**Cross-material extension:** grayscale detail/palette families
+are an option for rocks, non-ore minerals, bark, leaves, grass,
+soil and thin organic/seasonal cover—not only embedded ore. Reuse
+compatible textures, but **do not** automatically replace unique
+stone strata, bark growth direction, foliage geometry/silhouette
+and species pigmentation with a shared recolored bitmap. Internal
+leaf detail, leaf **cutout alpha** and exposed ore coverage are
+different fields with different shader/geometry responsibilities.
+
+**Extended proof after the copper baseline:** A/B-test (a) two
+granite/shale base variants against their original authored color,
+(b) two species-specific bark recipes on suitable trunk/branch
+geometry, and (c) one leaf silhouette with two seasonal color
+ramps, independently of actual season simulation. Preserve source
+and gameplay identity and test coherent clustering, correct
+orientation, color in linear space, texture residency, shader
+samples, alpha mips and recognition at player scale. Keep these
+as small independent fixtures; do not postpone P2.3 copper/vein
+continuity for a complete flora system.
+
+**Fantasy palette/phenotype acceptance:** include a small tree
+visual study alongside the grayscale-family prototype: one
+blue-leaf weeping-willow variant on a consistent willow geometry;
+one ordinary-to-autumn broadleaf palette change; and distinct
+winter-bare versus snow-covered branch treatments. These are
+art/asset experiments, not new world-biome systems. A fantasy ore
+or metal may share compatible grayscale morphology but requires
+its own palette, roughness/metallic/emissive rules and, if gameplay
+properties differ, authoritative material ID. Evaluate silhouettes,
+readability in neutral light, and whether rare fantasy colors
+remain harmonious with the style guide. Do **not** turn snow into
+a white leaf tint or assume blue foliage is automatically luminous.
+
+**Time-driven seasonal palette study (additional P4/P5 visual gate):**
+extend the proposed family-palette proof with an ordered cyclic
+array of approved spring/summer/autumn/winter (or species-specific)
+color ramps. Interpolate between adjacent keyframes based on
+**authoritative game-year phase** and eventual regional phenology,
+without rebaking full-color foliage textures or changing a plant
+species/material ID. Keep interpolation space explicit (linear
+light baseline), handle year wrap and deterministic world-time
+jumps, and do not presume every region shares four Earth seasons.
+
+For one deciduous broadleaf, one evergreen and one fantasy-blue
+willow, compare fixed keyframes and a smooth full-year sweep.
+Independently test *leaf retention* and *snow/frost cover* rather
+than using color shifts to fake either. Record 1m/3m/8m visuals,
+silhouette, color gradient, LOD/mip behavior and shader cost.
+This belongs alongside first flora-asset bindings (#13), not
+inside the already-working F8 copper/material gallery. A
+prototype may use a synthetic time slider; **no planetary
+time/climate implementation is implied**. Don't expand the
+existing v2 catalog or shader contract before this visual proof.
+
+
 ## Revised dependencies and phase gates
 
 The historic **P0–P7 labels remain as milestones** for issue/PR continuity,

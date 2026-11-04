@@ -111,6 +111,113 @@ ordinary authored masks, geological faults and other deterministic sources
 remain equally valid. The merged headless SCA prototype is research code, not a dependency
 of the overlay renderer or an implemented feature-mask generator.
 
+## Shared authored patterns versus specialized material consumers
+
+The grayscale-family proposal extends **beyond mineral overlays**:
+rock/soil bases, bark, leaf surfaces, and seasonal/biological covers
+can also reuse certain tonal patterns and palette ramps. But this
+document is specifically the **surface-overlay consumer** of that
+larger model. The [material-authoring contract](material-authoring-contract.md)
+owns shared IDs, mask semantics and palette recipes; the
+[vegetation architecture](vegetation-visual-architecture.md) owns bark
+orientation, species silhouettes and foliage transparency.
+
+An opaque granite surface does not need ore-like alpha coverage;
+a leaf-card alpha silhouette is not an ore inclusion mask; and bark
+striation should be aligned with local wood geometry rather than
+world-space geology. Reuse compatible *data representation*, not
+one universal mask projection or shader for every material.
+
+## Candidate: grayscale mineral patterns and palette response (overlay consumer)
+
+**Status:** proposed representation and art/benchmark comparison only.
+Today F8 composites a **colored** native-copper RGBA overlay on the CPU;
+its alpha is reused as an F10 preview mask. No general family lookup,
+grayscale source format, shader palette ramp, BC4 encoder, or multi-ore
+surface recipe exists in the shipped renderer.
+
+A useful split is:
+
+```text
+approved host material (granite / shale) ──────────────────────────┐
+authoritative geology: occurrence + grade + remaining stock       │
+  └─ eligible feature geometry / region-owned shape                │
+       └─ structural coverage / host clipping                      │
+curated grayscale pattern family                                  │
+  ├─ coverage alpha C (where ore is visible)                       │
+  └─ tonal detail G (dark/light *inside* the ore, optional)         │
+mineral species recipe                                              │
+  ├─ compatible morphology subset + deterministic variant weights │
+  ├─ color ramp / metallicness / roughness / oxidation             │
+  └─ permitted hosts and response limits                           │
+        ↓                                                          ↓
+     final visible coverage       +       mineral color response over host
+                                 ↓
+                      cover/wetness/frost occlusion
+                                 ↓
+                           shaded surface
+```
+
+**Two different grayscale roles must not be conflated:** coverage
+`C=0` is no visible mineral, whereas `G=0` can mean a *dark* pixel
+inside a fully present ore inclusion. For one-channel quick prototypes
+a designed tonal threshold may encode both, but this is an explicit
+lossy simplification—not a generic material contract.
+
+**Palette choice is mineral-specific.** Two or three tone-ramp stops
+may help oxidized copper, silver-gray galena, yellow gold or red/brown
+hematite retain believable midtones. Species-dependent geometry,
+crystal structure, patina and dielectric/metallic reflection must
+survive recoloring. Do not assign gold the identical tree-root-shaped
+vein distribution as native copper just by changing RGB constants.
+
+**Geological geometry and detail remain independent.** A shared
+world-space deposit/fracture field decides whether the ore exists
+and provides cross-hexel continuity. Curated grayscale tile patterns
+can fill that field with micro/nodule detail without individually
+restarting the deposit at each hexel. This is fully compatible with
+optional SCA edges, simpler fault splines and hand-authored masks.
+
+**Storage and performance must be measured, not assumed.**
+An RGBA BC7 tile uses 16 bytes per 4×4 texels. BC4 can store one
+linear scalar in 8 bytes per 4×4 texels, but **the current v2 baker
+supports BC7, not BC4**, and additional texture lookups, palette
+ramp sampling, branching or extra draw calls can cancel memory
+benefits. A family of five IDs is not necessarily a GPU
+`texture_2d_array`: array layers require compatible dimensions,
+format and mip layout. Prefer shared assets and grouped compatible
+arrays or other indexing *only after* the actual fixtures are
+measured; maintain the existing BC7/RGBA fallback path. Avoid
+packing linear coverage data into an sRGB color channel without an
+explicit decoding/packing contract.
+
+**Deterministic art variation:** select approved members from stable
+world/feature coordinates and semantic context, using regional
+weights/clustering to prevent checkerboard-style random variation.
+Variations are an artistic family, not a new ore type or an editor
+that changes the saved occurrence whenever a chunk loads.
+
+### Minimal acceptance comparison
+
+On the existing granite/shale test fixture, compare:
+
+1. Current full-color transparent copper candidate (baseline).
+2. One grayscale `C` + `G` inclusion pattern and one copper ramp.
+3. Three to five compatible grayscale morphologies, weighted
+   deterministically, using **the same** copper response in both hosts.
+4. The same grayscale morphologies with a **second, visually different
+   mineral recipe** (e.g. silver-gray galena), but only where the
+   morphology actually suits that mineral.
+5. A world-space continuous vein using the shared detail mask, with
+   fixed occurrence and grade independent of appearance.
+
+Require 1m/3m/8m native moving-camera screenshots, shadow checks,
+F10 highlights off/on, host readability, no source/stock fabrication,
+no pattern resets across caps/sides, correct linear color/coverage,
+and GPU time + memory comparisons against the existing BC7 path.
+Reject excessive sameness or shader cost and keep full-color
+source-art exceptions. See [the material roadmap](material-overlay-roadmap.md).
+
 ## Integration direction
 
 First prove a single deterministic world-anchored feature crossing two

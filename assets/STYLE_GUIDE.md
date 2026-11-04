@@ -213,6 +213,40 @@ granite grains. Do not use it as the final ore visual standard.
 - Ore hidden behind opaque rock **must not appear through the rock** merely
   because an occurrence is nearby.
 
+**Curated material variation, not random recoloring (candidate
+direction):** families of stone, ore, soil, bark, foliage and organic
+cover may share selected grayscale tonal/detail patterns, with
+material- or species-specific color ramps and surface responses.
+**Color alone must not define geological or biological identity.**
+Granite must retain crystalline structure; shale must retain bedding;
+copper and galena need distinct mineral motifs; tree species need
+recognizable bark grooves and leaf silhouettes. Seasonal leaf color
+should not turn a birch into an unrelated tree. Repeated bark grooves
+must follow branch/trunk direction rather than wrap randomly.
+
+Reuse only *compatible* patterns. Some surfaces still need authored
+full-color art, unique normal/roughness information or genuinely
+different geometry. Nearby variants should form coherent clusters, not
+a random checkerboard. Ore grade, host recognition, species silhouette
+and neutral-light gameplay readability remain critical.
+Detailed data, selection and palette contracts belong in
+[material authoring](../docs/material-authoring-contract.md),
+[flora assets](../docs/flora-to-assets.md) and
+[overlay architecture](../docs/overlay-visual-architecture.md), not
+in this style guide.
+
+**Fantasy materials are first-class, not mistakes to recolor away.**
+Blue-leaf weeping trees, silver foliage, unusual autumn pigments,
+iridescent minerals and fictional metals can belong in Hexal if
+their silhouettes, tonal groupings, visual hierarchy and physical
+response remain coherent with the established painterly world.
+A blue willow should still read as a **willow through its hanging
+branch and leaf clusters**, not merely through a bright color choice.
+Rare fantasy materials can carry stronger accents, but color changes
+alone do not automatically justify emissive bloom. Frost and snow
+must read as accumulated surface cover; a white palette is not
+equivalent to snow mass or icy geometry.
+
 **Initial approval test:** copper on **granite and shale**, three candidate
 visual families (**veins / clusters / hybrid**) and poor–medium–rich
 prominence. Favor a **hybrid** only after in-game side-by-side comparison;
@@ -345,6 +379,19 @@ painterly world palette. We borrow Hytale's clarity, not an absolute
 cuboid-only modeling restriction. The older textureless-voxel exploration
 supports geometry-driven silhouettes, **not** rejection of bark, leaf
 or terrain textures.
+
+**Seasonal color transitions must feel grown, not switched.**
+A tree may blend between approved spring/summer/autumn pigment
+palettes across the game year, including imaginative blue or silver
+foliage phenotypes. Preserve coherent canopy shading, recognizable
+species form and regional mood throughout intermediate colors;
+avoid abrupt global hue swaps and visually muddy transitions.
+Evergreen and fantasy species need not share the same calendar.
+**Leaf loss, snow/frost and bare branches are separate visual states**
+and must not be faked by making all foliage white or invisible
+through a color ramp. Shader keyframes, world-time evaluation and
+asset schema belong in the [vegetation architecture](../docs/vegetation-visual-architecture.md), not in this art guide.
+
 
 ### Structural appearance and movement
 

@@ -77,6 +77,74 @@ The asset IDs above are *examples*, not registered files or save-compatible
 values. A later approved asset catalog will validate references and require
 fallback behavior for missing variants.
 
+## Candidate grayscale-pattern reuse in published flora assets
+
+A future approved flora visual asset may select curated grayscale
+bark-detail, leaf-pigment or grass-fiber patterns and apply
+species/season/age palettes. This could avoid keeping independent
+full-color textures for every palette variant. The proposal is
+documented in [material authoring](material-authoring-contract.md)
+and [vegetation visual architecture](vegetation-visual-architecture.md).
+
+**Do not collapse separate roles:** a leaf's alpha-cutout silhouette
+is distinct from grayscale inner vein/pigment detail; longitudinal
+bark ridges require trunk/branch-aligned coordinates; actual shape,
+wood ownership, age, growth stages, harvested/dead state and species
+identity still belong to the saved plant/asset data, not a tint.
+
+An asset-binding catalog should reference **stable approved
+material-family and pattern IDs**, not provisional GPU array slots.
+Color variants can be derived from one authored pattern, but the
+real species must remain identifiable without relying exclusively
+on hue. This proposal changes no records in the existing
+research-only flora registry and introduces no unapproved visuals.
+
+### Optional fantasy phenotype without cloning species records
+
+For an approved willow visual, one variant might specify
+`leaf_palette_id: foliage.willow.blue` while retaining its
+`species_id`, geometry, trunk material, persistence and biological
+rules. **This is illustrative only**, not an active flora-catalog
+field. If blue foliage signifies a distinct fantasy species with
+different habitat, growth, harvested resources or interactions,
+approve and register that as a **new species identity** instead.
+
+Seasonal autumn recoloring is another candidate palette recipe.
+Winter-bare branches and snow/frost coverage additionally need
+leaf-retention, structure and environmental state, not just a white
+palette. A fantastical luminous canopy requires an intentional
+emissive-material/lighting designation; unusual hue alone must not
+make vegetation glow.
+
+The user-supplied tree images are concept references and remain in
+the conversation; they have **not** been installed as repo source
+art, given a provenance license for distribution or approved as
+production assets.
+
+### Seasonal palette arrays are appearance bindings, not species IDs
+
+A future approved flora asset may reference a stable
+`seasonal_palette_set_id` (illustrative field **only**) containing
+several pigment ramps keyed by normalized world-year phase. The
+renderer can sample the relevant neighboring ramps and blend the
+leaf's grayscale inner-detail colors continuously. A blue fantasy
+willow may have a different seasonal palette set from an ordinary
+willow even when they share geometry and life rules.
+
+**Persist real state, derive color:** species identity, approved
+phenotype, maturity, leaf retention, harvest/removal and actual
+climate/health effects belong to gameplay or approved flora asset
+state. Current world time plus a deterministic region/species
+mapping determines color phase when implemented. Never store
+per-frame interpolated RGB in the flora registry or bake a new
+PNG each day. Coordinate any leaf-loss geometry and snow cover
+through their own contracts; a palette does not define either.
+
+The current reference registry remains **research-only**. No
+`seasonal_palette_set_id` field, species palette lookup or
+world-time-driven foliage renderer is implemented in this PR.
+
+
 ## Registry data / source cautions
 
 `assets/flora/reference_registry.v1.json` holds **208 historical research

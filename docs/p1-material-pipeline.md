@@ -122,6 +122,67 @@ inventory test. GitHub Actions also runs
 The original `scripts/validate_material_catalog.py` still checks the
 historical 32px gallery. It is not a production-resolution rule.
 
+**External validation:** the [industry material-variation study](material-variation-industry-research.md) separates Hytale/Vintage Story/Eco evidence from material-instance, palette-LUT and stochastic-tiling research. Any later v2 extension still needs measured GPU sample/BC7/BC4 costs and artist approval; no format change is made by the study.
+
+## Future family/palette extension — proposed, not in v2 schema
+
+A **material-family recipe** is not limited to ores. If validated,
+the same abstraction could bind compatible grayscale grain and
+weathering detail for rocks, longitudinal ridge/flake patterns for
+tree bark, internal pigment/vein detail for leaves, and condition
+masks for ground cover. Each use case keeps its own coordinate frame,
+geometry/opacity role, source provenance, palette/lighting response
+and fallback to bespoke art. Do **not** force base albedo and
+leaf-silhouette alpha through an ore-only `C/G` definition or one
+shader entry point.
+
+Flora species must refer to **stable approved asset/material IDs**
+via the [flora authoring contract](flora-to-assets.md), never temporary
+GPU array layers. Color-ramp season changes do not need new full
+texture assets, but distinct leaf shapes, bark normals and growth
+geometry still need real authored data. Establish the general v2
+stable-ID material lookup before extending its schema.
+
+
+
+**Decision for research:** compare curated **material/overlay families**
+with reusable linear grayscale coverage and tonal-detail fields plus
+mineral-specific palette and surface response. The current
+`assets/materials/catalog.v2.json` still registers **three candidate
+sources and 52 `needs_art` identities**; do **not** silently add
+`family`, `palette` or `pattern` fields to its live schema. Its
+validator currently rejects unknown fields, and the current baker
+produces individual BC7 assets, not a portable array-package format.
+
+A possible *later, versioned* extension would track:
+- stable family ID; vetted variant IDs and weights/eligibility;
+- optional single-channel **linear** coverage C and tonal detail G,
+  or deliberately packed channels with explicit channel semantics;
+- a material/species-specific palette ramp (not necessarily flat RGB tint),
+  separate roughness/metallic/normal or height response;
+- face role, physical repeat, deterministic region/feature selection
+  and the provenance/approval of each variant;
+- a fallback to a normal authored full-color overlay or existing
+  v2 candidate when the representation is unsuitable.
+
+A conceptual family is **not automatically a GPU array**. v2 supports
+different source sizes; physical texture array layers require matching
+dimensions, block format and mip layout. Candidate formats like BC4
+for a scalar could reduce compressed storage from 16 bytes/4×4 in
+BC7 to 8 bytes/4×4 in BC4, but BC4 baking/runtime loading is not
+implemented. More shader samples and ramps can offset memory savings.
+Compare with the existing BC7 gallery before choosing a new format.
+
+**Do not change the catalog or shader yet.** First ship a small
+documented comparison that demonstrates one grayscale copper
+inclusion pattern over granite and shale, a 3–5-pattern controlled
+family, explicit missing-asset fallback, and a second mineral with
+distinctive non-color cues. Record actual texture bytes, shader
+samples, native GPU timings, visual approval, deterministic reload
+behavior and whether colorization harms mineral recognizability.
+See [material contract](material-authoring-contract.md) and
+[overlay architecture](overlay-visual-architecture.md).
+
 ## Why P0 remains separate for now
 
 The current playable scene uses `src/materials_p0.rs` and an embedded
