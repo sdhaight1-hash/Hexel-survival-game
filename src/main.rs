@@ -1,4 +1,4 @@
-//! One native 16×16×16 chunk viewed through a first-person camera.
+//! First-person one-chunk demo or opt-in 200-chunk material benchmark.
 
 mod materials_p0;
 mod materials_v2;
