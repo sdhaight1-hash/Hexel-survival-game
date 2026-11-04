@@ -18,7 +18,7 @@ use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
 use frame_pacing::FramePacer;
 use hexel_survival_game::{
     player::{MoveInput, Player},
-    world::World,
+    world::{CellPos, World},
 };
 use presentation::PresentationOptions;
 use render::Renderer;
@@ -82,7 +82,18 @@ impl Game {
         } else {
             World::demo(42)
         };
-        let player = Player::spawn(&world);
+        let mut player = Player::spawn(&world);
+        if let Some((q, r)) = presentation.spawn_cell {
+            let center = CellPos::new(q, r, 0).center();
+            let ground = world
+                .support_top(center.x, center.z)
+                .expect("streamed terrain has a deterministic surface");
+            player.feet = glam::Vec3::new(center.x, ground, center.z);
+            println!(
+                "STREAM distant spawn: requested axial ({q}, {r}), approximate feet ({:.2}, {:.2}, {:.2}); unwrapped prototype terrain (NO torus seam), global f32 precision",
+                player.feet.x, player.feet.y, player.feet.z,
+            );
+        }
         let initial = world.stream_around(player.feet);
         if streamed {
             println!(
@@ -638,6 +649,30 @@ fn main() {
 
 #[cfg(test)]
 mod shader_tests {
+    use hexel_survival_game::world::CellPos;
+    use crate::presentation::PresentationOptions;
+
+    #[test]
+    fn opt_in_distant_spawn_streams_target_window_without_changing_default() {
+        let settings = PresentationOptions {
+            spawn_cell: Some((65_536, -8_192)),
+            ..PresentationOptions::default()
+        };
+        let game = super::Game::new(true, settings);
+        let expected = CellPos::new(65_536, -8_192, 0).center();
+        assert!((game.player.feet.x - expected.x).abs() < 0.01);
+        assert!((game.player.feet.z - expected.z).abs() < 0.01);
+        assert_eq!(game.world.chunk_count(), 95);
+        let center = CellPos::at_world_xz(
+            game.player.feet.x,
+            game.player.feet.z,
+            game.player.feet.y.floor() as i32,
+        );
+        assert!(game.world.chunk(center.chunk_and_local().0).is_some());
+        let default = super::Game::new(true, PresentationOptions::default());
+        assert!(default.player.feet.x < 100.0);
+    }
+
     #[test]
     fn p2_surface_shader_parses_and_validates() {
         let source = include_str!("world_shader.wgsl");
