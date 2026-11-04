@@ -6,6 +6,8 @@ pub struct PresentationOptions {
     pub fps_cap: Option<u32>,
     /// Maximum new CPU sections and matching GPU meshes per streamed-world update.
     pub stream_budget: Option<usize>,
+    /// Experimental distant spawn in existing unwrapped i32 axial coordinates.
+    pub spawn_cell: Option<(i32, i32)>,
 }
 
 impl Default for PresentationOptions {
@@ -15,6 +17,7 @@ impl Default for PresentationOptions {
             max_frame_latency: 2,
             fps_cap: None,
             stream_budget: Some(1),
+            spawn_cell: None,
         }
     }
 }
@@ -22,11 +25,25 @@ impl Default for PresentationOptions {
 impl PresentationOptions {
     pub fn parse(args: impl IntoIterator<Item = String>) -> Result<(bool, Self), String> {
         let mut streamed = false;
+        let mut spawn_q = None;
+        let mut spawn_r = None;
         let mut options = Self::default();
         let mut args = args.into_iter();
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--streamed-world" => streamed = true,
+                "--spawn-q" => {
+                    let value = args.next().ok_or("--spawn-q needs a signed integer")?;
+                    spawn_q = Some(value.parse::<i32>().map_err(|_| {
+                        format!("Invalid --spawn-q '{value}'; use an i32 axial coordinate")
+                    })?);
+                }
+                "--spawn-r" => {
+                    let value = args.next().ok_or("--spawn-r needs a signed integer")?;
+                    spawn_r = Some(value.parse::<i32>().map_err(|_| {
+                        format!("Invalid --spawn-r '{value}'; use an i32 axial coordinate")
+                    })?);
+                }
                 "--present-mode" => {
                     let value = args.next().ok_or("--present-mode needs a value")?;
                     options.mode = match value.as_str() {
@@ -75,6 +92,21 @@ impl PresentationOptions {
                 _ => return Err(format!("Unknown argument '{arg}'")),
             }
         }
+        options.spawn_cell = match (spawn_q, spawn_r) {
+            (None, None) => None,
+            (Some(q), Some(r)) if streamed => {
+                // Preserve headroom for streamed windows and 16³ mesh neighbors.
+                const LIMIT: u32 = (i32::MAX - 128) as u32;
+                if q.unsigned_abs() > LIMIT || r.unsigned_abs() > LIMIT {
+                    return Err(
+                        "Distant spawn must stay within the safe i32 coordinate range".into(),
+                    );
+                }
+                Some((q, r))
+            }
+            (Some(_), Some(_)) => return Err("--spawn-q/--spawn-r require --streamed-world".into()),
+            _ => return Err("--spawn-q and --spawn-r must be provided together".into()),
+        };
         Ok((streamed, options))
     }
 
@@ -119,6 +151,39 @@ mod tests {
         )
         .unwrap();
         assert_eq!(unlimited.stream_budget, None);
+    }
+
+    #[test]
+    fn opt_in_distant_spawn_requires_complete_streamed_coordinates() {
+        let (streamed, options) = PresentationOptions::parse(
+            [
+                "--streamed-world",
+                "--spawn-q",
+                "1023984",
+                "--spawn-r",
+                "-256",
+            ]
+            .into_iter()
+            .map(str::to_owned),
+        )
+        .unwrap();
+        assert!(streamed);
+        assert_eq!(options.spawn_cell, Some((1_023_984, -256)));
+        assert_eq!(options.stream_budget, Some(1));
+        for args in [
+            vec!["--spawn-q", "10", "--spawn-r", "20"],
+            vec!["--streamed-world", "--spawn-q", "10"],
+            vec!["--streamed-world", "--spawn-q", "abc", "--spawn-r", "0"],
+            vec![
+                "--streamed-world",
+                "--spawn-q",
+                "-2147483648",
+                "--spawn-r",
+                "0",
+            ],
+        ] {
+            assert!(PresentationOptions::parse(args.into_iter().map(str::to_owned)).is_err());
+        }
     }
 
     #[test]
