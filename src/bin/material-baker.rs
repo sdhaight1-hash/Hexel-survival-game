@@ -49,7 +49,7 @@ struct Material {
     overlays: Option<Overlays>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Faces {
     top: FaceLayer,
@@ -57,14 +57,14 @@ struct Faces {
     bottom: FaceLayer,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct FaceLayer {
     base: String,
     overlay: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Overlays {
     top: String,
@@ -97,6 +97,38 @@ struct BakeIndex {
     schema_version: u32,
     note: &'static str,
     textures: Vec<BakedTexture>,
+    // Authoring identities, never transient GPU layer indices.
+    materials: Vec<BakedMaterial>,
+}
+
+#[derive(Serialize)]
+struct BakedMaterial {
+    id: String,
+    kind: String,
+    status: String,
+    representation: String,
+    faces: Option<Faces>,
+    overlays: Option<Overlays>,
+}
+
+/// Export only art-backed candidate/approved recipes, ordered by stable ID.
+/// The validated catalog ensures every referenced texture exists.
+fn material_recipes(catalog: &Catalog) -> Vec<BakedMaterial> {
+    let mut recipes: Vec<_> = catalog
+        .materials
+        .iter()
+        .filter(|material| material.status != "needs_art")
+        .map(|material| BakedMaterial {
+            id: material.id.clone(),
+            kind: material.kind.clone(),
+            status: material.status.clone(),
+            representation: material.representation.clone().unwrap_or_default(),
+            faces: material.faces.clone(),
+            overlays: material.overlays.clone(),
+        })
+        .collect();
+    recipes.sort_by(|a, b| a.id.cmp(&b.id));
+    recipes
 }
 
 fn invalid(message: impl Into<String>) -> Box<dyn Error> {
@@ -388,7 +420,6 @@ fn bake(catalog: &Catalog, root: &Path, out: &Path) -> Result<usize> {
     sources.sort_by(|a, b| a.id.cmp(&b.id));
     if sources.is_empty() {
         println!("No production textures yet: all 55 references still need artwork.");
-        return Ok(0);
     }
     fs::create_dir_all(out)?;
     for src in sources {
@@ -441,8 +472,9 @@ fn bake(catalog: &Catalog, root: &Path, out: &Path) -> Result<usize> {
     }
     let index = BakeIndex {
         schema_version: 2,
-        note: "Offline BC7 source textures, not a runtime texture-array layout. Stable IDs only.",
+        note: "Offline BC7 sources and validated material recipes; runtime GPU layout is separate.",
         textures,
+        materials: material_recipes(catalog),
     };
     fs::write(out.join("index.json"), serde_json::to_vec_pretty(&index)?)?;
     Ok(index.textures.len())
@@ -585,6 +617,67 @@ mod tests {
             8192
         );
         fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn baked_manifest_preserves_stable_faces_and_reusable_ore_overlays() {
+        let face = FaceLayer {
+            base: "rock.granite_albedo".into(),
+            overlay: None,
+        };
+        let mut catalog = Catalog {
+            schema_version: 2,
+            notes: "Synthetic recipes".into(),
+            texture_assets: vec![],
+            materials: vec![
+                Material {
+                    id: "rock.granite".into(),
+                    kind: "rock".into(),
+                    status: "candidate".into(),
+                    legacy_reference: String::new(),
+                    representation: Some("solid".into()),
+                    faces: Some(Faces {
+                        top: face.clone(),
+                        side: face.clone(),
+                        bottom: face,
+                    }),
+                    overlays: None,
+                },
+                Material {
+                    id: "ore.native_copper".into(),
+                    kind: "ore".into(),
+                    status: "candidate".into(),
+                    legacy_reference: String::new(),
+                    representation: Some("overlay".into()),
+                    faces: None,
+                    overlays: Some(Overlays {
+                        top: "ore.copper_mask".into(),
+                        side: Some("ore.copper_mask".into()),
+                        bottom: None,
+                    }),
+                },
+                Material {
+                    id: "rock.shale".into(),
+                    kind: "rock".into(),
+                    status: "needs_art".into(),
+                    legacy_reference: String::new(),
+                    representation: None,
+                    faces: None,
+                    overlays: None,
+                },
+            ],
+        };
+        let recipes = material_recipes(&catalog);
+        assert_eq!(recipes.len(), 2);
+        assert_eq!(recipes[0].id, "ore.native_copper");
+        assert_eq!(recipes[1].id, "rock.granite");
+        let json = serde_json::to_value(&recipes).unwrap();
+        assert_eq!(json[0]["overlays"]["side"], "ore.copper_mask");
+        assert_eq!(json[1]["faces"]["top"]["base"], "rock.granite_albedo");
+        assert_eq!(json[1]["faces"]["bottom"]["overlay"], serde_json::Value::Null);
+        // Authoring order does not affect the runtime index.
+        catalog.materials.reverse();
+        assert_eq!(serde_json::to_value(material_recipes(&catalog)).unwrap(), json);
     }
 
     #[test]
