@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use winit::keyboard::KeyCode;
 
 const PANEL_WIDTH: f32 = 478.0;
-const PANEL_HEIGHT: f32 = 575.0;
+const PANEL_HEIGHT: f32 = 665.0;
 const PANEL_MARGIN: f32 = 18.0;
 const ROW_TOP: f32 = 76.0;
 const ROW_HEIGHT: f32 = 43.0;
@@ -24,9 +24,11 @@ pub enum MenuAction {
     SurfacePreset,
     MetalGlints,
     GrayCopper,
+    OrePattern,
+    OrePalette,
 }
 
-pub const ACTIONS: [MenuAction; 10] = [
+pub const ACTIONS: [MenuAction; 12] = [
     MenuAction::Console,
     MenuAction::FrameStats,
     MenuAction::ChunkCulling,
@@ -37,6 +39,8 @@ pub const ACTIONS: [MenuAction; 10] = [
     MenuAction::SurfacePreset,
     MenuAction::MetalGlints,
     MenuAction::GrayCopper,
+    MenuAction::OrePattern,
+    MenuAction::OrePalette,
 ];
 
 impl MenuAction {
@@ -52,6 +56,8 @@ impl MenuAction {
             KeyCode::F9 => Self::SurfacePreset,
             KeyCode::F10 => Self::MetalGlints,
             KeyCode::F11 => Self::GrayCopper,
+            KeyCode::F12 => Self::OrePattern,
+            KeyCode::KeyP => Self::OrePalette,
             _ => return None,
         })
     }
@@ -68,6 +74,8 @@ impl MenuAction {
             Self::SurfacePreset => "F9  SURFACE MODE",
             Self::MetalGlints => "F10 METAL GLINTS",
             Self::GrayCopper => "F11 GRAY COPPER",
+            Self::OrePattern => "F12 ORE PATTERN",
+            Self::OrePalette => "P   ORE PALETTE",
         }
     }
 }
@@ -87,6 +95,8 @@ pub struct MenuSnapshot {
     pub surface: Option<&'static str>,
     pub metal_glints: Option<bool>,
     pub gray_copper: Option<bool>,
+    pub ore_pattern: Option<&'static str>,
+    pub ore_palette: Option<&'static str>,
 }
 
 impl MenuSnapshot {
@@ -102,6 +112,8 @@ impl MenuSnapshot {
             MenuAction::SurfacePreset => self.surface.is_some(),
             MenuAction::MetalGlints => self.metal_glints.is_some(),
             MenuAction::GrayCopper => self.gray_copper.is_some(),
+            MenuAction::OrePattern => self.ore_pattern.is_some(),
+            MenuAction::OrePalette => self.ore_palette.is_some(),
         }
     }
 
@@ -155,6 +167,8 @@ impl MenuSnapshot {
                 None => "NO ART",
             }
             .into(),
+            MenuAction::OrePattern => self.ore_pattern.unwrap_or("NEEDS F11").into(),
+            MenuAction::OrePalette => self.ore_palette.unwrap_or("NEEDS F11").into(),
         }
     }
 }
@@ -181,7 +195,7 @@ impl MenuVertex {
 
 fn menu_scale(width: u32, height: u32) -> f32 {
     (width as f32 / 520.0)
-        .min(height as f32 / 620.0)
+        .min(height as f32 / 710.0)
         .min(1.0)
         .max(0.01)
 }
@@ -405,7 +419,7 @@ pub fn geometry(
         &mut out,
         size,
         left + 22.0 * scale,
-        top + 523.0 * scale,
+        top + 611.0 * scale,
         1.7 * scale,
         "F1 OR ESC TO RETURN TO WORLD",
         dim,
@@ -414,7 +428,7 @@ pub fn geometry(
         &mut out,
         size,
         left + 22.0 * scale,
-        top + 548.0 * scale,
+        top + 637.0 * scale,
         1.55 * scale,
         if snapshot.gpu_timestamps {
             "GPU PASS TIMER AVAILABLE"
@@ -557,11 +571,13 @@ mod tests {
             surface: Some("Dry"),
             metal_glints: Some(true),
             gray_copper: None,
+            ore_pattern: None,
+            ore_palette: None,
         }
     }
 
     #[test]
-    fn ten_hotkeys_map_to_distinct_actions() {
+    fn twelve_hotkeys_map_to_distinct_actions() {
         for (key, action) in [
             (KeyCode::F2, MenuAction::Console),
             (KeyCode::F3, MenuAction::FrameStats),
@@ -573,6 +589,8 @@ mod tests {
             (KeyCode::F9, MenuAction::SurfacePreset),
             (KeyCode::F10, MenuAction::MetalGlints),
             (KeyCode::F11, MenuAction::GrayCopper),
+            (KeyCode::F12, MenuAction::OrePattern),
+            (KeyCode::KeyP, MenuAction::OrePalette),
         ] {
             assert_eq!(MenuAction::from_key(key), Some(action));
         }
@@ -623,6 +641,14 @@ mod tests {
         let s = state();
         assert!(!s.enabled(MenuAction::GrayCopper));
         assert_eq!(s.status(MenuAction::GrayCopper), "NEEDS F8");
+        assert_eq!(s.status(MenuAction::OrePattern), "NEEDS F11");
+        assert_eq!(s.status(MenuAction::OrePalette), "NEEDS F11");
+        assert!(MenuSnapshot {
+            ore_pattern: Some("STOCKWORK"),
+            ore_palette: Some("HEMATITE"),
+            ..s
+        }
+        .enabled(MenuAction::OrePattern));
         assert_eq!(s.status(MenuAction::UvDensity), "128 PX/M");
         assert_eq!(s.status(MenuAction::Presentation), "VSYNC");
         assert_eq!(

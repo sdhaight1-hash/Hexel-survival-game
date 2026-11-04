@@ -30,6 +30,10 @@ font should **not** be interpreted as the final game UI style.
   copy and continuous `target/benchmark-session.log` recording.
   F2/Esc closes it; F1 and F2 are mutually exclusive overlays.
   See [log and averages protocol](benchmark-history-console.md).
+- **F12** cycles six grayscale ore source patterns and **P** cycles
+  three pigment palettes while F8+F11 are active. Both are
+  enabled/disabled by the same renderer state as their hotkeys.
+  See [ore-pattern family study](ore-pattern-family-gallery.md).
 - Click a row to change the same runtime setting as its displayed F-key.
 - **F1 or Esc** closes the menu and recaptures first-person mouse look.
 - **F3, F4, F5, F6, F7, F8, F9, F10 and F11** remain working hotkeys.
