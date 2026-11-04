@@ -6,7 +6,7 @@ and overlay milestone audit; proposed world-space structural patterns and
 optional space-colonization integration incorporated.  
 **Applies to:** terrain, geology, ores, soils, flora, water, structures, characters,
 lighting, atmosphere, UI-related visual language, concept art and asset reviews.  
-**Read this before designing, generating, implementing or approving visual assets.**
+**Read this before designing or approving visual assets.**
 
 > **North star:** A **readable, handcrafted, stylized hexel survival world** with
 > believable geology and living ecology, given the **weathered beauty, melancholy
@@ -16,11 +16,11 @@ lighting, atmosphere, UI-related visual language, concept art and asset reviews.
 > textureless world everywhere, and not a literal copy of any reference game
 > or artist**.
 
-This document captures decisions and references already discussed by the
-project owner. It is a **creative standard for subsequent work**, not a claim
-that every effect described below already runs in the engine. Where a specific
-look or renderer feature is still unapproved, it is labeled **candidate** or
-**future**, not falsely called complete.
+This document defines **appearance and visual acceptance**, not the
+runtime architecture, engineering roadmap, implementation history or
+authoring toolchain. Those subjects are organized in the
+[documentation map](../docs/README.md). An illustrated reference or
+candidate effect is not a shipping feature.
 
 ## Visual companion infographics
 
@@ -219,91 +219,38 @@ prominence. Favor a **hybrid** only after in-game side-by-side comparison;
 the direction is proposed, not yet approved. Verify readability at
 approximately 1m, 3m and 8m in neutral light and a dark environment.
 
-### Reactive surface layers (P2.2 gallery prototype)
+### Surface layering and connected detail
 
-Surface appearance must not collapse the world's distinct facts into a
-single pre-baked texture. The visual stack conceptually distinguishes
-**durable substrate**, **embedded ore/minerals**, **biological or seasonal
-cover** (moss, lichen, grass, leaf litter, snow) and **surface conditions**
-(wetness, frost, weathering, soot, localized damage or tracks). These are
-not necessarily separate draw calls, nor must every category have a PNG.
+Treat **host rock**, **embedded minerals**, **living/seasonal cover**
+and **temporary surface conditions** as distinct visual roles. The rock
+must stay recognizable under its ore; significant moss, snow or frost can
+conceal a mineral's exposed highlights without changing whether the
+resource exists. Copper may use localized metal response; quartz,
+limestone and ordinary wet rock must not inherit copper's glints.
 
-- Metal-bearing mineral regions may receive *material-specific*, localized
-  and view/light-dependent sheen or sparse glints. Do not assign metallic
-  reflections to every mineral or use full-bright glow to indicate value.
-- Wetness changes darkness and reflected highlight response without
-  making rock metallic. Frost/snow coverage should favor exposed surfaces;
-  accumulated snow or thick ice may require geometry.
-- Moss and lichen are restrained patterned covers, not a flat global green
-  tint. Thin shader coverage is acceptable for a preview; substantial
-  clumps and plants will need geometry.
-- A later decal/mark system may represent footprints, scuffs, mining cuts,
-  ash/soot and structure wear without inventing new substrate IDs.
-- When several conditions overlap, more superficial covers can conceal
-  ore glints. Substrate and resource identity must remain intact.
-- Current shader conditions are **diagnostic F8 presets**, not simulated
-  weather/ecology or persistent world records. Their presence does not
-  constitute artistic approval. See [P2.2 QA](../docs/p2-2-reactive-surfaces.md).
+**Connected features should look connected.** A vein, rock fracture,
+root or fungal filament that extends across adjacent 1m hexels should
+retain its course across visible tops, sides and corners. Do not
+restart an identical high-contrast squiggle on each face. Fine tiling
+and localized alpha masks remain perfectly valid for granular texture
+and small, naturally discontinuous clusters.
 
-### Continuous patterns across neighboring hexels (planned)
+No single procedural method is required. Space colonization is one
+candidate for certain *branching* shapes, not for general textures,
+sedimentary layers, wetness or all ores. Geological forms must not
+uniformly resemble tree roots. Thin patterns may use masks/decals;
+substantial formations can need 3D shape.
 
-**New art/pipeline rule:** the **surface material** and a **spatial feature
-that crosses it** are different things. Large rock bedding, exposed ore
-veins, extended fractures, roots and branching fungal structures must not
-visibly restart at each 1m cell boundary simply because one local overlay
-texture was repeated. The same underlying feature should be sampled or
-projected consistently across adjacent exposed hex-prism caps, side
-faces, corners and section boundaries.
+**Art gate:** compare the same granite and shale base with tiled versus
+continuous copper patterns at ~1m, ~3m and ~8m, in motion and neutral
+light. If the simpler representation is clearer, use it. Never use
+emission as a substitute for legible ore.
 
-A world-space / feature-local **coverage field** is one candidate for
-this purpose: a bounded 3D rock/ore/fracture structure can generate
-coverage where it intersects actual exposed faces; the host's authored
-texture supplies its material character underneath. Thin patterns may be
-shader masks or decals; substantial cracks, stems, crevices and snow
-banks can require owned geometry. A continuous-looking *overlay* must
-not reveal buried ore through non-ore rock, or create resource stock.
-Precision must remain stable under chunk-origin shifts and eventually
-the periodic world seam. The full toroidal hex-lattice translation is
-still unapproved, so cross-world-seam functionality remains a future
-acceptance gate.
-
-**Space colonization belongs here only as an optional geometric authoring
-tool** for selected connected deposits, fractures, roots, vines and other
-branching motifs. It can output candidate connected skeleton edges; it
-does not determine rock identity, mineral grade, metallic response,
-weathering, actual ore occurrence, water flow, or visual quality.
-Geologically planar veins, sediment layers, stockworks and replacement
-bodies may require fault geometry, bands, splines or other techniques.
-Never make all ores look like tree roots. The experimental implementation
-is on [draft research PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
-not the game's working material/overlay runtime. SCA is **not a
-prerequisite** for completing the broader material pipeline.
-
-**Appearance-composition order is semantic, not necessarily a stack of
-separate draw passes:** durable substrate; embedded minerals in eligible
-host; biological/seasonal cover; transient conditions; localized
-marks and exposed highlights. Snow, frost or moss can **hide** exposed
-metallic glints while leaving substrate, ore quantity and mineable state
-unchanged. Wetness usually needs no branching network; it should follow
-actual exposure and water/environment state when implemented.
-
-An authored tileable alpha mask remains an appropriate fallback for
-small/local ore clusters and the present F8 gallery. For *connected*
-patterns, compare the tiled baseline against a single world-space feature
-before committing to a universal implementation. Shared details,
-feature-local masks and selective decals/geometry are preferred over
-baking every rock × ore × grade × wetness × season combination.
-
-**New visual review gate (not yet passed):** compare tiled and
-feature-continuous copper on granite and shale at approximately 1m, 3m
-and 8m, including two adjacent cells, the true hexagonal cap, all six
-side orientations, a corner, a section edge, neutral light, shadow and
-camera motion. Host recognition, poor-grade readability, grounded
-material-specific sheen and pattern continuity matter more than how
-complicated the generator is. Keep the simpler method if it looks
-better or is cheaper at equivalent clarity. See the
-[revised material and overlay roadmap](../docs/material-overlay-roadmap.md) and
-[P2.2 preview record](../docs/p2-2-reactive-surfaces.md).
+For system interfaces, condition ownership, region/cell boundaries and
+the experimental SCA proposal, see
+[surface overlay architecture](../docs/overlay-visual-architecture.md),
+the [material/overlay roadmap](../docs/material-overlay-roadmap.md) and
+the [P2.2 gallery record](../docs/p2-2-reactive-surfaces.md).
 
 ## 6. Soil, grass and vegetation
 
@@ -398,186 +345,32 @@ cuboid-only modeling restriction. The older textureless-voxel exploration
 supports geometry-driven silhouettes, **not** rejection of bark, leaf
 or terrain textures.
 
-### Plant structure generation is separate from appearance and ecology
+### Structural appearance and movement
 
-**Core architectural rule:** *where a plant can grow*, *which structure
-its recipe creates*, *how its life state changes*, and *how its mesh/cards
-are rendered* are **four distinct responsibilities**.
+Species **silhouette**, branch rhythm, crown shape, leaf arrangement,
+bark/end-grain roles and changing life stage are artistic obligations
+regardless of how a structure was created. Use predictable authored
+forms as the default; reserve space-colonization, L-systems or other
+specialized algorithms for shapes that actually benefit.
 
-```text
-Habitat/placement + approved species rules
-    -> deterministic plant instance + growth state
-    -> species-authored structural recipe
-    -> versioned structural blueprint (wood, twigs, leaf sites, bounds)
-    -> rendered near/far mesh, leaf cards, textures and wind
-```
+A small plant can have fine geometry much smaller than a hexel; a
+large tree can use logical wood ownership while retaining smooth,
+visually coherent branches. Harvesting and distance LOD should never
+leave orphaned-looking trunks, impossible floating foliage or a
+visibly different species. In wind, the base must remain anchored
+while flexible parts move subtly.
 
-The blueprint is a **design target**, not an already shipped type in
-Hexel Survival. It should permit several growth stages and different
-render meshes/LODs without letting a material texture become the authority
-for plant identity, fertility or resources. A 3D plant can have a 2D-card
-leaf crown; an L-system tree need not be rendered with individual voxels.
+Use material-aware cutout cards, compact meshes and hybrids as needed;
+avoid paper-thin forests, harsh alpha-edge noise and foliage that
+disappears at a few metres. The appearance is judged in the playable
+scene, not merely the authoring tool.
 
-**Algorithm choices and intended role:**
-
-| Approach | Intended use | Status / constraint |
-| --- | --- | --- |
-| **Species-authored templates and parametric branching grammars** | Default for ordinary grass clusters, flowers, mushrooms, crops, common trees and shrubs | **Preferred first implementation.** Predictable and artist-directed; vary seeds within species bounds |
-| **Constrained/parametric L-systems** | Selected branching trees, vines and woody plants with distinctive branching rhythms | **Candidate advanced authoring tool**, not mandatory, not currently a general L-system engine in either runtime |
-| **Space-colonization / attractor-guided growth** | Special spreading/ancient trees, unusual canopies and obstacle-responsive growth | **Candidate specialized precompute/cached authoring**; the old editor's *CanopyGuided* mode is only inspired by this idea, **not** a full iterative space-colonization solver |
-| **Coherent noise / weighted scatter** | Habitat patch placement, crown irregularity, cover density, bounded structural variation | **Foundational candidate**; noise placement is not itself plant biology, and noise-driven 3D shapes do not replace authored species forms |
-
-Do **not** call L-systems an automatic realism guarantee or implement
-multiple full generators merely for completeness. Even mathematically
-complex branches require authored crown envelopes, taper, phyllotaxy,
-leaf arrangement, gravity response and silhouette constraints.
-Space-colonization attractors are **geometric targets**, not
-automatically a simulation of actual sunlight or nutrients.
-Use these algorithms **offline or on controlled regeneration events**,
-not as repeated work every render frame.
-
-**Species examples:** oak may use heavy, irregular limbs and broad
-crown lobes; pine regular branching tiers and needle sprays; willow
-drooping curtains and riparian habit; larch spur needles; palms crown
-fronds; mushrooms usually need no branching solver at all.
-All shape parameters are **artistic/biological approximations** until
-validated, not measured universal botanical constants.
-
-### Plant size, hexel ownership and persistent life state
-
-- The demo's **1m-across-flats, 1m-tall hexels** describe the terrain
-  substrate and can describe *harvestable wood occupancy* for big trees.
-  **Do not snap small plant render geometry to a 1m lattice.**
-  Flowers, fungi, roots, stems, grass blades and thin branches may be
-  centimetre-scale 3D geometry rooted at locations on a hexel surface.
-- Large woody plants may use **logical hexel-owned cells** for collision,
-  cutting and persistence while their *rendered* branch tubes and foliage
-  are finer and curved. Keep mesh ownership and interaction semantics
-  explicit; avoid visible phantom branches after removing a cell.
-- A reused source plant definition is not a world instance. Plant state
-  must independently record growth/age, health, season, harvesting,
-  damage and player actions, according to approved gameplay systems.
-  Cutting a tree or picking a mushroom must **not** be undone by a
-  chunk being unloaded and procedurally regenerated.
-- World seed + **canonical periodic Q/R position** can produce an
-  unmodified initial individual deterministically. Later changes need
-  authoritative saved edits/state. Version the generator/asset recipe so
-  changing branch rules does not silently replace trees in old saves.
-  Cross-chunk crowns, roots and branches need ownership/culling rules.
-- Older authoring tools may describe local **Q/R/Z (Z-up)**; the current
-  Hexel Survival scene uses **Q/R/Y (Y-up)**. Any import must convert
-  coordinates and units explicitly and check periodic boundary rules.
-
-### Rendering, alpha and vegetation performance
-
-- **Cards:** use double-sided, fixed-orientation alpha-cutout where
-  appropriate. Prefer cutout over expensive sorted alpha blending for
-  ordinary leaves/grass, but measure **alpha overdraw**, not just
-  triangles. A tiny low-fill-rate quad can be worse than compact geometry.
-- **Silhouette/edge quality:** test card cutout thresholds, filtering,
-  alpha-aware mipmaps and thin-leaf coverage; prevent distant grass from
-  disappearing or shimmering. Ordered coverage, MSAA alpha-to-coverage
-  and thin-leaf transmission are **comparative options**, not automatic
-  required features of the playable renderer.
-- **Assets/texture memory:** share atlas/BC7-ready leaf/bark materials
-  among instances; cache baked recipe outputs. Seasonal tint changes
-  should not require rebaking foliage or regenerating tree geometry.
-  Existing P0 BC7 success **does not imply** leaf-alpha mips and
-  production foliage compression are solved.
-- **Instances/LOD:** batch repeated geometry and plant instances by
-  material/species where practical; use chunk/region visibility,
-  distance-appropriate silhouettes, wind cutoff and bounded buffers.
-  Close plants may be hybrids, middle-distance plants simplified card/
-  mesh clusters, far trees simple 3D crowns or multi-view impostors, and
-  very distant vegetation ecological canopy coverage. A camera-facing
-  billboard is **optional**, not a universal distance rule; hilltop
-  viewpoints must not reveal paper-thin forests.
-- **Wind:** cosmetic motion belongs in render geometry, preferably
-  vertex/palette parameters, and should be rooted, species-specific and
-  cheaper at distance. It must not alter tree wood occupancy or harvest
-  state. Avoid per-frame CPU regeneration of plants and material maps.
-- **Measurement:** profile generated geometry count, upload count,
-  draw calls, alpha-tested pixels/overdraw where measurable, GPU texture
-  residency, generation/bake time, frame time and visible LOD transitions
-  on representative hardware. No invented FPS or memory saving claims.
-
-### Existing Voxel Game Engine: substantial reference, not a dependency
-
-**Primary technical reference:**
-[sdhaight1-hash/Voxel-Game-Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine).
-It is a working **Rust desktop asset-authoring editor** with separate
-Nodes, Presets, Foliage and Assets workspaces, **not** the playable
-survival world's renderer, ecology or persistence layer.
-
-**Verified existing authoring capabilities in that repository:**
-
-- **43 foliage presets** (42 tree/bamboo types plus a separate Shrub
-  preset) with seeded, species-bounded growth rules: branch pitch,
-  taper/base flare, plant architecture, phyllotaxy and leaf placement.
-  See [tree growth rules](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/tree-growth-rules-v4.md).
-- **Classic** and limited **CanopyGuided** branch generation. Neither
-  implies a full L-system implementation or general obstacle-responsive
-  space-colonization ecosystem.
-- **Hexel-owned, editable tree wood** with organic tapered mesh surfaces
-  clipped to their owning wood hexels. Leaf cutout cards, bark UVs and
-  branch structures can coexist with destructible logical cells.
-  See [organic hexel tree meshing](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/organic-hexel-tree-meshing.md).
-- **Versioned `FloraPrefab` authoring definitions** that combine a
-  `FoliageProject`, stable asset ID and approximate climate preference;
-  `FloraPlacement` is a serialized reference, **not live world
-  generation or saved life state**.
-  See [flora prefab contract](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/flora-prefab.md).
-- **Reusable bark/leaf procedural materials**, cutout leaf cards,
-  visual wind, seasonal palettes, a bounded bake cache and GPU preview
-  experiments in mipmaps, edge coverage, material-aware foliage shading
-  and thin-leaf backlighting. These are **editor/preview features**.
-  See [foliage bake cache](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/shared-foliage-bake-cache.md).
-
-**Integration policy:** study or reuse the **ideas and data contracts**
-surgically; do **not** copy the full editor, replace our game renderer,
-merge incompatible crate stacks or silently transfer all presets into
-the new flora registry. The old 43 editor presets and current Hexel
-Survival **208 research rows** are different inventories with overlapping
-but non-equivalent taxonomies and approval states. Map stable identities
-and licenses explicitly. Verify local Z-up -> world Y-up and save-version
-compatibility before any import.
-
-The preferred eventual boundary is:
-
-```text
-Voxel editor (optional authoring reference / future publishing tool)
-    -> validated, versioned flora asset + material + structure/LOD
-    -> Hexel Survival runtime chooses placement, simulates life/state,
-       stores edits, and renders using its own optimized wgpu pipeline
-```
-
-**Not implemented in Hexel Survival:** a published tree-asset loader,
-vegetation world spawning, instancing, LOD, persistent tree harvesting,
-living seasons, full space colonization or general L-systems.
-There is **no commitment to port** the older foliage code; first
-verify the smallest useful output/asset interface.
-
-### First vegetation art and architecture proof
-
-Before producing a large flora library, put a **small comparison board**
-in the existing first-person prototype: several grass densities/cards,
-a mushroom with a simple volumetric cap/stalk, a wildflower or crop
-hybrid, and two tree shapes (e.g. an oak with a bounded grammar and a
-willow with weeping leaf clusters). Start with available templates and
-authoring references; **do not build an L-system and space-colonization
-engine just to populate this board**.
-
-At normal eye height and from a hill/overhead angle, compare **cards
-vs. compact meshes vs. hybrids** for silhouette, texture/alpha detail,
-species recognition, wind, animation/growth-stage readability,
-performance and LOD pop. Check a useful plant's discoverability at
-the same distances and lighting used for ore reviews. Record actual
-GPU/CPU results. Retain current P0 soil/rock/ore visuals and BC7
-compression unless a measured reason requires changes.
-
-**Do not treat this guide's example plants or older editor prefabs as
-approved production assets.** This proof must happen in-engine before
-deciding mass-production standards for grasses, flowers, crops and trees.
+Details about the earlier Voxel Game Engine's **43 foliage presets**,
+branch grammars, organic meshing, LOD, performance, wood ownership,
+coordinate transforms and first asset fixture live in
+[vegetation visual architecture](../docs/vegetation-visual-architecture.md).
+Flora registry state and species binding live in
+[flora to assets](../docs/flora-to-assets.md).
 
 ## 7. Landscape, architecture and human-made objects
 
@@ -599,85 +392,54 @@ deciding mass-production standards for grasses, flowers, crops and trees.
   item silhouettes, consistent metal/wood/cloth visual treatment. Avoid
   ornate decoration that obscures interaction targets.
 
-## 8. Renderer and atmosphere: direction vs implementation
+## 8. Lighting and atmosphere: visual direction
 
-The **style/reference board proposes these goals**. They are **not claims
-that the current 16³ wgpu demo has these features**.
+- **Readable light:** warm natural sunlight, cool colored shadows and
+  firelight emphasize material form while preserving essential ore
+  and interactable recognition. Evaluate assets under neutral light
+  before art-directed grading.
+- **Depth and mood:** atmospheric haze, soft contact shadow and
+  restrained contrast create age and scale without hiding nearby
+  hazards or drowning the world in darkness.
+- **Selective highlights:** reflective copper, appropriate crystals,
+  water and rare luminous elements behave differently. Don't apply
+  universal bloom, shine, glow or black outlines to all terrain.
+- **Stylization:** limited tonal grouping or subtle outlines may help
+  focal objects, but the world remains full 3D geometry, not a
+  flat posterized illustration.
+- **Wind and seasonal visuals:** plants should remain species-specific
+  and recognizable. Weather and climate can change the appearance,
+  but not arbitrary substrate or resource identity.
+- **Quality tiers:** reduced-detail settings must preserve the
+  same gameplay cues and silhouettes; performance is part of art
+  acceptance, not license to hide important ore or plants.
 
-| Technique | Intended treatment | Status |
-| --- | --- | --- |
-| Dynamic time-of-day lighting | Broad readable light / shadow shape changes, warm/cool shifts | **Future** |
-| Colored shadows | Hue-sensitive light response and material-appropriate shadow tone | **Future** |
-| Material-aware stylized lighting / limited tonal bands | Moderated cel shading, not posterized every surface | **Candidate** |
-| Ambient occlusion | Ground contact and geometry depth; no dirty halos around every hexel | **Future** |
-| Outlines | Prefer characters, focal silhouettes/interactables; **not every hexel edge** | **Candidate, configurable** |
-| Distance haze / fog | Scale, depth and mood without losing important nearby resources | **Future** |
-| Color grading | Time/weather/biome-aware subtle palette bias; controlled saturation, exposure and contrast | **Future** |
-| Selective bloom / highlights | Fire, reflective ore and rare luminous elements, not universal glows | **Candidate** |
-| Wind + foliage response | Species/group-specific motion with distance and quality cutoffs | **Future** |
-| Weather and seasons | Rain, snow, storm, changing leaf/cover states; world data remains authoritative | **Future** |
-| Low / medium / high visual presets | Measured performance fallbacks, same gameplay signals across tiers | **Future** |
-| Neutral / full-style A/B view | **Developer comparison tool** using identical scene/time/camera | **Future** |
+**These are style targets, not claims that the current demo implements
+dynamic weather, cinematic lighting, flora wind or general post-processing.**
+See [rendering and asset-pipeline design](../docs/rendering-and-asset-pipeline.md) for planned features,
+current limitations, runtime compression, material baking and metrics.
 
-**Current reality:** one bounded 16×16×16 first-person test chunk,
-meter-scaled hex-face UVs, a P0 material gallery, **F6** UV checker
-and **F7** checker-density diagnostic. BC7 for 12 P0 256px material
-layers is working on supported GPU hardware with an RGBA fallback.
-A limited **F8** gallery previews revised granite, shale and transparent
-copper candidates; **F9** cycles diagnostic wet/moss/frost coverage;
-**F10** toggles localized copper glints. These are **not** simulated,
-approved art or generalized production overlays. There is **no**
-style on/off mode, full P1 runtime GPU material binding, living flora
-renderer, planetary weather, chunk streaming or complete day/night
-renderer yet. Do not imply otherwise.
+## 9. Asset production: artistic requirements
 
-Lighting and post-process settings must not make critical resource
-identification depend solely on cinematic light, bloom or outlines.
-Enable asset inspection in neutral/base light.
+Author original high-quality surfaces and plant silhouettes before
+scaling to whole libraries. Use stable source identity and reviewed
+families, consistent physical detail and carefully tested top/side/bottom
+transitions. Avoid repeating a successful gallery swatch dozens of
+times merely to satisfy a catalog count.
 
-## 9. Production asset pipeline, compression and budgets
+The 55 material identities are **not 55 approved final assets**;
+current work consists of three unapproved candidate sources and
+52 outstanding source identities. The 208 historical flora research
+entries are not a production roster. Current gallery effects are
+diagnostic, not artistic approval.
 
-- **Authoritative inventory:** `assets/materials/catalog.v2.json` tracks
-  55 legacy geology/material identities: **3 `candidate` (granite, shale,
-  native copper), 52 `needs_art`, and 0 `approved`**. The P2.1 image
-  revisions and P2.2 shader preview do not change approval statuses.
-- **Face/overlay contracts:** see
-  [Material authoring contract](../docs/material-authoring-contract.md)
-  and [P1 authoring pipeline](../docs/p1-material-pipeline.md).
-  Stable IDs, explicit face roles and physical `repeat_metres` belong in
-  the catalog; gameplay never persists GPU layer indices.
-- **Source art:** new files go to `assets/production/` after authoring,
-  not over the 55 original source textures. Record authorship and review
-  status; keep originals for comparison.
-- **Validation:** `cargo run --bin material-baker -- validate`.
-  **Offline BC7 bake:** `cargo run --release --bin material-baker -- bake`.
-  The current tool supports rectangular and square 4px-aligned RGBA8
-  sources; it produces separate BC7 textures and an index under
-  `target/materials-v2/`. The runtime **checks and validates** a present
-  index at startup but does **not yet** bind its recipes as
-  general-purpose GPU materials.
-- **Compression:** P0 uses build-time BC7, native GPU BC7 where supported,
-  one-time CPU decode RGBA fallback otherwise. It currently uses one mip
-  level. The **75% texture memory saving** applies to that 12-layer test,
-  not total game GPU memory or FPS.
-- **Future optimization:** quality-tested mipmaps, texture grouping/
-  atlasing, streaming/LOD, alpha overdraw, geometry instancing and
-  foliage distance tiers, and platform-specific compression (ASTC/ETC2)
-  are evaluated when needed rather than assumed implemented.
-- **Foliage source vs instance:** author shared bark/leaf cutout textures,
-  structural blueprints and appearance variants **once per recipe**,
-  not per world plant. Track provenance and versions; climate and
-  harvested state remain outside the visual material system.
-- **Foliage GPU cost:** budget alpha-cutout overdraw, leaf-mip coverage,
-  transparent-surface artifacts, geometry and upload churn separately.
-  A lower-poly card layout is not automatically cheaper or clearer than
-  compact hybrid geometry. Preserve crucial plant recognition on all tiers.
-- **No fixed 32px rule.** Physical material appearance and measured
-  budget determine source resolutions. Compare 64/128/256+ texels/metre
-  only where each actually delivers visible benefit.
-- **Gameplay parity:** low-quality settings may reduce detail/effects,
-  but must not hide ores, useful flora or hazards that higher quality
-  settings reveal.
+Catalog and baker contracts belong in
+[material authoring](../docs/material-authoring-contract.md) and
+[P1 material pipeline](../docs/p1-material-pipeline.md);
+runtime packing, alpha overdraw and quality budgets belong in
+[rendering and asset pipeline](../docs/rendering-and-asset-pipeline.md).
+All staged work and completion criteria belong in the
+[material/overlay roadmap](../docs/material-overlay-roadmap.md).
 
 ## 10. In-game review and acceptance gates
 
@@ -716,11 +478,7 @@ Enable asset inspection in neutral/base light.
    unimplemented world-space mask as current functionality.
 8. **In motion:** look for texture shimmer, visible tiling, blur, obvious
    alpha noise and loss of visual cues from normal camera movement.
-9. **Technical:** run registry/catalog validation and tests; review
-   BC7 quality on supported GPU and RGBA fallback as available; record
-   CPU/GPU memory, frame timing and draw-cost regressions for
-   substantial feature changes.
-10. **Approval:** store candidate/reference/approved status **honestly**.
+9. **Approval:** store candidate/reference/approved status **honestly**.
    The project owner evaluates screenshots from the live game and approves
    material identity, gameplay readability and style cohesion.
    No automatic "approved" merely because CI is green.
@@ -734,49 +492,18 @@ Retain P0 screenshots as the baseline, not as mandatory final aesthetic
 quality. Species authoring output is not approved until verified in
 the playable runtime.
 
-## 11. Instructions for future AI assistants and collaborators
+## 11. Collaboration and approvals
 
-When starting **any** new visual, vegetation, texture, shader, UI or lighting
-task in this repository:
+All artists, developers and agents should use this guide as the default
+visual design reference and preserve its intent. Technical behavior,
+project status, tooling, provenance validation and asset-review forms
+live in the [visual contribution workflow](../docs/visual-contribution-guide.md) and
+[documentation map](../docs/README.md).
 
-1. **Read this file first**, then the relevant existing engine/material/
-   flora docs. For tree/vegetation work, also inspect the **current**
-   Voxel-Game-Engine authoring source and documentation before proposing
-   a new tree generator, material baker or clipping algorithm. Check
-   both repositories' actual status, not just earlier chat descriptions.
-2. State whether a detail is **established**, a **candidate**, or a
-   **future goal**. Do not mislabel a concept sheet as an implemented effect.
-3. Translate the task into **testable visual and technical outcomes**,
-   including hexel geometry, gameplay readability and performance.
-4. Preserve the established world/material separation. **Do not**
-   refactor geology, worldgen or the renderer just to produce an art asset.
-5. For new images, produce **original** work; don't reproduce Hytale,
-   Vintage Story, Luis Royo, or another creator's protected art.
-6. Prefer a small **in-game vertical slice** (soil / two rock hosts /
-   one readable ore / flora sample) to mass-generating unvalidated files.
-7. Keep authored source and baked runtime derivatives separate. Reuse BC7
-   and P1 validation rather than inventing an incompatible asset pipeline.
-8. For new engine effects, measure a neutral baseline, provide graceful
-   low-tier fallback, and never trade away gameplay visual cues.
-9. After testing, update the relevant docs and record what **actually**
-   changed; do not quietly rewrite this guide or claim production approval.
-10. When a new request conflicts with this guide, **surface the conflict
-    and ask the owner to decide** before treating the new look as canonical.
-
-### Asset review mini-brief
-
-For each new sample, record:
-
-- Stable material/species ID, source/creator and approval state
-- Family + geological/ecological role, and why it is recognizable
-- Top/side/bottom or plant-geometry requirements; base/overlay split
-- For flora: card/3D/hybrid choice, structural algorithm, authored species
-  bounds, growth stage, cutout/LOD/wind plan and persistence implications
-- Color/value family, macro/mid/micro shape design, physical repeat
-- Host-rock/grade/cover variants if applicable
-- Screenshots with F6 checker where relevant, normal view and comparison
-- Artifact resolution, compression/alpha behavior and performance notes
-- Observed defects, open questions and the owner's decision
+**Only the project owner approves a final visual direction or individual
+production asset.** A benchmark, shader, generated image or passing
+unit test cannot certify style cohesion. Preserve the established
+direction until a deliberate review changes it.
 
 ## 12. Reference sources and authority
 
@@ -795,19 +522,10 @@ For each new sample, record:
   card-versus-mesh choices; L-systems, space colonization, noise and
   template grammars; deterministic world growth and performance**.
   These are architecture discussion outcomes, not implemented features.
-- Existing technical reference:
-  [Voxel Game Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine)
-  and its [Foliage/Assets authoring boundary](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/asset-creation-subsystems.md),
-  [species growth profiles](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/tree-growth-rules-v4.md),
-  [organic hexel wood](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/organic-hexel-tree-meshing.md),
-  [flora prefabs](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/flora-prefab.md)
-  and [foliage cache](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/shared-foliage-bake-cache.md).
-- Project contracts: [material rules](../docs/material-authoring-contract.md),
-  [P1 catalog/baker](../docs/p1-material-pipeline.md),
-  [flora mappings](../docs/flora-to-assets.md),
-  [material format](../docs/material-format-v2.md),
-  [compression](../docs/texture-compression.md),
-  [world vision](../docs/world-generation.md).
+- Engineering references, algorithms and runtime contracts are
+  indexed in the [documentation map](../docs/README.md) and
+  [vegetation visual architecture](../docs/vegetation-visual-architecture.md).
+  They inform implementation but do not supersede these visual standards.
 
 The reference imagery is **not copied into this repository**; this text
 records the intent so it remains actionable even without Library access.
