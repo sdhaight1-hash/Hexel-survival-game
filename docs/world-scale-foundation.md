@@ -92,6 +92,18 @@ terrain generation or rendering**. We still need to resolve the
 choose the canonical manifest/version, and test wrap-aware physics and
 pathfinding before enabling world seams.
 
+### P3.1B candidate geographic bridge (test-only)
+
+[The P3.1B projection candidate](p3-1b-axial-geography-projection-candidate.md)
+proves that the existing chunk-aligned integer period translations map
+unambiguously to the **exact** approved 1,024-km square periodic
+geographic raster by an integer Euclidean-floor mapping. A corresponding
+affine geographic-coordinate metric stretches the north spacing by about
+0.00113% relative to regular 1-m hexes. This is a **choice of physical
+metric**, not an automatically accepted implementation. Near-field terrain
+sampling still does not wrap. No game/physics/render/save code uses the
+candidate, and the playable topology remains unresolved.
+
 ### P3.2 — Resident chunk streamer (first playable world)
 - Camera/player chunk key drives an active working set in
   **all three axes**. Generate nearby sections on demand,
