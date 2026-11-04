@@ -21,7 +21,30 @@ that every effect described below already runs in the engine. Where a specific
 look or renderer feature is still unapproved, it is labeled **candidate** or
 **future**, not falsely called complete.
 
+## Visual companion infographics
+
+The three **original, full-size illustrated companion posters** below summarize
+the visual direction, geology/material rules, and plant-generation/rendering
+principles. They are **concept/reference diagrams**, not authoritative engine
+screenshots, final texture assets, or proof that proposed effects already
+exist. **The written specifications in this guide take precedence** if an
+illustration depicts a cubic-looking block, a billboard when a fixed
+cross-card is intended, an arbitrary texel-resolution number, glowing
+ore, or an unimplemented feature.
+
+- [Visual identity, palette and artistic pillars](style-infographics/visual-identity.webp)
+- [Terrain materials, face roles and ore readability](style-infographics/terrain-geology.webp)
+- [Flora rendering, growth algorithms and LOD](style-infographics/flora-architecture.webp)
+
+The files are stored under [`assets/style-infographics/`](style-infographics/).
+They are not production-game material atlases and should not be sampled,
+reused as textures, or interpreted as accurate previews of runtime graphics.
+
 ## 1. Visual influences and how they fit together
+
+![Hexel Survival art direction infographic: readability, geological identity, painterly mood, palette, hexel face principles, and approval checks](style-infographics/visual-identity.webp)
+
+
 
 | Reference direction | Keep | Do not copy / overgeneralize |
 | --- | --- | --- |
@@ -119,6 +142,10 @@ allowed; author for physical texels per metre and valid hexel UVs.
 
 ## 4. Hexel-specific terrain standards
 
+![Terrain and geology infographic: layered soil and rock roles, hexel face mapping, ore overlays, stylized texture production, and performance](style-infographics/terrain-geology.webp)
+
+
+
 The current demo hexel is **1 metre across flats × 1 metre tall**. Each
 of its six vertical edges is approximately **0.5773503 m** wide; the
 top/bottom are real hexagons. These are the **playable prototype's**
@@ -192,6 +219,10 @@ the direction is proposed, not yet approved. Verify readability at
 approximately 1m, 3m and 8m in neutral light and a dark environment.
 
 ## 6. Soil, grass and vegetation
+
+![Vegetation architecture infographic: cutout cards, 3D meshes, hybrid flora, plant life state, procedural structure generation, and LOD](style-infographics/flora-architecture.webp)
+
+
 
 ### Soil + living ground cover
 
