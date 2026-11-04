@@ -186,6 +186,19 @@ samples, alpha mips and recognition at player scale. Keep these
 as small independent fixtures; do not postpone P2.3 copper/vein
 continuity for a complete flora system.
 
+**Fantasy palette/phenotype acceptance:** include a small tree
+visual study alongside the grayscale-family prototype: one
+blue-leaf weeping-willow variant on a consistent willow geometry;
+one ordinary-to-autumn broadleaf palette change; and distinct
+winter-bare versus snow-covered branch treatments. These are
+art/asset experiments, not new world-biome systems. A fantasy ore
+or metal may share compatible grayscale morphology but requires
+its own palette, roughness/metallic/emissive rules and, if gameplay
+properties differ, authoritative material ID. Evaluate silhouettes,
+readability in neutral light, and whether rare fantasy colors
+remain harmonious with the style guide. Do **not** turn snow into
+a white leaf tint or assume blue foliage is automatically luminous.
+
 ## Revised dependencies and phase gates
 
 The historic **P0–P7 labels remain as milestones** for issue/PR continuity,
