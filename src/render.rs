@@ -14,7 +14,11 @@ use hexel_survival_game::{
     surface_layers::SurfacePreset,
     world::{CellPos, World, CHUNK_SIDE},
 };
-use std::{borrow::Cow, sync::Arc, time::Instant};
+use std::{
+    borrow::Cow,
+    sync::{mpsc, Arc},
+    time::{Duration, Instant},
+};
 use wgpu::util::DeviceExt;
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -55,9 +59,88 @@ struct ChunkMesh {
 pub struct DrawStats {
     pub submitted_chunks: usize,
     pub submitted_vertices: u64,
-    /// CPU wall time for the draw path, including surface acquisition/present.
-    /// This is not a GPU timestamp or a shader-only benchmark.
+    /// CPU wall time includes surface acquisition/present, and may block.
     pub draw_cpu_ms: f32,
+    /// Asynchronously retrieved GPU world render-pass time for one sampled
+    /// frame. Not a full-frame latency, CPU time or isolated shader time.
+    pub gpu_pass_ms: Option<f32>,
+}
+
+/// One in-flight render-pass timestamp readback. Never blocks gameplay
+/// waiting for a GPU result; unsupported adapters simply have no timer.
+struct GpuTimer {
+    queries: wgpu::QuerySet,
+    resolved: wgpu::Buffer,
+    readback: wgpu::Buffer,
+    pending: Option<mpsc::Receiver<Result<(), wgpu::BufferAsyncError>>>,
+    last_request: Instant,
+    period_ns: f32,
+}
+
+impl GpuTimer {
+    fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
+        Self {
+            queries: device.create_query_set(&wgpu::QuerySetDescriptor {
+                label: Some("World pass timestamps"),
+                ty: wgpu::QueryType::Timestamp,
+                count: 2,
+            }),
+            resolved: device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("GPU timestamp resolve"),
+                size: 16,
+                usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC,
+                mapped_at_creation: false,
+            }),
+            readback: device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("GPU timestamp staging"),
+                size: 16,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                mapped_at_creation: false,
+            }),
+            pending: None,
+            last_request: Instant::now(),
+            period_ns: queue.get_timestamp_period(),
+        }
+    }
+
+    fn sample_ready(&mut self, device: &wgpu::Device) -> Option<f32> {
+        let pending = self.pending.as_ref()?;
+        // Poll for callbacks without waiting on the GPU.
+        device.poll(wgpu::Maintain::Poll);
+        let completed = match pending.try_recv() {
+            Ok(done) => done,
+            Err(mpsc::TryRecvError::Empty) => return None,
+            Err(mpsc::TryRecvError::Disconnected) => {
+                self.pending = None;
+                return None;
+            }
+        };
+        self.pending = None;
+        if completed.is_err() {
+            return None;
+        }
+        let mapped = self.readback.slice(..).get_mapped_range();
+        let start = u64::from_le_bytes(mapped[0..8].try_into().unwrap());
+        let end = u64::from_le_bytes(mapped[8..16].try_into().unwrap());
+        drop(mapped);
+        self.readback.unmap();
+        (end > start).then_some((end - start) as f32 * self.period_ns / 1_000_000.0)
+    }
+
+    fn should_sample(&self) -> bool {
+        self.pending.is_none() && self.last_request.elapsed() >= Duration::from_millis(250)
+    }
+
+    fn begin_readback(&mut self) {
+        let (send, receive) = mpsc::channel();
+        self.readback
+            .slice(..)
+            .map_async(wgpu::MapMode::Read, move |result| {
+                let _ = send.send(result);
+            });
+        self.pending = Some(receive);
+        self.last_request = Instant::now();
+    }
 }
 
 pub struct Renderer {
@@ -65,6 +148,9 @@ pub struct Renderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
+    supports_unlocked_present: bool,
+    gpu_timer: Option<GpuTimer>,
+    gpu_profiling_enabled: bool,
     pipeline: wgpu::RenderPipeline,
     crosshair_pipeline: wgpu::RenderPipeline,
     menu_pipeline: wgpu::RenderPipeline,
@@ -116,15 +202,19 @@ impl Renderer {
         let supports_bc7 = adapter
             .features()
             .contains(wgpu::Features::TEXTURE_COMPRESSION_BC);
+        let supports_timestamps = adapter.features().contains(wgpu::Features::TIMESTAMP_QUERY);
+        let mut required_features = wgpu::Features::empty();
+        if supports_bc7 {
+            required_features |= wgpu::Features::TEXTURE_COMPRESSION_BC;
+        }
+        if supports_timestamps {
+            required_features |= wgpu::Features::TIMESTAMP_QUERY;
+        }
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("Hexel Survival device"),
-                    required_features: if supports_bc7 {
-                        wgpu::Features::TEXTURE_COMPRESSION_BC
-                    } else {
-                        wgpu::Features::empty()
-                    },
+                    required_features,
                     required_limits: wgpu::Limits::default(),
                     memory_hints: wgpu::MemoryHints::Performance,
                 },
@@ -133,6 +223,15 @@ impl Renderer {
             .await
             .map_err(|e| format!("Could not initialize graphics device: {e}"))?;
         let caps = surface.get_capabilities(&adapter);
+        let supports_unlocked_present =
+            world.is_benchmark() && caps.present_modes.contains(&wgpu::PresentMode::Immediate);
+        let gpu_timer = supports_timestamps.then(|| GpuTimer::new(&device, &queue));
+        println!(
+            "Benchmark adapter: {} | F5 Immediate: {} | GPU timestamps: {} (sampled world render pass only)",
+            adapter.get_info().name,
+            if supports_unlocked_present { "available" } else { "unavailable" },
+            if supports_timestamps { "available" } else { "unavailable" }
+        );
         let format = caps
             .formats
             .iter()
@@ -603,6 +702,9 @@ impl Renderer {
             device,
             queue,
             config,
+            supports_unlocked_present,
+            gpu_timer,
+            gpu_profiling_enabled: false,
             pipeline,
             crosshair_pipeline,
             menu_pipeline,
@@ -676,11 +778,47 @@ impl Renderer {
         Some(self.chunk_culling)
     }
 
+    /// F5 is a benchmark-only, explicitly supported Immediate swap mode.
+    /// Never silently fall back to Mailbox/FIFO while claiming uncapped.
+    pub fn toggle_present_mode(&mut self) -> Option<bool> {
+        if !self.supports_unlocked_present {
+            return None;
+        }
+        let unlocked = self.config.present_mode == wgpu::PresentMode::Fifo;
+        self.config.present_mode = if unlocked {
+            wgpu::PresentMode::Immediate
+        } else {
+            wgpu::PresentMode::Fifo
+        };
+        self.surface.configure(&self.device, &self.config);
+        Some(unlocked)
+    }
+
+    pub fn presentation_label(&self) -> &'static str {
+        if self.config.present_mode == wgpu::PresentMode::Immediate {
+            "IMMEDIATE (unlocked)"
+        } else {
+            "FIFO (vsync)"
+        }
+    }
+
+    pub fn set_gpu_profiling(&mut self, enabled: bool) {
+        self.gpu_profiling_enabled = enabled;
+    }
+
+    pub fn gpu_timestamps_supported(&self) -> bool {
+        self.gpu_timer.is_some()
+    }
+
     pub fn menu_snapshot(&self, frame_stats: bool) -> MenuSnapshot {
         let has_art = self.v2_materials.is_some();
         MenuSnapshot {
             frame_stats,
             chunk_culling: (self.terrain_chunks.len() > 1).then_some(self.chunk_culling),
+            unlocked_present: self
+                .supports_unlocked_present
+                .then_some(self.config.present_mode == wgpu::PresentMode::Immediate),
+            gpu_timestamps: self.gpu_timer.is_some(),
             uv_checker: self.debug_checker,
             uv_density: self.texels_per_metre,
             v2_materials: has_art.then_some(self.v2_preview_enabled),
@@ -740,6 +878,12 @@ impl Renderer {
         menu: Option<(MenuSnapshot, Option<MenuAction>)>,
     ) -> Result<(), wgpu::SurfaceError> {
         let draw_start = Instant::now();
+        let gpu_sample_ms = self
+            .gpu_timer
+            .as_mut()
+            .and_then(|timer| timer.sample_ready(&self.device));
+        let timestamp_this_frame = self.gpu_profiling_enabled
+            && self.gpu_timer.as_ref().is_some_and(GpuTimer::should_sample);
         if let Some((snapshot, hovered)) = menu {
             if self.menu_cache != Some((snapshot, hovered)) {
                 let vertices =
@@ -800,6 +944,17 @@ impl Renderer {
                 label: Some("World frame"),
             });
         {
+            let timestamp_writes = if timestamp_this_frame {
+                self.gpu_timer
+                    .as_ref()
+                    .map(|timer| wgpu::RenderPassTimestampWrites {
+                        query_set: &timer.queries,
+                        beginning_of_pass_write_index: Some(0),
+                        end_of_pass_write_index: Some(1),
+                    })
+            } else {
+                None
+            };
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("First-person world pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -824,7 +979,7 @@ impl Renderer {
                     stencil_ops: None,
                 }),
                 occlusion_query_set: None,
-                timestamp_writes: None,
+                timestamp_writes,
             });
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.camera_bind_group, &[]);
@@ -861,12 +1016,24 @@ impl Renderer {
                 pass.draw(0..self.menu_vertex_count, 0..1);
             }
         }
+        if timestamp_this_frame {
+            if let Some(timer) = self.gpu_timer.as_ref() {
+                encoder.resolve_query_set(&timer.queries, 0..2, &timer.resolved, 0);
+                encoder.copy_buffer_to_buffer(&timer.resolved, 0, &timer.readback, 0, 16);
+            }
+        }
         self.queue.submit(std::iter::once(encoder.finish()));
         frame.present();
+        if timestamp_this_frame {
+            if let Some(timer) = self.gpu_timer.as_mut() {
+                timer.begin_readback();
+            }
+        }
         self.last_stats = DrawStats {
             submitted_chunks,
             submitted_vertices,
             draw_cpu_ms: draw_start.elapsed().as_secs_f32() * 1000.0,
+            gpu_pass_ms: gpu_sample_ms,
         };
         Ok(())
     }

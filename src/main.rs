@@ -39,6 +39,10 @@ struct Game {
     benchmark_window_start: Instant,
     benchmark_frames: u32,
     benchmark_draw_ms_total: f64,
+    benchmark_gpu_ms_total: f64,
+    benchmark_gpu_samples: u32,
+    benchmark_frame_intervals_ms: Vec<f64>,
+    benchmark_last_present: Option<Instant>,
 }
 
 impl Default for Game {
@@ -65,6 +69,10 @@ impl Default for Game {
             benchmark_window_start: Instant::now(),
             benchmark_frames: 0,
             benchmark_draw_ms_total: 0.0,
+            benchmark_gpu_ms_total: 0.0,
+            benchmark_gpu_samples: 0,
+            benchmark_frame_intervals_ms: Vec::new(),
+            benchmark_last_present: None,
         }
     }
 }
@@ -109,13 +117,24 @@ impl Game {
         }
     }
 
+    fn reset_benchmark_window(&mut self) {
+        self.benchmark_window_start = Instant::now();
+        self.benchmark_frames = 0;
+        self.benchmark_draw_ms_total = 0.0;
+        self.benchmark_gpu_ms_total = 0.0;
+        self.benchmark_gpu_samples = 0;
+        self.benchmark_frame_intervals_ms.clear();
+        self.benchmark_last_present = None;
+    }
+
     /// One action path for F-keys and mouse-selected menu rows.
     fn apply_debug_action(&mut self, action: MenuAction) {
         if action == MenuAction::FrameStats {
             self.benchmark_logging = !self.benchmark_logging;
-            self.benchmark_window_start = Instant::now();
-            self.benchmark_frames = 0;
-            self.benchmark_draw_ms_total = 0.0;
+            self.reset_benchmark_window();
+            if let Some(renderer) = self.renderer.as_mut() {
+                renderer.set_gpu_profiling(self.benchmark_logging);
+            }
             println!(
                 "F3 benchmark logging: {}",
                 if self.benchmark_logging { "ON" } else { "OFF" }
@@ -127,6 +146,13 @@ impl Game {
         };
         match action {
             MenuAction::FrameStats => unreachable!(),
+            MenuAction::Presentation => match renderer.toggle_present_mode() {
+                Some(true) => println!("F5 presentation: UNLOCKED (Immediate, tearing possible)"),
+                Some(false) => println!("F5 presentation: VSYNC (FIFO)"),
+                None => println!(
+                    "F5 unavailable: Immediate presentation not supported in this benchmark."
+                ),
+            },
             MenuAction::ChunkCulling => match renderer.toggle_chunk_culling() {
                 Some(true) => println!("F4 nearby-chunk culling: ON"),
                 Some(false) => println!("F4 nearby-chunk culling: OFF (all resident chunks drawn)"),
@@ -165,6 +191,9 @@ impl Game {
                     println!("F11 unavailable: enable F8 with a baked native-copper candidate.")
                 }
             },
+        }
+        if self.benchmark_logging {
+            self.reset_benchmark_window(); // never mix settings within one benchmark interval
         }
     }
 
@@ -228,6 +257,10 @@ impl ApplicationHandler for Game {
                     "WASD move | Mouse look | Space jump | Left Ctrl sprint | Left Shift sneak"
                 );
                 println!("F1: clickable diagnostics menu (F1/Esc closes); F3–F11 shortcuts remain active.");
+                println!(
+                    "F5: opt-in VSYNC / UNLOCKED (Immediate) benchmark presentation if available."
+                );
+                println!("F3: frame p50/p95/p99 + asynchronous GPU render-pass timestamps when supported.");
                 println!("Esc release/recapture mouse | Click window to recapture.");
                 println!(
                     "Static loaded-chunk boundaries are barriers; streaming/torus wrapping are NOT implemented."
@@ -353,23 +386,55 @@ impl ApplicationHandler for Game {
                     match renderer.draw(&self.player, menu) {
                         Ok(()) => {
                             if self.benchmark_logging {
+                                let now = Instant::now();
+                                if let Some(previous) = self.benchmark_last_present {
+                                    self.benchmark_frame_intervals_ms
+                                        .push(now.duration_since(previous).as_secs_f64() * 1000.0);
+                                }
+                                self.benchmark_last_present = Some(now);
                                 self.benchmark_frames += 1;
                                 let stats = renderer.stats();
                                 self.benchmark_draw_ms_total += f64::from(stats.draw_cpu_ms);
+                                if let Some(ms) = stats.gpu_pass_ms {
+                                    self.benchmark_gpu_ms_total += f64::from(ms);
+                                    self.benchmark_gpu_samples += 1;
+                                }
                                 let elapsed = self.benchmark_window_start.elapsed().as_secs_f64();
                                 if elapsed >= 3.0 {
+                                    self.benchmark_frame_intervals_ms.sort_by(f64::total_cmp);
+                                    let p50 =
+                                        frame_percentile_ms(&self.benchmark_frame_intervals_ms, 50);
+                                    let p95 =
+                                        frame_percentile_ms(&self.benchmark_frame_intervals_ms, 95);
+                                    let p99 =
+                                        frame_percentile_ms(&self.benchmark_frame_intervals_ms, 99);
+                                    let gpu = if self.benchmark_gpu_samples > 0 {
+                                        format!(
+                                            "{:.2} ms GPU pass ({} samples)",
+                                            self.benchmark_gpu_ms_total
+                                                / f64::from(self.benchmark_gpu_samples),
+                                            self.benchmark_gpu_samples
+                                        )
+                                    } else if renderer.gpu_timestamps_supported() {
+                                        "GPU pass pending".to_string()
+                                    } else {
+                                        "GPU pass N/A".to_string()
+                                    };
                                     println!(
-                                        "BENCH [{}]: {:.1} FPS (wall incl. vsync), {:.2} ms/draw CPU incl. acquire/present, {}/{} submitted chunks, {} submitted vertices",
+                                        "BENCH [{} | {}]: {:.1} FPS wall, frame p50/p95/p99 {:.2}/{:.2}/{:.2} ms, {:.2} ms CPU draw incl. acquire/present, {}, {}/{} submitted chunks, {} vertices",
                                         renderer.material_comparison_label(),
+                                        renderer.presentation_label(),
                                         f64::from(self.benchmark_frames) / elapsed,
+                                        p50,
+                                        p95,
+                                        p99,
                                         self.benchmark_draw_ms_total / f64::from(self.benchmark_frames),
+                                        gpu,
                                         stats.submitted_chunks,
                                         self.world.chunk_count(),
                                         stats.submitted_vertices,
                                     );
-                                    self.benchmark_frames = 0;
-                                    self.benchmark_draw_ms_total = 0.0;
-                                    self.benchmark_window_start = Instant::now();
+                                    self.reset_benchmark_window();
                                 }
                             }
                         }
@@ -408,6 +473,29 @@ impl ApplicationHandler for Game {
         if let Some(window) = self.window.as_ref() {
             window.request_redraw();
         }
+    }
+}
+
+/// Nearest sampled frame interval at a requested percentile. Input is sorted
+/// by the caller; empty windows report zero instead of implying GPU timing.
+fn frame_percentile_ms(sorted: &[f64], percentile: usize) -> f64 {
+    if sorted.is_empty() {
+        return 0.0;
+    }
+    sorted[(sorted.len() * percentile / 100).min(sorted.len() - 1)]
+}
+
+#[cfg(test)]
+mod benchmark_stats_tests {
+    use super::*;
+
+    #[test]
+    fn frame_percentiles_use_observed_sorted_intervals() {
+        assert_eq!(frame_percentile_ms(&[], 95), 0.0);
+        let frames: Vec<f64> = (1..=100).map(f64::from).collect();
+        assert_eq!(frame_percentile_ms(&frames, 50), 51.0);
+        assert_eq!(frame_percentile_ms(&frames, 95), 96.0);
+        assert_eq!(frame_percentile_ms(&frames, 99), 100.0);
     }
 }
 
