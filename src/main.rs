@@ -8,11 +8,11 @@ mod render;
 mod texture_codec;
 mod texture_pack;
 
+use debug_menu::{hit_test, MenuAction};
 use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
 };
-use debug_menu::{hit_test, MenuAction};
 use render::Renderer;
 use std::{collections::HashSet, sync::Arc, time::Instant};
 use winit::{
@@ -135,12 +135,17 @@ impl Game {
                 println!("P0 UV checker: {}", if active { "ON" } else { "OFF" });
             }
             MenuAction::UvDensity => {
-                println!("P0 checker scale: {} texels/metre", renderer.cycle_density());
+                println!(
+                    "P0 checker scale: {} texels/metre",
+                    renderer.cycle_density()
+                );
             }
             MenuAction::V2Materials => match renderer.toggle_v2_preview() {
                 Some(true) => println!("V2 candidate gallery: ON"),
                 Some(false) => println!("V2 candidate gallery: OFF (P0)"),
-                None => println!("V2 gallery unavailable: bake compatible candidate textures first."),
+                None => {
+                    println!("V2 gallery unavailable: bake compatible candidate textures first.")
+                }
             },
             MenuAction::SurfacePreset => match renderer.cycle_surface_preset() {
                 Some(name) => println!("F8 surface preset: {name}"),
@@ -154,7 +159,9 @@ impl Game {
             MenuAction::GrayCopper => match renderer.toggle_grayscale_copper() {
                 Some(true) => println!("F11 copper comparison: grayscale mask + shader palette"),
                 Some(false) => println!("F11 copper comparison: original full-color candidate"),
-                None => println!("F11 unavailable: enable F8 with a baked native-copper candidate."),
+                None => {
+                    println!("F11 unavailable: enable F8 with a baked native-copper candidate.")
+                }
             },
         }
     }
@@ -304,8 +311,7 @@ impl ApplicationHandler for Game {
                 if self.menu_open {
                     if let Some(window) = self.window.as_ref() {
                         let size = window.inner_size();
-                        self.menu_hover =
-                            hit_test(position.x, position.y, size.width, size.height);
+                        self.menu_hover = hit_test(position.x, position.y, size.width, size.height);
                     }
                 }
             }
@@ -322,7 +328,10 @@ impl ApplicationHandler for Game {
                     ) {
                         let size = window.inner_size();
                         if let Some(action) = hit_test(x, y, size.width, size.height) {
-                            if renderer.menu_snapshot(self.benchmark_logging).enabled(action) {
+                            if renderer
+                                .menu_snapshot(self.benchmark_logging)
+                                .enabled(action)
+                            {
                                 self.apply_debug_action(action);
                             }
                         }
