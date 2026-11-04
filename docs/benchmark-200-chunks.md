@@ -52,7 +52,7 @@ change on a rebuild.
 
 | Key | Action |
 | --- | --- |
-| F3 | Toggle a log every ~3 seconds with sampled wall FPS, average **CPU draw path** milliseconds, visible chunks and submitted vertices |
+| F3 | Toggle a log every ~3 seconds with sampled wall FPS, average **CPU draw path** milliseconds, submitted nearby chunks and submitted vertices |
 | F4 | Toggle conservative nearby-chunk culling against drawing **all resident chunks**; availability only in 200-chunk mode |
 | F8 | Default P0 versus optional candidate preview (requires baked cache) |
 | F11 | Shader grayscale copper versus original full-color copper, **F8 only** |
