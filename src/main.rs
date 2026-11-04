@@ -149,7 +149,9 @@ impl Game {
             MenuAction::Presentation => match renderer.toggle_present_mode() {
                 Some(true) => println!("F5 presentation: UNLOCKED (Immediate, tearing possible)"),
                 Some(false) => println!("F5 presentation: VSYNC (FIFO)"),
-                None => println!("F5 unavailable: Immediate presentation not supported in this benchmark."),
+                None => println!(
+                    "F5 unavailable: Immediate presentation not supported in this benchmark."
+                ),
             },
             MenuAction::ChunkCulling => match renderer.toggle_chunk_culling() {
                 Some(true) => println!("F4 nearby-chunk culling: ON"),
@@ -255,7 +257,9 @@ impl ApplicationHandler for Game {
                     "WASD move | Mouse look | Space jump | Left Ctrl sprint | Left Shift sneak"
                 );
                 println!("F1: clickable diagnostics menu (F1/Esc closes); F3–F11 shortcuts remain active.");
-                println!("F5: opt-in VSYNC / UNLOCKED (Immediate) benchmark presentation if available.");
+                println!(
+                    "F5: opt-in VSYNC / UNLOCKED (Immediate) benchmark presentation if available."
+                );
                 println!("F3: frame p50/p95/p99 + asynchronous GPU render-pass timestamps when supported.");
                 println!("Esc release/recapture mouse | Click window to recapture.");
                 println!(
@@ -398,9 +402,12 @@ impl ApplicationHandler for Game {
                                 let elapsed = self.benchmark_window_start.elapsed().as_secs_f64();
                                 if elapsed >= 3.0 {
                                     self.benchmark_frame_intervals_ms.sort_by(f64::total_cmp);
-                                    let p50 = frame_percentile_ms(&self.benchmark_frame_intervals_ms, 50);
-                                    let p95 = frame_percentile_ms(&self.benchmark_frame_intervals_ms, 95);
-                                    let p99 = frame_percentile_ms(&self.benchmark_frame_intervals_ms, 99);
+                                    let p50 =
+                                        frame_percentile_ms(&self.benchmark_frame_intervals_ms, 50);
+                                    let p95 =
+                                        frame_percentile_ms(&self.benchmark_frame_intervals_ms, 95);
+                                    let p99 =
+                                        frame_percentile_ms(&self.benchmark_frame_intervals_ms, 99);
                                     let gpu = if self.benchmark_gpu_samples > 0 {
                                         format!(
                                             "{:.2} ms GPU pass ({} samples)",
