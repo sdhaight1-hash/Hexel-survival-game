@@ -213,6 +213,75 @@ rebuilds and world reloads. A missing optional pattern may fall
 back visually, but cannot silently change resource identity,
 species, harvested state or emission.
 
+## Seasonal palette keyframes and time-driven interpolation (proposal)
+
+**Seasonal palettes are arrays of keyframes and small color ramps, not
+full copies of every source texture.** A versioned material-family
+recipe may associate a species/biome phenotype with ordered
+`(phase, ramp)` entries for spring, summer, autumn and winter, or
+with a different number of meaningful keyframes. Each ramp may have
+several tonal stops so one grayscale pigment field supports nuanced
+colors across the leaf. A grayscale detail field, cutout silhouette,
+normal information and species/asset ID remain separate.
+
+**Proposed evaluation:**
+
+```text
+global cyclic world-year phase ∈ [0, 1)
+    -> species / region phenology mapping (may shift, hold or skip phases)
+    -> find the two neighboring seasonal palette keyframes
+    -> normalized interpolation fraction between their phase positions
+    -> interpolate corresponding ramp stops in a specified color space
+    -> apply ramp to grayscale pigment/tonal detail
+    -> perform material lighting and independent frost/snow/cover effects
+```
+
+For adjacent keyframes `A` and `B` and local phase fraction `t`,
+`ramp(t) = (1-t) * rampA + t * rampB` (conceptually per matching
+ramp stop). Handle the **last → first keyframe** as a wrap-around,
+not an abrupt jump at a new game year. Linear-light RGB is a
+well-defined baseline; artist-oriented perceptual interpolation
+(e.g. OkLab) is a *comparison option*, provided conversions and
+clamping are explicit. Do not interpolate encoded sRGB bytes as
+though they were linear intensities. Time easing is a tunable
+appearance curve, not a replacement for plant phenology.
+
+**Ownership and timing:** gameplay/world time and eventually
+climate/phenology supply the annual phase and locally relevant
+growth-season parameters; the renderer consumes derived palette
+weights. A tree's approved species/phenotype, lifespan, health and
+harvest state remain authoritative. Local latitude-like forcing,
+temperature/elevation, water stress, biome and any hemispheric-style
+offset must be based on actual Hexal geography rules, *not*
+silently hardcoded Earth seasons. Region/species offsets should be
+stable across unloaded chunks, saves and replays.
+
+**Different visual processes must not be collapsed:**
+- **Pigment change:** shade the same leaves with a gradually
+  evolving palette, including fantasy blue/silver/red phenotypes.
+- **Deciduous leaf loss or budding:** alter approved leaf-instance
+  retention/coverage and, where needed, geometry with separate
+  stable thresholds/curves. Simply alpha-fading every leaf can
+  cause sorting, mip or silhouette artifacts.
+- **Snow/frost/wetness:** remain independently simulated or
+  supplied environment coverage and may occlude pigments.
+- **Evergreens, dormant vegetation and nonseasonal fantasy
+  species:** may use a flat ramp, short transition or unique
+  seasonal curve. Four equal quarters are **not mandatory**.
+- **Player time jumps:** palette, structure and environmental
+  state must be reconstructible from authoritative time and
+  persistent state without relying on frame-by-frame accumulation.
+
+**Runtime boundary:** when implemented, prefer a small world-time
+uniform and species/instance recipe parameters to updating thousands
+of colored PNGs or CPU-rebaking meshes each frame. Do not change
+the current `catalog.v2.json` schema, BC7 bake formats or saved
+species IDs in this documentation PR. Before selecting shader
+palette representations, test moving-camera near/far art quality,
+year-wrap continuity, deterministic reload, GPU cost and
+season-specific geometry/cover alignment.
+
+
 ## Asset locations and gates
 
 - Existing categorized source art and 32px previews are in `assets/textures`.
