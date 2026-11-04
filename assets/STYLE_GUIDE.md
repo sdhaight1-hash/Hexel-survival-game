@@ -1,6 +1,8 @@
 # Hexel Survival — Canonical Art Direction & Style Guide
 
-**Status:** project art-direction baseline • **Last reviewed:** 2026-11-03  
+**Status:** project art-direction baseline • **Last reviewed:** 2026-11-03
+**Revision note:** vegetation rendering, plant-structure generation,
+LOD/persistence and Voxel-Game-Engine reference incorporated.  
 **Applies to:** terrain, geology, ores, soils, flora, water, structures, characters,
 lighting, atmosphere, UI-related visual language, concept art and asset reviews.  
 **Read this before designing, generating, implementing or approving visual assets.**
@@ -218,8 +220,11 @@ mean forcing all leaves into cubes or banning leaf/bark textures.
 
 - Prefer clear, intentionally grouped **3D geometry/silhouettes** for
   major plants, trunks, branches, grass clumps and distinctive foliage.
-  Use textured/cutout foliage only where it measurably improves the look
-  within performance budgets. Avoid needless layers of tiny alpha cards.
+  **Hybrid foliage is the default direction:** choose fixed-orientation
+  textured cutout planes, actual 3D geometry, or both according to each
+  species' shape and gameplay role. A few efficient cards are desirable
+  for dense grasses and leaves; distinctive stems, caps, seedheads and
+  branches may deserve real depth. Avoid needless layers of tiny alpha cards.
 - Trees need meaningful bark and **end-grain** face roles; foliage must not
   share a generic grass material. Species should remain identifiable
   through shape, leaf form and seasonal behavior.
@@ -232,6 +237,229 @@ mean forcing all leaves into cubes or banning leaf/bark textures.
   research rows**, not 208 approved assets or necessarily unique species.
   Do not make up production assets, growth states or spawn parameters from
   this number.
+
+### Plant geometry: 2D cards, 3D meshes and hybrids
+
+**Established design direction:** use a **hybrid vegetation asset system**.
+Vintage Story uses crossed-plane vegetation for some grass and custom
+plant geometry for other forms; Hytale's stylized model vocabulary
+includes flat quads as well as volumetric geometry. Those are useful
+design patterns, **not sources of assets to copy**. Do not decide
+a representation from the words "flower" or "mushroom" alone.
+
+A **card** is a flat textured polygon in 3D space with cutout alpha; it
+need not billboard toward the camera. Crossed X-cards, staggered sprays,
+radial cards and deliberately angled fronds all give different silhouettes.
+A **mesh** supplies actual volume, thickness, shading and occlusion.
+A **hybrid** uses both in one coherent plant asset.
+
+| Plant family / role | Default candidate | Shape and texture considerations |
+| --- | --- | --- |
+| Dense short grass and meadow fillers | Small crossed/radial cutout-card clusters | Good density at low geometry cost; multiple varieties and heights; avoid flat grass "walls" |
+| Tall grass, reeds, cattails, papyrus | Hybrid blades/cards and volumetric stems/seedheads | Readable stem height, seedhead and waterline identity |
+| Small wildflowers | Cards or hybrid | Discernible flowerhead, petals, leaves, bud/seed stages; useful species must be findable |
+| Ferns, vines and many foliage sprays | Angled/double-sided cutout cards on simple support geometry | Frond shape and direction, avoid card stacks with huge empty alpha areas |
+| Mushrooms and fungi | Usually simple 3D caps/stalks; cards for appropriately thin forms | Cap, gills/pores, shelf attachment, distinctive species silhouettes |
+| Bushes, berries and shrubs | Hybrid | Woody structure, layered leaves, visible berries/flowers and useful harvest parts |
+| Crops | Growth-stage-specific hybrid/3D | Seeds, stalks, harvestable heads/fruits, depleted/ripe state all readable |
+| Trees | Volumetric trunk/branch structure + grouped leaf/needle cards | Species-specific crown, bark and exposed end-grain; canopy silhouette at a distance |
+| Cacti and succulents | Mostly 3D | Important mass, arms, spines/ridges simplified for actual player scale |
+| Water plants | Species-dependent | Flat water-lily surfaces, emergent hybrid reeds, underwater plant cards/meshes |
+
+These are **starting choices, not universal biological rules or final asset
+approvals**. A landmark mushroom could justify more geometry; a distant
+shrub might use only a few cutout planes. Do not confuse the greenery
+**painted on a terrain cap** (ground-cover layer) with actual clumps,
+flowers and mushrooms growing above it (independent plant instances).
+
+**Style standard:** simplified but botanically recognizable forms,
+grouped blades and foliage masses, graceful non-cubic curves where useful,
+restrained texture noise and colors compatible with the weathered,
+painterly world palette. We borrow Hytale's clarity, not an absolute
+cuboid-only modeling restriction. The older textureless-voxel exploration
+supports geometry-driven silhouettes, **not** rejection of bark, leaf
+or terrain textures.
+
+### Plant structure generation is separate from appearance and ecology
+
+**Core architectural rule:** *where a plant can grow*, *which structure
+its recipe creates*, *how its life state changes*, and *how its mesh/cards
+are rendered* are **four distinct responsibilities**.
+
+```text
+Habitat/placement + approved species rules
+    -> deterministic plant instance + growth state
+    -> species-authored structural recipe
+    -> versioned structural blueprint (wood, twigs, leaf sites, bounds)
+    -> rendered near/far mesh, leaf cards, textures and wind
+```
+
+The blueprint is a **design target**, not an already shipped type in
+Hexel Survival. It should permit several growth stages and different
+render meshes/LODs without letting a material texture become the authority
+for plant identity, fertility or resources. A 3D plant can have a 2D-card
+leaf crown; an L-system tree need not be rendered with individual voxels.
+
+**Algorithm choices and intended role:**
+
+| Approach | Intended use | Status / constraint |
+| --- | --- | --- |
+| **Species-authored templates and parametric branching grammars** | Default for ordinary grass clusters, flowers, mushrooms, crops, common trees and shrubs | **Preferred first implementation.** Predictable and artist-directed; vary seeds within species bounds |
+| **Constrained/parametric L-systems** | Selected branching trees, vines and woody plants with distinctive branching rhythms | **Candidate advanced authoring tool**, not mandatory, not currently a general L-system engine in either runtime |
+| **Space-colonization / attractor-guided growth** | Special spreading/ancient trees, unusual canopies and obstacle-responsive growth | **Candidate specialized precompute/cached authoring**; the old editor's *CanopyGuided* mode is only inspired by this idea, **not** a full iterative space-colonization solver |
+| **Coherent noise / weighted scatter** | Habitat patch placement, crown irregularity, cover density, bounded structural variation | **Foundational candidate**; noise placement is not itself plant biology, and noise-driven 3D shapes do not replace authored species forms |
+
+Do **not** call L-systems an automatic realism guarantee or implement
+multiple full generators merely for completeness. Even mathematically
+complex branches require authored crown envelopes, taper, phyllotaxy,
+leaf arrangement, gravity response and silhouette constraints.
+Space-colonization attractors are **geometric targets**, not
+automatically a simulation of actual sunlight or nutrients.
+Use these algorithms **offline or on controlled regeneration events**,
+not as repeated work every render frame.
+
+**Species examples:** oak may use heavy, irregular limbs and broad
+crown lobes; pine regular branching tiers and needle sprays; willow
+drooping curtains and riparian habit; larch spur needles; palms crown
+fronds; mushrooms usually need no branching solver at all.
+All shape parameters are **artistic/biological approximations** until
+validated, not measured universal botanical constants.
+
+### Plant size, hexel ownership and persistent life state
+
+- The demo's **1m-across-flats, 1m-tall hexels** describe the terrain
+  substrate and can describe *harvestable wood occupancy* for big trees.
+  **Do not snap small plant render geometry to a 1m lattice.**
+  Flowers, fungi, roots, stems, grass blades and thin branches may be
+  centimetre-scale 3D geometry rooted at locations on a hexel surface.
+- Large woody plants may use **logical hexel-owned cells** for collision,
+  cutting and persistence while their *rendered* branch tubes and foliage
+  are finer and curved. Keep mesh ownership and interaction semantics
+  explicit; avoid visible phantom branches after removing a cell.
+- A reused source plant definition is not a world instance. Plant state
+  must independently record growth/age, health, season, harvesting,
+  damage and player actions, according to approved gameplay systems.
+  Cutting a tree or picking a mushroom must **not** be undone by a
+  chunk being unloaded and procedurally regenerated.
+- World seed + **canonical periodic Q/R position** can produce an
+  unmodified initial individual deterministically. Later changes need
+  authoritative saved edits/state. Version the generator/asset recipe so
+  changing branch rules does not silently replace trees in old saves.
+  Cross-chunk crowns, roots and branches need ownership/culling rules.
+- Older authoring tools may describe local **Q/R/Z (Z-up)**; the current
+  Hexel Survival scene uses **Q/R/Y (Y-up)**. Any import must convert
+  coordinates and units explicitly and check periodic boundary rules.
+
+### Rendering, alpha and vegetation performance
+
+- **Cards:** use double-sided, fixed-orientation alpha-cutout where
+  appropriate. Prefer cutout over expensive sorted alpha blending for
+  ordinary leaves/grass, but measure **alpha overdraw**, not just
+  triangles. A tiny low-fill-rate quad can be worse than compact geometry.
+- **Silhouette/edge quality:** test card cutout thresholds, filtering,
+  alpha-aware mipmaps and thin-leaf coverage; prevent distant grass from
+  disappearing or shimmering. Ordered coverage, MSAA alpha-to-coverage
+  and thin-leaf transmission are **comparative options**, not automatic
+  required features of the playable renderer.
+- **Assets/texture memory:** share atlas/BC7-ready leaf/bark materials
+  among instances; cache baked recipe outputs. Seasonal tint changes
+  should not require rebaking foliage or regenerating tree geometry.
+  Existing P0 BC7 success **does not imply** leaf-alpha mips and
+  production foliage compression are solved.
+- **Instances/LOD:** batch repeated geometry and plant instances by
+  material/species where practical; use chunk/region visibility,
+  distance-appropriate silhouettes, wind cutoff and bounded buffers.
+  Close plants may be hybrids, middle-distance plants simplified card/
+  mesh clusters, far trees simple 3D crowns or multi-view impostors, and
+  very distant vegetation ecological canopy coverage. A camera-facing
+  billboard is **optional**, not a universal distance rule; hilltop
+  viewpoints must not reveal paper-thin forests.
+- **Wind:** cosmetic motion belongs in render geometry, preferably
+  vertex/palette parameters, and should be rooted, species-specific and
+  cheaper at distance. It must not alter tree wood occupancy or harvest
+  state. Avoid per-frame CPU regeneration of plants and material maps.
+- **Measurement:** profile generated geometry count, upload count,
+  draw calls, alpha-tested pixels/overdraw where measurable, GPU texture
+  residency, generation/bake time, frame time and visible LOD transitions
+  on representative hardware. No invented FPS or memory saving claims.
+
+### Existing Voxel Game Engine: substantial reference, not a dependency
+
+**Primary technical reference:**
+[sdhaight1-hash/Voxel-Game-Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine).
+It is a working **Rust desktop asset-authoring editor** with separate
+Nodes, Presets, Foliage and Assets workspaces, **not** the playable
+survival world's renderer, ecology or persistence layer.
+
+**Verified existing authoring capabilities in that repository:**
+
+- **43 foliage presets** (42 tree/bamboo types plus a separate Shrub
+  preset) with seeded, species-bounded growth rules: branch pitch,
+  taper/base flare, plant architecture, phyllotaxy and leaf placement.
+  See [tree growth rules](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/tree-growth-rules-v4.md).
+- **Classic** and limited **CanopyGuided** branch generation. Neither
+  implies a full L-system implementation or general obstacle-responsive
+  space-colonization ecosystem.
+- **Hexel-owned, editable tree wood** with organic tapered mesh surfaces
+  clipped to their owning wood hexels. Leaf cutout cards, bark UVs and
+  branch structures can coexist with destructible logical cells.
+  See [organic hexel tree meshing](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/organic-hexel-tree-meshing.md).
+- **Versioned `FloraPrefab` authoring definitions** that combine a
+  `FoliageProject`, stable asset ID and approximate climate preference;
+  `FloraPlacement` is a serialized reference, **not live world
+  generation or saved life state**.
+  See [flora prefab contract](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/flora-prefab.md).
+- **Reusable bark/leaf procedural materials**, cutout leaf cards,
+  visual wind, seasonal palettes, a bounded bake cache and GPU preview
+  experiments in mipmaps, edge coverage, material-aware foliage shading
+  and thin-leaf backlighting. These are **editor/preview features**.
+  See [foliage bake cache](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/shared-foliage-bake-cache.md).
+
+**Integration policy:** study or reuse the **ideas and data contracts**
+surgically; do **not** copy the full editor, replace our game renderer,
+merge incompatible crate stacks or silently transfer all presets into
+the new flora registry. The old 43 editor presets and current Hexel
+Survival **208 research rows** are different inventories with overlapping
+but non-equivalent taxonomies and approval states. Map stable identities
+and licenses explicitly. Verify local Z-up -> world Y-up and save-version
+compatibility before any import.
+
+The preferred eventual boundary is:
+
+```text
+Voxel editor (optional authoring reference / future publishing tool)
+    -> validated, versioned flora asset + material + structure/LOD
+    -> Hexel Survival runtime chooses placement, simulates life/state,
+       stores edits, and renders using its own optimized wgpu pipeline
+```
+
+**Not implemented in Hexel Survival:** a published tree-asset loader,
+vegetation world spawning, instancing, LOD, persistent tree harvesting,
+living seasons, full space colonization or general L-systems.
+There is **no commitment to port** the older foliage code; first
+verify the smallest useful output/asset interface.
+
+### First vegetation art and architecture proof
+
+Before producing a large flora library, put a **small comparison board**
+in the existing first-person prototype: several grass densities/cards,
+a mushroom with a simple volumetric cap/stalk, a wildflower or crop
+hybrid, and two tree shapes (e.g. an oak with a bounded grammar and a
+willow with weeping leaf clusters). Start with available templates and
+authoring references; **do not build an L-system and space-colonization
+engine just to populate this board**.
+
+At normal eye height and from a hill/overhead angle, compare **cards
+vs. compact meshes vs. hybrids** for silhouette, texture/alpha detail,
+species recognition, wind, animation/growth-stage readability,
+performance and LOD pop. Check a useful plant's discoverability at
+the same distances and lighting used for ore reviews. Record actual
+GPU/CPU results. Retain current P0 soil/rock/ore visuals and BC7
+compression unless a measured reason requires changes.
+
+**Do not treat this guide's example plants or older editor prefabs as
+approved production assets.** This proof must happen in-engine before
+deciding mass-production standards for grasses, flowers, crops and trees.
 
 ## 7. Landscape, architecture and human-made objects
 
@@ -311,6 +539,14 @@ Enable asset inspection in neutral/base light.
   atlasing, streaming/LOD, alpha overdraw, geometry instancing and
   foliage distance tiers, and platform-specific compression (ASTC/ETC2)
   are evaluated when needed rather than assumed implemented.
+- **Foliage source vs instance:** author shared bark/leaf cutout textures,
+  structural blueprints and appearance variants **once per recipe**,
+  not per world plant. Track provenance and versions; climate and
+  harvested state remain outside the visual material system.
+- **Foliage GPU cost:** budget alpha-cutout overdraw, leaf-mip coverage,
+  transparent-surface artifacts, geometry and upload churn separately.
+  A lower-poly card layout is not automatically cheaper or clearer than
+  compact hybrid geometry. Preserve crucial plant recognition on all tiers.
 - **No fixed 32px rule.** Physical material appearance and measured
   budget determine source resolutions. Compare 64/128/256+ texels/metre
   only where each actually delivers visible benefit.
@@ -342,7 +578,11 @@ Enable asset inspection in neutral/base light.
    prominence without inventing resource amounts.
 6. **For grass/flora:** species/cover variation and growth states remain
    distinct; avoid repeating green vertical streaks, flat coatings and
-   fragile unreadable silhouettes.
+   fragile unreadable silhouettes. Compare fixed cutout cards, small
+   meshes and hybrids from every camera angle; inspect thin leaves,
+   visible alpha edges, recognizability and visual coherence with
+   adjacent soil/rock materials. A generated tree must still look
+   like its named species after seed variation and LOD simplification.
 7. **In motion:** look for texture shimmer, visible tiling, blur, obvious
    alpha noise and loss of visual cues from normal camera movement.
 8. **Technical:** run registry/catalog validation and tests; review
@@ -354,11 +594,14 @@ Enable asset inspection in neutral/base light.
    material identity, gameplay readability and style cohesion.
    No automatic "approved" merely because CI is green.
 
-**Recommended proof board:** low-fertility soil and grass cover states;
-granite, shale and clear copper overlays in both hosts; a small stand of
-distinct grasses/foliage models later. Test **neutral** versus full-style
-rendering once that toggle exists. Retain P0 screenshots as the baseline,
-not as mandatory final aesthetic quality.
+**Recommended proof boards:** (1) low-fertility soil and grass cover states,
+granite, shale and clear copper overlays in both hosts; (2) mixed card,
+mesh and hybrid grass, mushroom, flower/crop and two different tree
+architectures. Test both boards at first-person and overhead viewpoints.
+Test **neutral** versus full-style rendering once that toggle exists.
+Retain P0 screenshots as the baseline, not as mandatory final aesthetic
+quality. Species authoring output is not approved until verified in
+the playable runtime.
 
 ## 11. Instructions for future AI assistants and collaborators
 
@@ -366,7 +609,10 @@ When starting **any** new visual, vegetation, texture, shader, UI or lighting
 task in this repository:
 
 1. **Read this file first**, then the relevant existing engine/material/
-   flora docs. Check repo state before recommending code changes.
+   flora docs. For tree/vegetation work, also inspect the **current**
+   Voxel-Game-Engine authoring source and documentation before proposing
+   a new tree generator, material baker or clipping algorithm. Check
+   both repositories' actual status, not just earlier chat descriptions.
 2. State whether a detail is **established**, a **candidate**, or a
    **future goal**. Do not mislabel a concept sheet as an implemented effect.
 3. Translate the task into **testable visual and technical outcomes**,
@@ -393,6 +639,8 @@ For each new sample, record:
 - Stable material/species ID, source/creator and approval state
 - Family + geological/ecological role, and why it is recognizable
 - Top/side/bottom or plant-geometry requirements; base/overlay split
+- For flora: card/3D/hybrid choice, structural algorithm, authored species
+  bounds, growth stage, cutout/LOD/wind plan and persistence implications
 - Color/value family, macro/mid/micro shape design, physical repeat
 - Host-rock/grade/cover variants if applicable
 - Screenshots with F6 checker where relevant, normal view and comparison
@@ -412,6 +660,17 @@ For each new sample, record:
 - User-shared Hytale-style screenshots, grass hexel/UV diagrams,
   Vintage Story-style geology and flora references, painterly narrative
   scenes and ore-readability discussions in this project's conversation.
+- Prior Hexel Survival discussions on **Vintage Story/Hytale vegetation
+  card-versus-mesh choices; L-systems, space colonization, noise and
+  template grammars; deterministic world growth and performance**.
+  These are architecture discussion outcomes, not implemented features.
+- Existing technical reference:
+  [Voxel Game Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine)
+  and its [Foliage/Assets authoring boundary](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/asset-creation-subsystems.md),
+  [species growth profiles](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/tree-growth-rules-v4.md),
+  [organic hexel wood](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/organic-hexel-tree-meshing.md),
+  [flora prefabs](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/flora-prefab.md)
+  and [foliage cache](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/shared-foliage-bake-cache.md).
 - Project contracts: [material rules](../docs/material-authoring-contract.md),
   [P1 catalog/baker](../docs/p1-material-pipeline.md),
   [flora mappings](../docs/flora-to-assets.md),
