@@ -28,7 +28,10 @@ impl Axial64 {
     }
 
     pub fn world_xz_m(self) -> DVec2 {
-        DVec2::new(self.q as f64 + self.r as f64 * 0.5, self.r as f64 * HEX_ROW_METRES)
+        DVec2::new(
+            self.q as f64 + self.r as f64 * 0.5,
+            self.r as f64 * HEX_ROW_METRES,
+        )
     }
 
     /// Canonicalize an exact lattice position against the candidate's two
@@ -39,12 +42,10 @@ impl Axial64 {
     pub fn candidate_wrap(self) -> Self {
         let r = self.r.rem_euclid(PERIOD_R);
         let wraps_r = self.r.div_euclid(PERIOD_R);
-        let unwrapped_q = i128::from(self.q)
-            - i128::from(wraps_r) * i128::from(R_PERIOD_Q_OFFSET);
+        let unwrapped_q = i128::from(self.q) - i128::from(wraps_r) * i128::from(R_PERIOD_Q_OFFSET);
         // Twice the horizontal position is an exact integer and keeps
         // half-metre parity for odd axial rows.
-        let twice_x = (2 * unwrapped_q + i128::from(r))
-            .rem_euclid(2 * i128::from(PERIOD_Q));
+        let twice_x = (2 * unwrapped_q + i128::from(r)).rem_euclid(2 * i128::from(PERIOD_Q));
         let q = (twice_x - i128::from(r)) / 2;
         Self {
             q: i64::try_from(q).expect("canonical q is bounded"),
@@ -99,8 +100,7 @@ mod tests {
         }
         let start = Axial64::new(1234, -4567).world_xz_m();
         let east = Axial64::new(1234 + PERIOD_Q, -4567).world_xz_m() - start;
-        let north = Axial64::new(1234 + R_PERIOD_Q_OFFSET, -4567 + PERIOD_R)
-            .world_xz_m() - start;
+        let north = Axial64::new(1234 + R_PERIOD_Q_OFFSET, -4567 + PERIOD_R).world_xz_m() - start;
         assert!((east.x - TARGET_WORLD_METRES).abs() < 1e-6);
         assert!(east.y.abs() < 1e-6);
         assert!(north.x.abs() < 1e-6);
