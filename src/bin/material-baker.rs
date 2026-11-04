@@ -688,6 +688,75 @@ mod tests {
     }
 
     #[test]
+    fn candidate_art_has_seam_continuity_and_no_short_period_duplication() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        for (relative, ore) in [
+            ("assets/production/rock/granite_candidate.png", false),
+            ("assets/production/rock/shale_candidate.png", false),
+            ("assets/production/ore/native_copper_candidate.png", true),
+        ] {
+            let (width, height, rgba) = read_png(&root.join(relative)).unwrap();
+            assert_eq!((width, height), (256, 256), "{relative}");
+            let side = width as usize;
+            let pixel = |x: usize, y: usize| &rgba[(y * side + x) * 4..(y * side + x + 1) * 4];
+            let mut seam_sum = 0usize;
+            for i in 0..side {
+                for channel in 0..4 {
+                    seam_sum +=
+                        pixel(0, i)[channel].abs_diff(pixel(side - 1, i)[channel]) as usize;
+                    seam_sum +=
+                        pixel(i, 0)[channel].abs_diff(pixel(i, side - 1)[channel]) as usize;
+                }
+            }
+            let seam_delta = seam_sum as f32 / (side * 8) as f32;
+            assert!(
+                seam_delta < 8.0,
+                "{relative}: excessive average wrap seam delta {seam_delta:.2}"
+            );
+
+            if ore {
+                let visible = rgba
+                    .chunks_exact(4)
+                    .filter(|pixel| pixel[3] > 32)
+                    .count();
+                let coverage = visible as f32 / (side * side) as f32;
+                assert!(
+                    (0.06..0.30).contains(&coverage),
+                    "{relative}: ore-only alpha coverage {coverage:.3} is not usable"
+                );
+                assert!(
+                    rgba.chunks_exact(4).any(|pixel| pixel[3] == 0),
+                    "{relative}: overlay must retain a fully clear background"
+                );
+            } else {
+                assert!(
+                    rgba.chunks_exact(4).all(|pixel| pixel[3] == 255),
+                    "{relative}: host rock must be opaque"
+                );
+                // A duplicated 32/64px image patch must not masquerade as
+                // a complete 1m authored material. This cannot assess taste.
+                for step in [32, 64] {
+                    let mut difference = 0usize;
+                    for y in 0..side {
+                        for x in 0..side {
+                            for channel in 0..3 {
+                                difference += pixel(x, y)[channel].abs_diff(
+                                    pixel((x + step) % side, (y + step) % side)[channel],
+                                ) as usize;
+                            }
+                        }
+                    }
+                    let average = difference as f32 / (side * side * 3) as f32;
+                    assert!(
+                        average > 4.0,
+                        "{relative}: suspicious {step}px period (mean delta {average:.2})"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn repo_catalog_has_55_sources_and_only_three_unapproved_candidates() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
         let catalog: Catalog = serde_json::from_slice(
