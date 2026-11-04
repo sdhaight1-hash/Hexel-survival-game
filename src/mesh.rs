@@ -58,6 +58,17 @@ fn cap_uv(position: Vec3) -> [f32; 2] {
 /// Meshes visible faces of a section. Neighbor checks query the world, so
 /// future adjacent chunks can hide the shared faces correctly.
 pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
+    build_chunk_mesh_relative(world, chunk, None)
+}
+
+/// In the opt-in distant spawn, build all resident meshes relative to the
+/// same integer axial origin before converting positions to f32. Never add
+/// 0.58m hex corners to million-metre f32 coordinates.
+pub fn build_chunk_mesh_relative(
+    world: &World,
+    chunk: ChunkPos,
+    origin: Option<(i32, i32)>,
+) -> Vec<Vertex> {
     if world.chunk(chunk).is_none() {
         return Vec::new();
     }
@@ -74,7 +85,19 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                 if !block.is_solid() {
                     continue;
                 }
-                let center = cell.center();
+                let center = if let Some((origin_q, origin_r)) = origin {
+                    // Use i64 subtraction to avoid i32 overflow and preserve
+                    // the full metre / half-metre detail at distant spawns.
+                    let dq = i64::from(cell.q) - i64::from(origin_q);
+                    let dr = i64::from(cell.r) - i64::from(origin_r);
+                    Vec3::new(
+                        dq as f32 + dr as f32 * 0.5,
+                        (cell.y as f32 + 0.5),
+                        dr as f32 * hexel_survival_game::world::HEX_ROW_SPACING,
+                    )
+                } else {
+                    cell.center()
+                };
                 let bottom = cell.y as f32;
                 let top = bottom + 1.0;
                 let ring: [Vec3; 6] = std::array::from_fn(|i| {
@@ -180,6 +203,25 @@ mod tests {
                 && v.material < materials_p0::LAYER_COUNT as u32
         }));
         assert!(build_chunk_mesh(&world, ChunkPos { q: 1, r: 0, y: 0 }).is_empty());
+    }
+
+    #[test]
+    fn distant_origin_keeps_hex_corners_distinct_and_shared_across_chunks() {
+        let mut world = World::streamed(42);
+        let origin = CellPos::new(1_023_984, 0, 0).center();
+        world.stream_around(origin);
+        let near = CellPos::at_world_xz(origin.x, origin.z, 220);
+        let (section, _) = near.chunk_and_local();
+        let vertices = build_chunk_mesh_relative(&world, section, Some((1_023_984, 0)));
+        assert!(!vertices.is_empty());
+        assert!(vertices.iter().all(|v| v.position[0].abs() < 100.0));
+        // A top cap's six triangles must retain their distinct adjacent
+        // vertices, rather than snapping to coarse global-f32 increments.
+        let mut distinct = std::collections::HashSet::new();
+        for vertex in &vertices {
+            distinct.insert((vertex.position[0].to_bits(), vertex.position[2].to_bits()));
+        }
+        assert!(distinct.len() > 100);
     }
 
     #[test]
