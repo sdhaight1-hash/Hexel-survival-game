@@ -98,6 +98,8 @@ impl Game {
     fn toggle_menu(&mut self) {
         self.menu_open = !self.menu_open;
         self.menu_hover = None;
+        self.menu_cursor = None;
+        self.pressed.clear(); // avoid held movement keys leaking out of the menu
         if self.menu_open {
             self.release_mouse();
             println!("F1 diagnostics menu: OPEN (click a row; F1/Esc closes)");
