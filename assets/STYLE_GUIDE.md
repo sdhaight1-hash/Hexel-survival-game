@@ -235,6 +235,18 @@ Detailed data, selection and palette contracts belong in
 [overlay architecture](../docs/overlay-visual-architecture.md), not
 in this style guide.
 
+**Fantasy materials are first-class, not mistakes to recolor away.**
+Blue-leaf weeping trees, silver foliage, unusual autumn pigments,
+iridescent minerals and fictional metals can belong in Hexal if
+their silhouettes, tonal groupings, visual hierarchy and physical
+response remain coherent with the established painterly world.
+A blue willow should still read as a **willow through its hanging
+branch and leaf clusters**, not merely through a bright color choice.
+Rare fantasy materials can carry stronger accents, but color changes
+alone do not automatically justify emissive bloom. Frost and snow
+must read as accumulated surface cover; a white palette is not
+equivalent to snow mass or icy geometry.
+
 **Initial approval test:** copper on **granite and shale**, three candidate
 visual families (**veins / clusters / hybrid**) and poor–medium–rich
 prominence. Favor a **hybrid** only after in-game side-by-side comparison;
