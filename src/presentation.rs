@@ -38,9 +38,9 @@ impl PresentationOptions {
                 }
                 "--frame-latency" => {
                     let value = args.next().ok_or("--frame-latency needs a value")?;
-                    options.max_frame_latency = value.parse::<u32>().map_err(|_| {
-                        format!("Invalid --frame-latency '{value}'; use 1, 2 or 3")
-                    })?;
+                    options.max_frame_latency = value
+                        .parse::<u32>()
+                        .map_err(|_| format!("Invalid --frame-latency '{value}'; use 1, 2 or 3"))?;
                     if !(1..=3).contains(&options.max_frame_latency) {
                         return Err(format!("Invalid --frame-latency '{value}'; use 1, 2 or 3"));
                     }
@@ -76,13 +76,18 @@ mod tests {
 
     #[test]
     fn parses_explicit_ab_settings() {
-        let (streamed, settings) = PresentationOptions::parse([
-            "--streamed-world",
-            "--present-mode",
-            "mailbox",
-            "--frame-latency",
-            "1",
-        ].into_iter().map(str::to_owned)).unwrap();
+        let (streamed, settings) = PresentationOptions::parse(
+            [
+                "--streamed-world",
+                "--present-mode",
+                "mailbox",
+                "--frame-latency",
+                "1",
+            ]
+            .into_iter()
+            .map(str::to_owned),
+        )
+        .unwrap();
         assert!(streamed);
         assert_eq!(settings.mode, wgpu::PresentMode::Mailbox);
         assert_eq!(settings.max_frame_latency, 1);
