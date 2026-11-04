@@ -9,7 +9,9 @@ been imported into this game.
 | --- | --- | --- |
 | [Hexel Game Engine](https://github.com/sdhaight1-hash/Hexel-Game-Engine) | Rust/wgpu playable flat hexel prototype, 16³ chunks, camera, collisions, editing, some tree and geology data | Candidate runtime techniques and gameplay prototype; validate code before reusing |
 | [Voxel Game Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine) | Rust procedural asset editor (Nodes, Presets, Foliage, Assets), wgpu asset preview and authoring exports | Authoring tools and reusable **baked** assets, not world-simulation authority |
-| **This repository** | Actual native Rust/wgpu one-chunk first-person prototype, P0/P1 material infrastructure, and separate periodic raster-index tests | Game runtime integration, persistent world state and global-field consumers; full planet systems still planned |
+| **This repository** | Native Rust/wgpu one-chunk first-person gallery **and opt-in deterministic moving 95-section streamed-world prototype**, P0/P1 material infrastructure, F1–F3 runtime diagnostics and separate periodic raster tests | Game runtime integration, persistent world state and global-field consumers; full planet systems still planned |
+
+**Current runtime scope:** the streamed-world prototype has live Q/R/Y section exchanges and disposable GPU meshes, but no saved edits, authoritative finite ore, toroidal movement or distant LOD. The current [P3.2 streamer documentation](p3-2-streamed-world.md) is the implementation reference; this file describes future data-authority integration.
 
 **Topological conflict to resolve:** Hexel Game Engine's README still describes
 a future **sphere**, while the latest supplied world-generation specification
