@@ -54,6 +54,7 @@ struct Game {
     streamed_uploaded_bytes: u64,
     streamed_generation_cpu_ms: f64,
     streamed_meshing_cpu_ms: f64,
+    stream_pending: usize,
     stream_metrics: StreamFrameMetrics,
     render_cpu_metrics: RenderCpuMetrics,
     menu_open: bool,
@@ -107,6 +108,7 @@ impl Game {
             streamed_uploaded_bytes: 0,
             streamed_generation_cpu_ms: 0.0,
             streamed_meshing_cpu_ms: 0.0,
+            stream_pending: 0,
             stream_metrics: StreamFrameMetrics::default(),
             render_cpu_metrics: RenderCpuMetrics::default(),
             menu_open: false,
@@ -279,6 +281,12 @@ impl ApplicationHandler for Game {
         )) {
             Ok(renderer) => {
                 self.console_log.record(renderer.presentation_report());
+                if self.world.is_streamed() {
+                    self.console_log.record(format!(
+                        "STREAM BUDGET: {:?} new section(s) per tick (None = original unbounded); initial 95-section bootstrap unchanged.",
+                        self.presentation.stream_budget
+                    ));
+                }
                 self.window = Some(window);
                 self.renderer = Some(renderer);
                 self.capture_mouse();
@@ -519,7 +527,11 @@ impl ApplicationHandler for Game {
         self.last_frame = now;
         self.player.step(&self.world, self.input(), dt);
         if self.world.is_streamed() {
-            let delta = self.world.stream_around(self.player.feet);
+            let delta = self.world.stream_around_budgeted(
+                self.player.feet,
+                self.presentation.stream_budget.unwrap_or(usize::MAX),
+            );
+            self.stream_pending = delta.pending;
             if !delta.added.is_empty() || !delta.removed.is_empty() {
                 self.streamed_generated += delta.added.len();
                 self.streamed_evicted += delta.removed.len();
@@ -541,7 +553,7 @@ impl ApplicationHandler for Game {
                     .as_ref()
                     .map_or((0, 0), Renderer::terrain_counts);
                 self.console_log.record(format!(
-                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s); Is_Moving={is_moving}; Is_Looking={is_looking} (latest update).",
+                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s); Is_Moving={is_moving}; Is_Looking={is_looking} (latest update); pending {} section(s), budget {:?} per tick.",
                     self.world.chunk_count(),
                     gpu_meshes,
                     submitted_vertices,
@@ -552,6 +564,8 @@ impl ApplicationHandler for Game {
                     self.streamed_generation_cpu_ms,
                     self.streamed_meshing_cpu_ms,
                     now.duration_since(self.last_stream_report).as_secs_f64(),
+                    self.stream_pending,
+                    self.presentation.stream_budget,
                 ));
                 self.streamed_generated = 0;
                 self.streamed_evicted = 0;
