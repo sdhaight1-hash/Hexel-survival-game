@@ -44,6 +44,11 @@ changes after harvest; authored assets define **what** it is and how it looks.
 Do not evaluate CPU material graphs per terrain cell or run ecology inside the
 asset editor. Meshes and GPU buffers are derived caches.
 
+The [world generation and persistence infographic](../assets/diagrams/worldgen-persistence.svg) illustrates this ownership
+boundary, including immutable seed-derived geography, separately
+saved mutations and disposable render caches. The diagram is a
+**proposed integration contract**, not a save/streaming implementation.
+
 ## Coordinates and authority
 
 - The global geography layer uses a periodic **rectangular X/Z raster**.
