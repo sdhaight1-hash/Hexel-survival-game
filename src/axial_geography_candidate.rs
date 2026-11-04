@@ -11,9 +11,7 @@ use glam::{DVec2, Vec3};
 
 use crate::{
     geography::{RasterSample, ELEVATION_SAMPLES_PER_AXIS, WORLD_SIDE_METRES},
-    hex_torus_candidate::{
-        Axial64, PERIOD_Q, PERIOD_R, R_PERIOD_Q_OFFSET, HEX_ROW_METRES,
-    },
+    hex_torus_candidate::{Axial64, HEX_ROW_METRES, PERIOD_Q, PERIOD_R, R_PERIOD_Q_OFFSET},
 };
 
 /// Stable candidate three-dimensional cell identity. Y does not wrap.
@@ -66,8 +64,8 @@ impl CandidateProjection {
     /// Equivalent candidate axial cells always identify the same sample.
     /// Never derive authoritative raster ownership from rounded floats.
     pub fn raster_sample(cell: Axial64) -> RasterSample {
-        let x_numerator = (2 * i128::from(cell.q) + i128::from(cell.r))
-            * i128::from(ELEVATION_SAMPLES_PER_AXIS);
+        let x_numerator =
+            (2 * i128::from(cell.q) + i128::from(cell.r)) * i128::from(ELEVATION_SAMPLES_PER_AXIS);
         let x_denominator = 2 * i128::from(PERIOD_Q);
         let z_numerator = i128::from(cell.r) * i128::from(ELEVATION_SAMPLES_PER_AXIS);
         let z_denominator = i128::from(PERIOD_R);
@@ -169,7 +167,10 @@ mod tests {
             let actual = CandidateProjection::raster_sample(cell);
             assert!(actual.x < ELEVATION_SAMPLES_PER_AXIS);
             assert!(actual.z < ELEVATION_SAMPLES_PER_AXIS);
-            assert_eq!(actual, CandidateProjection::raster_sample(cell.candidate_wrap()));
+            assert_eq!(
+                actual,
+                CandidateProjection::raster_sample(cell.candidate_wrap())
+            );
             for nz in -2_i64..=2 {
                 for nx in -2_i64..=2 {
                     if (-2_000_000_000..2_000_000_000).contains(&cell.q)
@@ -211,7 +212,9 @@ mod tests {
                 }
             }
             assert_ne!(
-                CandidateCellId::new(p.q, p.r, p.y + 16).candidate_chunk(16).y,
+                CandidateCellId::new(p.q, p.r, p.y + 16)
+                    .candidate_chunk(16)
+                    .y,
                 base.y
             );
         }
@@ -232,7 +235,10 @@ mod tests {
                 let near = CandidateProjection::nearest_periodic_image(from, target);
                 let d = CandidateProjection::geographic_metres(near)
                     - CandidateProjection::geographic_metres(from);
-                assert!(d.length() < 1.1, "nonlocal neighbor from {base:?} via {target:?}: {d:?}");
+                assert!(
+                    d.length() < 1.1,
+                    "nonlocal neighbor from {base:?} via {target:?}: {d:?}"
+                );
                 assert_eq!(near.candidate_wrap(), target);
             }
         }
