@@ -50,6 +50,7 @@ the mouse.
 | Esc / left click | Release / recapture cursor (Esc closes F1 menu first) |
 | F1 | Clickable developer diagnostics menu; F1 / Esc closes it |
 | F3 / F4 | Frame stats / nearby-chunk culling (F4 available in 200-chunk mode) |
+| F5 | Toggle FIFO V-sync vs truly unlocked Immediate when adapter supports it, benchmark scene only |
 | F6 | Toggle hex-face UV checker |
 | F7 | Cycle checker scale (64 / 128 / 256 texels per metre) |
 | F8 | P0 versus three unapproved v2 candidate rock/ore previews |
@@ -58,8 +59,9 @@ the mouse.
 | F11 | Compare authored-color copper vs grayscale source + shader palette, F8 gallery only |
 
 The [F1 diagnostics menu](docs/diagnostics-menu.md) displays current
-F3–F11 values; clicking its rows triggers the **same code path** as
-the hotkeys. The menu is an unpaused debug overlay: close it while
+F3–F11 values, including F5 presentation; clicking its rows triggers
+the **same code path** as the hotkeys. [Benchmark instrumentation](docs/benchmark-instrumentation.md)
+adds frame-time percentiles and optional asynchronous GPU pass timings. The menu is an unpaused debug overlay: close it while
 recording benchmarks.
 
 For F8–F10 preview candidates, first validate/bake the new material
