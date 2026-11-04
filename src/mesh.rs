@@ -62,6 +62,11 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
         return Vec::new();
     }
     let mut vertices = Vec::new();
+    let material_for_face: fn(Block, CellPos, HexFace) -> Material = if world.is_benchmark() {
+        materials_p0::for_benchmark_face
+    } else {
+        materials_p0::for_face
+    };
     for y in 0..CHUNK_SIDE {
         for r in 0..CHUNK_SIDE {
             for q in 0..CHUNK_SIDE {
@@ -98,7 +103,7 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            materials_p0::for_face(block, cell, HexFace::Top),
+                            material_for_face(block, cell, HexFace::Top),
                             [1.0, 1.0, 1.0],
                         );
                     }
@@ -115,7 +120,7 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            materials_p0::for_face(block, cell, HexFace::Bottom),
+                            material_for_face(block, cell, HexFace::Bottom),
                             [0.77, 0.77, 0.77],
                         );
                     }
@@ -133,7 +138,7 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
                     let c = Vec3::new(ring[j].x, top, ring[j].z);
                     let d = Vec3::new(ring[side].x, top, ring[side].z);
                     let shade = 0.88 + side as f32 * 0.018;
-                    let material = materials_p0::for_face(block, cell, HexFace::Side(side as u8));
+                    let material = material_for_face(block, cell, HexFace::Side(side as u8));
                     let tint = [shade, shade, shade];
                     // One side is 0.577m wide x 1m tall. Use metres
                     // around the hex perimeter, NOT 0..1 across each side.
@@ -180,6 +185,21 @@ mod tests {
                 && v.material < materials_p0::LAYER_COUNT as u32
         }));
         assert!(build_chunk_mesh(&world, ChunkPos { q: 1, r: 0, y: 0 }).is_empty());
+    }
+
+    #[test]
+    fn neighboring_benchmark_chunks_generate_valid_exposed_meshes() {
+        let world = World::benchmark(42);
+        for pos in [
+            ChunkPos { q: 0, r: 0, y: 0 },
+            ChunkPos { q: 1, r: 0, y: 0 },
+            ChunkPos { q: -1, r: 0, y: 0 },
+        ] {
+            let vertices = build_chunk_mesh(&world, pos);
+            assert!(!vertices.is_empty());
+            assert_eq!(vertices.len() % 3, 0);
+            assert!(vertices.iter().all(|vertex| vertex.position.iter().all(|p| p.is_finite())));
+        }
     }
 
     #[test]
