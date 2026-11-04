@@ -11,9 +11,9 @@ use glam::{Mat4, Vec3};
 use hexel_survival_game::{
     player::Player,
     surface_layers::SurfacePreset,
-    world::{ChunkPos, World},
+    world::{ChunkPos, StreamDelta, World},
 };
-use std::{borrow::Cow, sync::Arc};
+use std::{borrow::Cow, collections::HashMap, sync::Arc, time::Instant};
 use wgpu::util::DeviceExt;
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -44,6 +44,18 @@ impl CrosshairVertex {
     }
 }
 
+struct TerrainGpuMesh {
+    buffer: wgpu::Buffer,
+    vertices: u32,
+}
+
+/// CPU-side mesh/build/upload submission metrics, not GPU execution time.
+pub struct StreamGpuUpdate {
+    pub meshed_buffers: usize,
+    pub uploaded_bytes: u64,
+    pub cpu_ms: f64,
+}
+
 pub struct Renderer {
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
@@ -61,8 +73,7 @@ pub struct Renderer {
     v2_preview_enabled: bool,
     surface_preset: SurfacePreset,
     metallic_glints: bool,
-    terrain_buffer: wgpu::Buffer,
-    terrain_vertices: u32,
+    terrain_meshes: HashMap<ChunkPos, TerrainGpuMesh>,
     crosshair_buffer: wgpu::Buffer,
     crosshair_vertices: u32,
     _depth_texture: wgpu::Texture,
@@ -465,15 +476,28 @@ impl Renderer {
             cache: None,
         });
 
-        let mesh = build_chunk_mesh(world, ChunkPos::default());
-        if mesh.is_empty() {
+        let mut terrain_meshes = HashMap::new();
+        for pos in world.chunk_positions() {
+            let mesh = build_chunk_mesh(world, pos);
+            if mesh.is_empty() {
+                continue;
+            }
+            let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Exposed hexel chunk faces"),
+                contents: bytemuck::cast_slice(&mesh),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+            terrain_meshes.insert(
+                pos,
+                TerrainGpuMesh {
+                    buffer,
+                    vertices: mesh.len() as u32,
+                },
+            );
+        }
+        if terrain_meshes.is_empty() {
             return Err("No terrain geometry was generated".to_string());
         }
-        let terrain_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Exposed hexel faces"),
-            contents: bytemuck::cast_slice(&mesh),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
         let crosshair = [
             CrosshairVertex {
                 position: [-0.013, 0.0],
@@ -523,13 +547,61 @@ impl Renderer {
             v2_preview_enabled: false,
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
-            terrain_buffer,
-            terrain_vertices: mesh.len() as u32,
+            terrain_meshes,
             crosshair_buffer,
             crosshair_vertices: crosshair.len() as u32,
             _depth_texture: depth_texture,
             depth_view,
         })
+    }
+
+    /// Upload only newly resident sections, and drop evicted GPU buffers.
+    /// Absent-neighbor face checks use the deterministic base, not air.
+    /// An empty mesh still belongs to the resident CPU set, but needs no buffer.
+    pub fn sync_stream(&mut self, world: &World, delta: &StreamDelta) -> StreamGpuUpdate {
+        let start = Instant::now();
+        for pos in &delta.removed {
+            self.terrain_meshes.remove(pos);
+        }
+        let mut meshed_buffers = 0usize;
+        let mut uploaded_bytes = 0u64;
+        for &pos in &delta.added {
+            let mesh = build_chunk_mesh(world, pos);
+            if mesh.is_empty() {
+                continue;
+            }
+            uploaded_bytes += (mesh.len() * std::mem::size_of::<Vertex>()) as u64;
+            let buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Streamed hexel faces"),
+                    contents: bytemuck::cast_slice(&mesh),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
+            self.terrain_meshes.insert(
+                pos,
+                TerrainGpuMesh {
+                    buffer,
+                    vertices: mesh.len() as u32,
+                },
+            );
+            meshed_buffers += 1;
+        }
+        StreamGpuUpdate {
+            meshed_buffers,
+            uploaded_bytes,
+            cpu_ms: start.elapsed().as_secs_f64() * 1000.0,
+        }
+    }
+
+    pub fn terrain_counts(&self) -> (usize, u64) {
+        (
+            self.terrain_meshes.len(),
+            self.terrain_meshes
+                .values()
+                .map(|mesh| u64::from(mesh.vertices))
+                .sum(),
+        )
     }
 
     /// Toggle a validated candidate rock/ore comparison without changing P0.
@@ -655,8 +727,10 @@ impl Renderer {
                 &self.material_bind_group
             };
             pass.set_bind_group(1, material_group, &[]);
-            pass.set_vertex_buffer(0, self.terrain_buffer.slice(..));
-            pass.draw(0..self.terrain_vertices, 0..1);
+            for mesh in self.terrain_meshes.values() {
+                pass.set_vertex_buffer(0, mesh.buffer.slice(..));
+                pass.draw(0..mesh.vertices, 0..1);
+            }
             pass.set_pipeline(&self.crosshair_pipeline);
             pass.set_vertex_buffer(0, self.crosshair_buffer.slice(..));
             pass.draw(0..self.crosshair_vertices, 0..1);

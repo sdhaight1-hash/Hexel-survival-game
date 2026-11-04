@@ -1,4 +1,4 @@
-//! One native 16×16×16 chunk viewed through a first-person camera.
+//! Native first-person material demo or opt-in moving streamed-world prototype.
 
 mod materials_p0;
 mod materials_v2;
@@ -30,12 +30,38 @@ struct Game {
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
     last_frame: Instant,
+    last_stream_report: Instant,
+    streamed_generated: usize,
+    streamed_evicted: usize,
+    streamed_meshes: usize,
+    streamed_uploaded_bytes: u64,
+    streamed_generation_cpu_ms: f64,
+    streamed_meshing_cpu_ms: f64,
 }
 
 impl Default for Game {
     fn default() -> Self {
-        let world = World::demo(42);
+        Self::new(false)
+    }
+}
+
+impl Game {
+    fn new(streamed: bool) -> Self {
+        let mut world = if streamed {
+            World::streamed(42)
+        } else {
+            World::demo(42)
+        };
         let player = Player::spawn(&world);
+        let initial = world.stream_around(player.feet);
+        if streamed {
+            println!(
+                "STREAM initial: {} resident 16³ sections, {:.1} ms CPU generation; seed 42",
+                world.chunk_count(),
+                initial.generation_cpu_ms
+            );
+        }
+        let now = Instant::now();
         Self {
             window: None,
             renderer: None,
@@ -43,12 +69,17 @@ impl Default for Game {
             player,
             pressed: HashSet::new(),
             mouse_captured: false,
-            last_frame: Instant::now(),
+            last_frame: now,
+            last_stream_report: now,
+            streamed_generated: 0,
+            streamed_evicted: 0,
+            streamed_meshes: 0,
+            streamed_uploaded_bytes: 0,
+            streamed_generation_cpu_ms: 0.0,
+            streamed_meshing_cpu_ms: 0.0,
         }
     }
-}
 
-impl Game {
     fn capture_mouse(&mut self) {
         let Some(window) = self.window.as_ref() else {
             return;
@@ -122,13 +153,26 @@ impl ApplicationHandler for Game {
                 self.renderer = Some(renderer);
                 self.capture_mouse();
                 self.last_frame = Instant::now();
-                println!("Hexel Survival: one 16×16×16 chunk, deterministic demo seed 42.");
+                if self.world.is_streamed() {
+                    println!(
+                        "Hexel Survival STREAMED WORLD: {} resident sections; procedural source seed 42.",
+                        self.world.chunk_count()
+                    );
+                    println!(
+                        "No static terrain boundary. Q/R/Y streaming ON. No torus wrap, edits, caves, distant LOD or camera rebasing yet."
+                    );
+                    println!("STREAM prints 3-second resident/generation/mesh/upload counters.");
+                } else {
+                    println!("Hexel Survival: one 16×16×16 chunk, deterministic demo seed 42.");
+                    println!(
+                        "Chunk edges are temporary barriers; torus wrapping is NOT implemented."
+                    );
+                    println!("P0 material gallery faces your initial spawn at r=9..12.");
+                }
                 println!(
                     "WASD move | Mouse look | Space jump | Left Ctrl sprint | Left Shift sneak"
                 );
                 println!("Esc release/recapture mouse | Click window to recapture.");
-                println!("Chunk edges are temporary barriers; torus wrapping is NOT implemented.");
-                println!("P0 material gallery faces your initial spawn at r=9..12.");
                 println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
                 println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
@@ -278,6 +322,46 @@ impl ApplicationHandler for Game {
         let dt = now.duration_since(self.last_frame).as_secs_f32();
         self.last_frame = now;
         self.player.step(&self.world, self.input(), dt);
+        if self.world.is_streamed() {
+            let delta = self.world.stream_around(self.player.feet);
+            if !delta.added.is_empty() || !delta.removed.is_empty() {
+                self.streamed_generated += delta.added.len();
+                self.streamed_evicted += delta.removed.len();
+                self.streamed_generation_cpu_ms += delta.generation_cpu_ms;
+                if let Some(renderer) = self.renderer.as_mut() {
+                    let result = renderer.sync_stream(&self.world, &delta);
+                    self.streamed_meshes += result.meshed_buffers;
+                    self.streamed_uploaded_bytes += result.uploaded_bytes;
+                    self.streamed_meshing_cpu_ms += result.cpu_ms;
+                }
+            }
+            if now.duration_since(self.last_stream_report).as_secs_f64() >= 3.0 {
+                let (gpu_meshes, submitted_vertices) = self
+                    .renderer
+                    .as_ref()
+                    .map_or((0, 0), Renderer::terrain_counts);
+                println!(
+                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s).",
+                    self.world.chunk_count(),
+                    gpu_meshes,
+                    submitted_vertices,
+                    self.streamed_generated,
+                    self.streamed_evicted,
+                    self.streamed_meshes,
+                    self.streamed_uploaded_bytes as f64 / 1_048_576.0,
+                    self.streamed_generation_cpu_ms,
+                    self.streamed_meshing_cpu_ms,
+                    now.duration_since(self.last_stream_report).as_secs_f64(),
+                );
+                self.streamed_generated = 0;
+                self.streamed_evicted = 0;
+                self.streamed_meshes = 0;
+                self.streamed_uploaded_bytes = 0;
+                self.streamed_generation_cpu_ms = 0.0;
+                self.streamed_meshing_cpu_ms = 0.0;
+                self.last_stream_report = now;
+            }
+        }
         if let Some(window) = self.window.as_ref() {
             window.request_redraw();
         }
@@ -287,7 +371,10 @@ impl ApplicationHandler for Game {
 fn main() {
     let event_loop = EventLoop::new().expect("Could not initialize window event loop");
     event_loop.set_control_flow(ControlFlow::Poll);
-    if let Err(error) = event_loop.run_app(&mut Game::default()) {
+    let streamed = std::env::args()
+        .skip(1)
+        .any(|arg| arg == "--streamed-world");
+    if let Err(error) = event_loop.run_app(&mut Game::new(streamed)) {
         eprintln!("Game event loop stopped: {error}");
     }
 }

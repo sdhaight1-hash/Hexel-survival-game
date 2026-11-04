@@ -1,15 +1,17 @@
 # Hexel Survival Game
 
 Native Rust/wgpu first-person prototype for a planned hexagonal-prism
-survival game. **Current scope:** exactly one bounded 16 × 16 × 16
-hexel chunk (4,096 addressable cells), stepped demo terrain,
-camera/movement, gravity, collision, visible-face meshing and a
-small material/overlay **test gallery**. This is **not** world generation.
+survival game. **Default scope:** one bounded 16 × 16 × 16 hexel
+material/gallery fixture. **Opt-in scope:** a moving section streamer
+with deterministic heightfield terrain, player traversal and incremental
+GPU chunk meshes. Neither mode is a finished global world generator.
 
 **World-scale work:** [The streaming-first plan](docs/world-scale-foundation.md)
 now includes a headless [seeded terrain generator](src/generated_terrain.rs)
-for arbitrary Q/R/Y sections, including far-away positions. It is **not yet
-connected to the interactive world, streaming or persistence**. The selected
+for arbitrary Q/R/Y sections, including far-away positions. The
+[opt-in moving streamer](docs/p3-2-streamed-world.md) now uses that source
+for live local terrain; distant LOD, persistence, approved torus mapping
+and high-precision global movement are **not implemented**. The selected
 geographic target remains 1,024 km × 1,024 km.
 
 The player is 1⅔ m tall. Each regular hexel is 1 m across its
@@ -17,8 +19,8 @@ opposing flats and 1 m high, with six rectangular sides, a top hexagon
 and a bottom hexagon. These are prototype dimensions; the final
 toroidal grid translations and elevation mapping are still undecided.
 
-**Not implemented:** digging/building, save/load, chunk streaming,
-toroidal movement, real caves/mineral deposits, flora spawning,
+**Not implemented:** digging/building, save/load, production-grade async
+streaming/LOD, toroidal movement, real caves/mineral deposits, flora spawning,
 finite-water physics, climate, ecology and planet-scale generation.
 
 ## Run and inspect
@@ -29,6 +31,17 @@ graphics adapter supported by wgpu. Launch the native desktop app:
 ```sh
 cargo run --release
 ```
+
+To explore the first live moving world instead of the bounded gallery:
+
+```sh
+cargo run --release -- --streamed-world
+```
+
+The streamer keeps 95 nearby Q/R/Y sections resident and prints CPU
+chunk-generation/mesh-upload counters every 3 seconds. This is an
+**unbounded heightfield test**, not wrapped full-world geography;
+see [native traversal checklist](docs/p3-2-streamed-world.md).
 
 It opens a 1280 × 800 window. Click the window if needed to capture
 the mouse.
@@ -77,7 +90,9 @@ approval still requires actual first-person review.
 
 ## Architecture in brief
 
-- `src/world.rs`: Q/R/Y cells and a bounded deterministic demo chunk.
+- `src/world.rs`: Q/R/Y cells, bounded demo and opt-in resident chunk window.
+- `src/generated_terrain.rs`: deterministic base data for loaded and unloaded sections.
+- `src/hex_torus_candidate.rs`: test-only period/precision candidate, not active world wrapping.
 - `src/player.rs`: movement, collision, camera and bounded demo behavior.
 - `src/mesh.rs`: exposed prism faces; meshes are disposable derived data.
 - `src/render.rs` and WGSL: native first-person rendering.

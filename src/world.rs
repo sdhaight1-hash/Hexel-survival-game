@@ -1,10 +1,14 @@
-//! A single, deterministic 16x16x16 demo chunk on an axial hexagonal grid.
+//! A deterministic 16x16x16 demo chunk or opt-in, streamed axial hex terrain.
 //!
 //! This is a locally flat chunk. Geographic torus periods and playable
 //! hex-lattice seam translations have NOT been chosen or implemented.
 
+use crate::generated_terrain::PrototypeTerrain;
 use glam::Vec3;
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, HashSet},
+    time::Instant,
+};
 
 pub const CHUNK_SIDE: i32 = 16;
 pub const CHUNK_VOLUME: usize = 16 * 16 * 16;
@@ -141,9 +145,25 @@ impl Chunk {
     }
 }
 
+/// Changes to the resident CPU working set; used for matching GPU uploads.
+#[derive(Default, Debug)]
+pub struct StreamDelta {
+    pub added: Vec<ChunkPos>,
+    pub removed: Vec<ChunkPos>,
+    pub generation_cpu_ms: f64,
+}
+
+/// Opt-in first streamed-world prototype: 19 hexagonal Q/R columns and five
+/// Y sections, centered on the player's section. This is a bounded resident
+/// window, not the world extent or a render-distance promise.
+pub const STREAM_HORIZONTAL_RADIUS: i32 = 2;
+pub const STREAM_VERTICAL_RADIUS: i32 = 2;
+
 #[derive(Default)]
 pub struct World {
     chunks: HashMap<ChunkPos, Chunk>,
+    terrain: Option<PrototypeTerrain>,
+    stream_center: Option<ChunkPos>,
 }
 
 impl World {
@@ -180,14 +200,98 @@ impl World {
         }
         let mut chunks = HashMap::new();
         chunks.insert(ChunkPos::default(), chunk);
-        Self { chunks }
+        Self {
+            chunks,
+            terrain: None,
+            stream_center: None,
+        }
+    }
+
+    /// The original terrain source is global, even when no chunk is resident.
+    /// This mode is unbounded for now, **not** the future approved torus.
+    pub fn streamed(seed: u64) -> Self {
+        Self {
+            chunks: HashMap::new(),
+            terrain: Some(PrototypeTerrain::new(seed)),
+            stream_center: None,
+        }
+    }
+
+    pub fn is_streamed(&self) -> bool {
+        self.terrain.is_some()
+    }
+
+    pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
+        self.chunks.keys().copied()
+    }
+
+    /// Loading/evicting changes *residency*, not original cell identity.
+    /// A missing resident neighbor must query the deterministic base and
+    /// must never be interpreted as empty terrain during meshing.
+    pub fn stream_around(&mut self, player_feet: Vec3) -> StreamDelta {
+        let Some(source) = self.terrain else {
+            return StreamDelta::default();
+        };
+        let player_cell =
+            CellPos::at_world_xz(player_feet.x, player_feet.z, player_feet.y.floor() as i32);
+        let (center, _) = player_cell.chunk_and_local();
+        if self.stream_center == Some(center) {
+            return StreamDelta::default();
+        }
+        let started = Instant::now();
+        let mut requested = Vec::new();
+        for dq in -STREAM_HORIZONTAL_RADIUS..=STREAM_HORIZONTAL_RADIUS {
+            for dr in -STREAM_HORIZONTAL_RADIUS..=STREAM_HORIZONTAL_RADIUS {
+                let hex_distance = dq.abs().max(dr.abs()).max((dq + dr).abs());
+                if hex_distance > STREAM_HORIZONTAL_RADIUS {
+                    continue;
+                }
+                for dy in -STREAM_VERTICAL_RADIUS..=STREAM_VERTICAL_RADIUS {
+                    requested.push((
+                        hex_distance,
+                        dy.abs(),
+                        ChunkPos {
+                            q: center.q + dq,
+                            r: center.r + dr,
+                            y: center.y + dy,
+                        },
+                    ));
+                }
+            }
+        }
+        // Center-first, deterministic generation order. No randomized
+        // per-chunk geology or dependence on iteration order of HashMap.
+        requested.sort_by_key(|(distance, height, pos)| (*distance, *height, pos.y, pos.q, pos.r));
+        let wanted: HashSet<_> = requested.iter().map(|entry| entry.2).collect();
+        let mut removed: Vec<_> = self
+            .chunks
+            .keys()
+            .copied()
+            .filter(|pos| !wanted.contains(pos))
+            .collect();
+        removed.sort_by_key(|pos| (pos.y, pos.r, pos.q));
+        self.chunks.retain(|pos, _| wanted.contains(pos));
+        let mut added = Vec::new();
+        for (_, _, pos) in requested {
+            if let std::collections::hash_map::Entry::Vacant(entry) = self.chunks.entry(pos) {
+                entry.insert(source.generate_chunk(pos));
+                added.push(pos);
+            }
+        }
+        self.stream_center = Some(center);
+        StreamDelta {
+            added,
+            removed,
+            generation_cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
+        }
     }
 
     pub fn get(&self, pos: CellPos) -> Block {
         let (chunk, local) = pos.chunk_and_local();
-        self.chunks
-            .get(&chunk)
-            .map_or(Block::Air, |chunk| chunk.get(local))
+        self.chunks.get(&chunk).map_or_else(
+            || self.terrain.map_or(Block::Air, |source| source.sample(pos)),
+            |chunk| chunk.get(local),
+        )
     }
 
     pub fn chunk(&self, pos: ChunkPos) -> Option<&Chunk> {
@@ -200,12 +304,19 @@ impl World {
 
     /// Demo boundary, not a global world boundary or a torus implementation.
     pub fn contains_demo_footprint(&self, x: f32, z: f32) -> bool {
+        if self.is_streamed() {
+            return true; // no artificial demo barrier; topology is still provisional
+        }
         let (chunk, _) = CellPos::at_world_xz(x, z, 0).chunk_and_local();
         self.chunks.contains_key(&chunk)
     }
 
     /// Highest solid top at this horizontal sample in the first vertical section.
     pub fn support_top(&self, x: f32, z: f32) -> Option<f32> {
+        if let Some(source) = self.terrain {
+            let cell = CellPos::at_world_xz(x, z, 0);
+            return Some((source.surface_y(cell.q, cell.r) + 1) as f32 * HEXEL_HEIGHT);
+        }
         let cell = CellPos::at_world_xz(x, z, 0);
         let (chunk, local) = cell.chunk_and_local();
         let data = self.chunks.get(&chunk)?;
@@ -306,6 +417,55 @@ mod tests {
         assert_eq!(world.get(CellPos::new(9, 10, 3)), Block::Grass);
         assert_eq!(world.get(CellPos::new(12, 10, 3)), Block::Rock);
         assert_eq!(world.get(CellPos::new(14, 10, 3)), Block::Rock);
+    }
+
+    #[test]
+    fn streamed_window_remains_bounded_and_follows_horizontal_and_vertical_sections() {
+        let mut world = World::streamed(42);
+        let feet = CellPos::new(7, 7, 220).center();
+        let first = world.stream_around(feet);
+        assert_eq!(first.added.len(), 95); // 19 axial hex columns × five Y sections
+        assert!(first.removed.is_empty());
+        assert_eq!(world.chunk_count(), 95);
+        assert!(world.stream_around(feet).added.is_empty());
+        let moved = world.stream_around(CellPos::new(40, -20, 255).center());
+        assert!(!moved.added.is_empty());
+        assert!(!moved.removed.is_empty());
+        assert_eq!(world.chunk_count(), 95);
+        assert_eq!(world.chunk_positions().collect::<HashSet<_>>().len(), 95);
+    }
+
+    #[test]
+    fn unresident_neighbors_are_real_base_terrain_not_false_air() {
+        let source = PrototypeTerrain::new(42);
+        let mut world = World::streamed(42);
+        let at = CellPos::new(15, 16, source.surface_y(15, 16));
+        assert!(world.get(at).is_solid());
+        world.stream_around(at.center());
+        let chunk_before = world.get(at);
+        world.stream_around(CellPos::new(160, 160, 220).center());
+        assert_eq!(world.get(at), chunk_before);
+        assert_eq!(world.get(at), source.sample(at));
+        assert!(world.contains_demo_footprint(-200.0, 200.0));
+        assert!(world.support_top(-200.0, 200.0).is_some());
+    }
+
+    #[test]
+    fn streaming_revisit_restores_unchanged_original_chunks() {
+        let mut world = World::streamed(97);
+        let origin = CellPos::new(-1, -1, 223).center();
+        world.stream_around(origin);
+        let first: Vec<_> = (-16..=16)
+            .flat_map(|q| (-16..=16).map(move |r| CellPos::new(q, r, 220)))
+            .map(|p| world.get(p))
+            .collect();
+        world.stream_around(CellPos::new(200, -300, 223).center());
+        world.stream_around(origin);
+        let second: Vec<_> = (-16..=16)
+            .flat_map(|q| (-16..=16).map(move |r| CellPos::new(q, r, 220)))
+            .map(|p| world.get(p))
+            .collect();
+        assert_eq!(first, second);
     }
 
     #[test]
