@@ -88,12 +88,12 @@ fn world_mineral_vein(world_pos: vec3<f32>) -> vec2<f32> {
         + 0.17 * sin(dot(world_pos, vec3<f32>(0.91, 0.31, -0.46)));
     let main_distance = abs(sin(main_axis * 0.84 + 0.58));
     let branch_distance = abs(sin(branch_axis * 1.06 - 0.41));
-    let patch = smoothstep(0.32, 0.69, body);
+    let cluster_mask = smoothstep(0.32, 0.69, body);
     let primary_width = mix(0.030, 0.11, body);
     let primary = (1.0 - smoothstep(primary_width, primary_width + 0.10, main_distance))
-        * (0.22 + 0.78 * patch);
+        * (0.22 + 0.78 * cluster_mask);
     let secondary = (1.0 - smoothstep(0.028, 0.12, branch_distance))
-        * patch * 0.67;
+        * cluster_mask * 0.67;
     let coverage = clamp(max(primary, secondary), 0.0, 1.0);
     let tone = clamp(0.22 + 0.59 * (0.55 * bend + 0.45 * body), 0.0, 1.0);
     return vec2<f32>(tone, coverage);
