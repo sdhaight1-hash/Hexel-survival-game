@@ -398,6 +398,17 @@ ordering behind a vague catch-all "growth" API.
    becomes part of a real game/editor workflow. Otherwise keep batch
    generation simple.
 
+## Hydrology study: finite water, leveling and possible channel geometry
+
+Follow-on research is documented in
+[Finite water and spatial growth](finite-water-spatial-growth-study.md).
+Conclusion: space colonization may generate *candidate* river tributary,
+fracture conduit, seepage or cave-water network geometry, but it is **not**
+a water-volume/level/pressure solver. Keep volume-conserving flux, regional
+Fill–Spill–Merge basins, aquifer head and global phase inventories under a
+separate authoritative hydrology system. This study includes a staged,
+testable water-flow proof and toroidal conservation requirements.
+
 ## 4. Cross-chunk and periodic-world rules
 
 Do not seed a mineral vein or cave independently in every 16³ chunk: that
