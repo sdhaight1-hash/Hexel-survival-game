@@ -649,8 +649,8 @@ fn main() {
 
 #[cfg(test)]
 mod shader_tests {
-    use hexel_survival_game::world::CellPos;
     use crate::presentation::PresentationOptions;
+    use hexel_survival_game::world::CellPos;
 
     #[test]
     fn opt_in_distant_spawn_streams_target_window_without_changing_default() {
