@@ -10,6 +10,7 @@ pub mod geography;
 pub mod hex_torus_candidate;
 pub mod material_contract;
 pub mod material_lab;
+pub mod periodic_terrain_candidate;
 pub mod player;
 pub mod space_colonization;
 pub mod surface_layers;
