@@ -1,9 +1,11 @@
-# Minimal implementation roadmap
+# Core game/world implementation roadmap
 
 The goal is a **verifiable vertical slice**, not to write all proposed planet
-systems before the first playable test.
+systems before the first playable test. This M0–M3 track covers the
+**game/world foundation**, while [material/overlay milestones P0–P7](
+material-overlay-roadmap.md) cover art, assets and rendering.
 
-## M0 — Foundation (this pull request)
+## M0 — Foundation (delivered baseline)
 
 - [x] Document current topology, generation ownership and major open decisions.
 - [x] Add a dependency-free Rust library and CI formatting/test workflow.
