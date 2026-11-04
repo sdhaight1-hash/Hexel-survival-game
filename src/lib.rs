@@ -5,6 +5,7 @@
 
 pub mod flora;
 pub mod generated_terrain;
+pub mod hex_torus_candidate;
 pub mod geography;
 pub mod material_contract;
 pub mod material_lab;
