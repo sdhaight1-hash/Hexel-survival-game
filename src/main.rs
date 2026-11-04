@@ -524,20 +524,48 @@ impl ApplicationHandler for Game {
                                     } else {
                                         "GPU pass N/A".to_string()
                                     };
-                                    println!(
-                                        "BENCH [{} | {}]: {:.1} FPS wall, frame p50/p95/p99 {:.2}/{:.2}/{:.2} ms, {:.2} ms CPU draw incl. acquire/present, {}, {}/{} submitted chunks, {} vertices",
+                                    let label = format!(
+                                        "{} | {}{}",
                                         renderer.material_comparison_label(),
                                         renderer.presentation_label(),
-                                        f64::from(self.benchmark_frames) / elapsed,
+                                        if self.console_open || self.menu_open { " | UI OPEN" } else { "" },
+                                    );
+                                    let sample = BenchSample {
+                                        seconds: elapsed,
+                                        frames: u64::from(self.benchmark_frames),
+                                        cpu_draw_ms_total: self.benchmark_draw_ms_total,
+                                        gpu_pass_ms_total: self.benchmark_gpu_ms_total,
+                                        gpu_samples: u64::from(self.benchmark_gpu_samples),
+                                    };
+                                    self.benchmark_history.record_window(sample);
+                                    self.console_log.record(format!(
+                                        "BENCH [{}]: {:.1} FPS wall, frame p50/p95/p99 {:.2}/{:.2}/{:.2} ms, {:.2} ms CPU draw incl. acquire/present, {}, {}/{} submitted chunks, {} submitted exposed hexels, {} caps + {} sides = {} faces, {} triangles, {} vertices",
+                                        label,
+                                        sample.fps(),
                                         p50,
                                         p95,
                                         p99,
-                                        self.benchmark_draw_ms_total / f64::from(self.benchmark_frames),
+                                        sample.cpu_ms(),
                                         gpu,
                                         stats.submitted_chunks,
                                         self.world.chunk_count(),
+                                        stats.submitted_exposed_hexels,
+                                        stats.submitted_cap_faces,
+                                        stats.submitted_side_faces,
+                                        stats.submitted_cap_faces + stats.submitted_side_faces,
+                                        stats.submitted_vertices / 3,
                                         stats.submitted_vertices,
-                                    );
+                                    ));
+                                    self.console_log.record(format_average(
+                                        &label,
+                                        "ROLLING 30S",
+                                        self.benchmark_history.recent(30.0),
+                                    ));
+                                    self.console_log.record(format_average(
+                                        &label,
+                                        "TRIAL",
+                                        self.benchmark_history.trial(),
+                                    ));
                                     self.reset_benchmark_window();
                                 }
                             }
@@ -578,6 +606,21 @@ impl ApplicationHandler for Game {
             window.request_redraw();
         }
     }
+}
+
+/// Weighted FPS and CPU/GPU means, excluding unsupported GPU timings.
+fn format_average(label: &str, name: &str, sample: BenchSample) -> String {
+    let gpu = match sample.gpu_ms() {
+        Some(value) => format!("{value:.3} ms sampled GPU pass ({} samples)", sample.gpu_samples),
+        None => "GPU pass N/A (no completed samples)".into(),
+    };
+    format!(
+        "AVG {name} [{label}]: {:.1}s / {} frames, {:.1} FPS wall, {:.3} ms CPU draw incl. acquire/present, {gpu}",
+        sample.seconds,
+        sample.frames,
+        sample.fps(),
+        sample.cpu_ms(),
+    )
 }
 
 /// Nearest sampled frame interval at a requested percentile. Input is sorted
