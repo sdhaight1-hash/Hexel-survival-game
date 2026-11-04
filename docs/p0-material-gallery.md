@@ -11,8 +11,11 @@ problems; `F7` cycles diagnostic checker scales of 64/128/256 texels/m.
 authored **candidate** granite, shale and transparent copper over both
 rock hosts. P0 soil and grass previews are unchanged. F8 is unavailable
 if the offline bake has not been produced or fails validation.
-The candidate textures are intentionally small 128px stylized studies,
-resampled to 256px for the test board and **not final or approved art**.
+The revised candidates are original 256×256 studies with clustered granite
+grain, uneven shale bedding and localized native-copper inclusions. They now
+match the 256px test-board layer dimensions, so no preview upscaling is needed.
+They are still **not final or approved production art**. See the
+[P2.1 visual-review record](p2-1-texture-review.md) for explicit QA gates.
 
 Try looking almost horizontally at the raised row `r=10` to examine the
 side faces, then stand back and look down at the caps. The soil bands run

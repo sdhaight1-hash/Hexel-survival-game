@@ -4,7 +4,9 @@
 `catalog.v2.json` is the **new authoring inventory of all 55 source
 identities**. Three original exploratory artwork entries (`rock.granite`,
 `rock.shale`, `ore.native_copper`) are `candidate` for the F8 gallery,
-and 52 remain `needs_art`. **None is approved** as production art.
+and 52 remain `needs_art`. The three candidate images were revised in P2.1
+at 256×256, with new granite grain, shale bedding and copper inclusion art.
+**None is approved** as production art.
 
 The v2 material pipeline accepts RGB albedo and transparent overlays stored
 as **RGBA8 PNG**, allows independent rectangular source image dimensions
