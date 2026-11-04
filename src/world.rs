@@ -540,6 +540,7 @@ mod tests {
             let center = target.chunk_and_local().0;
             let mut previous_pending = usize::MAX;
             for tick in 0..4 {
+                let center_was_missing = world.chunk(center).is_none();
                 let delta = world.stream_around_budgeted(target.center(), 1);
                 assert!(delta.added.len() <= 1);
                 assert_eq!(delta.added.len(), delta.removed.len());
@@ -552,8 +553,8 @@ mod tests {
                 for pos in delta.added {
                     assert!(mirrored_residents.insert(pos));
                     assert!(world.chunk(pos).is_some());
-                    if tick == 0 {
-                        assert_eq!(pos, center); // nearest player section first
+                    if tick == 0 && center_was_missing {
+                        assert_eq!(pos, center); // nearest missing player section first
                     }
                 }
                 assert_eq!(mirrored_residents.len(), 95);
