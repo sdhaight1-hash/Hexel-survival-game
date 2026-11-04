@@ -100,7 +100,7 @@ face or transparent-overlay texture IDs. Pending `needs_art` records are
 excluded from the runtime-facing recipe list without losing them from
 the authoring catalog.
 
-Three original **experimental** 128×128 RGBA image assets are registered:
+Three original **experimental** 256×256 RGBA image assets are registered:
 granite, shale and an ore-only copper alpha overlay. They are deliberately
 tagged `candidate`, **not `approved`**. The baker compiles these three
 independently and retains the 52 other identities as `needs_art`.
