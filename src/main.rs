@@ -6,6 +6,7 @@ mod materials_p0;
 mod materials_v2;
 mod mesh;
 mod render;
+mod render_cpu_metrics;
 mod stream_metrics;
 mod texture_codec;
 mod texture_pack;
@@ -17,6 +18,7 @@ use hexel_survival_game::{
     world::World,
 };
 use render::Renderer;
+use render_cpu_metrics::RenderCpuMetrics;
 use std::{collections::HashSet, sync::Arc, time::Instant};
 use stream_metrics::StreamFrameMetrics;
 use winit::{
@@ -44,6 +46,7 @@ struct Game {
     streamed_generation_cpu_ms: f64,
     streamed_meshing_cpu_ms: f64,
     stream_metrics: StreamFrameMetrics,
+    render_cpu_metrics: RenderCpuMetrics,
     menu_open: bool,
     console_open: bool,
     menu_cursor: Option<(f64, f64)>,
@@ -91,6 +94,7 @@ impl Game {
             streamed_generation_cpu_ms: 0.0,
             streamed_meshing_cpu_ms: 0.0,
             stream_metrics: StreamFrameMetrics::default(),
+            render_cpu_metrics: RenderCpuMetrics::default(),
             menu_open: false,
             console_open: false,
             menu_cursor: None,
@@ -408,6 +412,7 @@ impl ApplicationHandler for Game {
                 }
             }
             WindowEvent::RedrawRequested => {
+                let is_moving = self.is_moving();
                 if let Some(renderer) = self.renderer.as_mut() {
                     let menu = self
                         .menu_open
@@ -416,7 +421,11 @@ impl ApplicationHandler for Game {
                         .console_open
                         .then(|| (self.console_log.lines(), self.console_log.generation()));
                     match renderer.draw(&self.player, menu, console) {
-                        Ok(()) => {}
+                        Ok(timings) => {
+                            if self.world.is_streamed() {
+                                self.render_cpu_metrics.record(timings, is_moving);
+                            }
+                        }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                             if let Some(window) = self.window.as_ref() {
                                 renderer.resize(window.inner_size());
@@ -496,8 +505,10 @@ impl ApplicationHandler for Game {
                 self.streamed_generation_cpu_ms = 0.0;
                 self.streamed_meshing_cpu_ms = 0.0;
                 let report = self.stream_metrics.report_and_reset();
+                let draw_report = self.render_cpu_metrics.report_and_reset();
                 if self.frame_stats {
                     self.console_log.record(report);
+                    self.console_log.record(draw_report);
                 }
                 self.last_stream_report = now;
             }
