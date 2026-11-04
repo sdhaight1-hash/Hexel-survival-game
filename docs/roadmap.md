@@ -54,9 +54,10 @@ The **reconciled, status-checked** art/texture program is documented in
   assets; general v2 runtime material binding; a deterministic
   **world-space feature-mask** proof on adjacent hexel faces (P2.3).
 - **Optional, subsequent:** compare a bounded space-colonization graph
-  against a simpler vein/spline baseline (P2.4). The research solver
-  is in [draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
-  not a current production texture or world generator.
+  against a simpler vein/spline baseline (P2.4). The bounded research solver is in
+  [src/space_colonization.rs](../src/space_colonization.rs), merged via
+  [PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30), but is not a production
+  texture or world generator.
 - **Later:** resource/cover state authority and save/reload; staged
   replacement of all 55 identities and approved flora; environment-driven
   effects; measured mip/streaming/LOD optimization.
