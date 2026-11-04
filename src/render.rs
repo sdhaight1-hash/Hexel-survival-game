@@ -2,6 +2,7 @@
 //! No terrain, movement or world-state logic lives inside this module.
 
 use crate::{
+    debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
     materials_p0, materials_v2,
     mesh::{build_chunk_mesh, Vertex},
     texture_pack::TexturePack,
@@ -13,7 +14,12 @@ use hexel_survival_game::{
     surface_layers::SurfacePreset,
     world::{ChunkPos, StreamDelta, World},
 };
-use std::{borrow::Cow, collections::HashMap, sync::Arc, time::Instant};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, VecDeque},
+    sync::Arc,
+    time::Instant,
+};
 use wgpu::util::DeviceExt;
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -63,6 +69,13 @@ pub struct Renderer {
     config: wgpu::SurfaceConfiguration,
     pipeline: wgpu::RenderPipeline,
     crosshair_pipeline: wgpu::RenderPipeline,
+    menu_pipeline: wgpu::RenderPipeline,
+    menu_buffer: Option<wgpu::Buffer>,
+    menu_vertex_count: u32,
+    menu_cache: Option<(MenuSnapshot, Option<MenuAction>)>,
+    console_buffer: Option<wgpu::Buffer>,
+    console_vertex_count: u32,
+    console_cache_generation: Option<u64>,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     debug_checker: bool,
@@ -476,6 +489,46 @@ impl Renderer {
             cache: None,
         });
 
+        let menu_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Debug menu shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("debug_menu.wgsl").into()),
+        });
+        let menu_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Developer diagnostics overlay"),
+            layout: Some(&crosshair_layout),
+            vertex: wgpu::VertexState {
+                module: &menu_shader,
+                entry_point: Some("vs_main"),
+                buffers: &[MenuVertex::layout()],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &menu_shader,
+                entry_point: Some("fs_main"),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                cull_mode: None,
+                ..Default::default()
+            },
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth24Plus,
+                depth_write_enabled: false,
+                depth_compare: wgpu::CompareFunction::Always,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            multisample: wgpu::MultisampleState::default(),
+            multiview: None,
+            cache: None,
+        });
+
         let mut terrain_meshes = HashMap::new();
         for pos in world.chunk_positions() {
             let mesh = build_chunk_mesh(world, pos);
@@ -537,6 +590,13 @@ impl Renderer {
             config,
             pipeline,
             crosshair_pipeline,
+            menu_pipeline,
+            menu_buffer: None,
+            menu_vertex_count: 0,
+            menu_cache: None,
+            console_buffer: None,
+            console_vertex_count: 0,
+            console_cache_generation: None,
             camera_buffer,
             camera_bind_group,
             debug_checker: false,
@@ -636,6 +696,8 @@ impl Renderer {
         let (texture, view) = create_depth(&self.device, size.width, size.height);
         self._depth_texture = texture;
         self.depth_view = view;
+        self.menu_cache = None;
+        self.console_cache_generation = None;
     }
 
     /// Show a high-contrast 16px-grid on every cap and prism side.
@@ -654,7 +716,73 @@ impl Renderer {
         self.texels_per_metre
     }
 
-    pub fn draw(&mut self, player: &Player) -> Result<(), wgpu::SurfaceError> {
+    pub fn menu_snapshot(&self, frame_stats: bool) -> MenuSnapshot {
+        let has_art = self.v2_materials.is_some();
+        MenuSnapshot {
+            console_open: false,
+            frame_stats,
+            chunk_culling: None,
+            unlocked_present: None,
+            gpu_timestamps: false,
+            uv_checker: self.debug_checker,
+            uv_density: self.texels_per_metre,
+            v2_materials: has_art.then_some(self.v2_preview_enabled),
+            surface: has_art.then_some(self.surface_preset.label()),
+            metal_glints: has_art.then_some(self.metallic_glints),
+            gray_copper: None,
+        }
+    }
+
+    pub fn draw(
+        &mut self,
+        player: &Player,
+        menu: Option<(MenuSnapshot, Option<MenuAction>)>,
+        console: Option<(&VecDeque<String>, u64)>,
+    ) -> Result<(), wgpu::SurfaceError> {
+        if let Some((snapshot, hovered)) = menu {
+            if self.menu_cache != Some((snapshot, hovered)) {
+                let vertices =
+                    debug_menu::geometry(self.config.width, self.config.height, snapshot, hovered);
+                self.menu_vertex_count = vertices.len() as u32;
+                self.menu_buffer = Some(self.device.create_buffer_init(
+                    &wgpu::util::BufferInitDescriptor {
+                        label: Some("Cached diagnostics menu triangles"),
+                        contents: bytemuck::cast_slice(&vertices),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    },
+                ));
+                self.menu_cache = Some((snapshot, hovered));
+            }
+        } else if self.menu_cache.is_some() {
+            self.menu_cache = None;
+            self.menu_buffer = None;
+            self.menu_vertex_count = 0;
+        }
+        if let Some((lines, generation)) = console {
+            if self.console_cache_generation != Some(generation) {
+                let vertices =
+                    debug_menu::console_geometry(self.config.width, self.config.height, lines);
+                self.console_vertex_count = vertices.len() as u32;
+                self.console_buffer = if vertices.is_empty() {
+                    None
+                } else {
+                    Some(
+                        self.device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: Some("Cached bottom benchmark log"),
+                                contents: bytemuck::cast_slice(&vertices),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            }),
+                    )
+                };
+                self.console_cache_generation = Some(generation);
+            }
+        } else if self.console_cache_generation.is_some() {
+            self.console_cache_generation = None;
+            self.console_buffer = None;
+            self.console_vertex_count = 0;
+        }
+
         let aspect = self.config.width as f32 / self.config.height as f32;
         let eye = player.eye_position();
         let view_proj = Mat4::perspective_rh(70.0_f32.to_radians(), aspect, 0.05, 200.0)
@@ -731,9 +859,21 @@ impl Renderer {
                 pass.set_vertex_buffer(0, mesh.buffer.slice(..));
                 pass.draw(0..mesh.vertices, 0..1);
             }
-            pass.set_pipeline(&self.crosshair_pipeline);
-            pass.set_vertex_buffer(0, self.crosshair_buffer.slice(..));
-            pass.draw(0..self.crosshair_vertices, 0..1);
+            if menu.is_none() && console.is_none() {
+                pass.set_pipeline(&self.crosshair_pipeline);
+                pass.set_vertex_buffer(0, self.crosshair_buffer.slice(..));
+                pass.draw(0..self.crosshair_vertices, 0..1);
+            }
+            if let Some(buffer) = self.menu_buffer.as_ref().filter(|_| menu.is_some()) {
+                pass.set_pipeline(&self.menu_pipeline);
+                pass.set_vertex_buffer(0, buffer.slice(..));
+                pass.draw(0..self.menu_vertex_count, 0..1);
+            }
+            if let Some(buffer) = self.console_buffer.as_ref().filter(|_| console.is_some()) {
+                pass.set_pipeline(&self.menu_pipeline);
+                pass.set_vertex_buffer(0, buffer.slice(..));
+                pass.draw(0..self.console_vertex_count, 0..1);
+            }
         }
         self.queue.submit(std::iter::once(encoder.finish()));
         frame.present();
