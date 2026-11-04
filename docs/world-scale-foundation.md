@@ -75,6 +75,23 @@ GPU or world topology behavior.
   schema version. No irreversible save format until seam rules
   are validated.
 
+### P3.1A coordinate candidate now implemented (test-only)
+
+`src/hex_torus_candidate.rs` contains an **exact signed-integer
+axial torus equivalence** and an `f64` world-coordinate conversion,
+including candidate translations `(1,024,000, 0)` and
+`(-591,200, 1,182,400)` cells. Both are chunk-aligned; the second
+physical period is ~1,023,988.44 m rather than exactly 1,024,000 m.
+The module tests both borders/corners, translatable equivalent cells,
+far-coordinate round trips and reciprocal neighbors.
+
+This is a **candidate**, not the approved geography-to-hex period
+mapping. It is intentionally **not called by gameplay, saving,
+terrain generation or rendering**. We still need to resolve the
+11.56-m metric discrepancy against the existing global raster,
+choose the canonical manifest/version, and test wrap-aware physics and
+pathfinding before enabling world seams.
+
 ### P3.2 — Resident chunk streamer (first playable world)
 - Camera/player chunk key drives an active working set in
   **all three axes**. Generate nearby sections on demand,
