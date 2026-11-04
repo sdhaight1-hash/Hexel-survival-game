@@ -22,6 +22,32 @@ Nothing listed as a design choice is a claim of runtime implementation.
 | Ecology | Global/regional aggregates + active local simulation | **Design goal; solver open** |
 | Runtime state storage | Persistent edits + finite stock overlays | **Required; technology open** |
 
+## P3.1C geometric compatibility finding (2026-11-04)
+
+The existing candidate east/north periods are exactly orthogonal in the
+regular 1-m-across-flats hex lattice and aligned to the current 16-cell
+section boundaries. If an exactly northward period must keep both axial
+translation components divisible by 16, its R component must be a
+multiple of 32. An exhaustive local scan around the existing candidate
+verifies that **R = 1,182,400** has the smallest mismatch to a
+1,024,000-metre north period under those restrictions:
+**11.562565 m short**. The next possible R = 1,182,432 is
+**16.150248 m long**. This is a test of that restricted period family,
+not a proof about all alternative hex dimensions, orientations or shears.
+
+**Preferred option for further headless validation, not yet approved:**
+retain the exact 1,024 km × 1,024 km geographic torus and the
+chunk-aligned integer seam periods, with the P3.1B affine geographic
+projection (north metric scale approximately 1.00001129 relative to
+regular hexes). The alternative is to reduce the physical north period
+by 11.56 m and accept that geographic coordinates are not exact physical
+metres. Both require an explicit world-coordinate/geometry decision.
+
+No change to `HexTopology::Unresolved`, active collision, near-hex
+geometry, world generation, chunk ownership, or save schema follows
+from this recommendation alone. See the
+[P3.1C metric comparison](p3-1c-topology-metric-decision.md).
+
 ## Decisions required before broad implementation
 
 1. **Toroidal hex-lattice:** choose exact period translations, orientation,
