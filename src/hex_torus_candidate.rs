@@ -109,6 +109,43 @@ mod tests {
     }
 
     #[test]
+    fn current_north_translation_is_closest_chunk_aligned_orthogonal_choice() {
+        // For a perfectly northward regular-hex period, q = -r/2.
+        // If BOTH q and r must be multiples of CHUNK_SIDE=16,
+        // r must be a multiple of 32. Search a generous neighborhood
+        // to confirm the candidate is the best permitted integer period.
+        let alignment = 2 * i64::from(CHUNK_SIDE);
+        assert_eq!(PERIOD_R.rem_euclid(alignment), 0);
+        assert_eq!(R_PERIOD_Q_OFFSET, -PERIOD_R / 2);
+        let chosen_error = (candidate_vertical_span_m() - TARGET_WORLD_METRES).abs();
+        let mut best_r = None;
+        let mut best_error = f64::INFINITY;
+        for r in (PERIOD_R - 3_200)..=(PERIOD_R + 3_200) {
+            if r.rem_euclid(alignment) != 0 {
+                continue;
+            }
+            let q = -r / 2;
+            assert_eq!(q.rem_euclid(i64::from(CHUNK_SIDE)), 0);
+            let physical_north_metres = r as f64 * HEX_ROW_METRES;
+            let error = (physical_north_metres - TARGET_WORLD_METRES).abs();
+            if error < best_error {
+                best_error = error;
+                best_r = Some(r);
+            }
+        }
+        assert_eq!(best_r, Some(PERIOD_R));
+        assert!((best_error - 11.562_565_279_775_3).abs() < 1e-6);
+        assert!((chosen_error - best_error).abs() < 1e-6);
+        // The next permitted period overshoots by about 16.15m.
+        let next_error = ((PERIOD_R + alignment) as f64 * HEX_ROW_METRES
+            - TARGET_WORLD_METRES)
+            .abs();
+        assert!((next_error - 16.150_247_641_257).abs() < 1e-6);
+        // This does NOT prove no alternative, nonorthogonal period or
+        // differently sized hex geometry could satisfy other requirements.
+    }
+
+    #[test]
     fn wrapping_preserves_identity_across_both_edges_and_corners() {
         for original in [
             Axial64::new(0, 0),
