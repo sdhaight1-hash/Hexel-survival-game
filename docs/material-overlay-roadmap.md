@@ -26,9 +26,9 @@ Keep **three distinct layers** of responsibility:
 
 **Space colonization is an optional source of connected geometry, not a
 texture format, material editor, overlay compositor, or prerequisite for
-the general texture system.** Its experimental Rust graph lives in
-[draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
-not `main`. The initial code creates parent-linked segments only; it
+the general texture system.** Its bounded headless Rust graph is now in
+[src/space_colonization.rs](../src/space_colonization.rs), merged via
+[PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30). The initial code creates parent-linked segments only; it
 does not generate an actual mineral deposit, shader mask or cave system.
 
 The new architecture supports a *single* region-owned ore/fracture
@@ -174,7 +174,8 @@ Depletion is not inferred from alpha.
 **Exit:** ship the specialized feature source **only if it outperforms**
 the simpler baseline visually or structurally within measured CPU/GPU
 budgets. The entire material/overlay system must work without this
-adapter; PR #30 remains a separate draft until approved.
+adapter; integrating SCA into the production overlay system still requires
+separate validation and approval.
 
 ### Gate E — game-state handoff and edit persistence (P2 production / M1–M3)
 
@@ -232,4 +233,4 @@ candidate *after* this plumbing proves useful.
 
 **Not this revision:** no engine/shader code, new material statuses,
 water solver, global geology, flora production, image assets, or
-merging of draft PR #30.
+production SCA-to-overlay integration.
