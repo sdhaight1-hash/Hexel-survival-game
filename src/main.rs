@@ -187,72 +187,77 @@ impl Game {
 
     /// One action path for F-keys and mouse-selected menu rows.
     fn apply_debug_action(&mut self, action: MenuAction) {
+        if action == MenuAction::Console {
+            self.toggle_console();
+            return;
+        }
         if action == MenuAction::FrameStats {
+            if self.benchmark_logging {
+                self.finish_benchmark_trial();
+            }
             self.benchmark_logging = !self.benchmark_logging;
-            self.reset_benchmark_window();
+            self.reset_benchmark_trial();
             if let Some(renderer) = self.renderer.as_mut() {
                 renderer.set_gpu_profiling(self.benchmark_logging);
             }
-            println!(
+            self.console_log.record(format!(
                 "F3 benchmark logging: {}",
                 if self.benchmark_logging { "ON" } else { "OFF" }
-            );
+            ));
             return;
+        }
+        let can_change = self.renderer.as_ref().is_some_and(|r| {
+            r.menu_snapshot(self.benchmark_logging).enabled(action)
+        });
+        if can_change && self.benchmark_logging {
+            self.finish_benchmark_trial(); // preserve the OLD configuration label
         }
         let Some(renderer) = self.renderer.as_mut() else {
             return;
         };
-        match action {
-            MenuAction::FrameStats => unreachable!(),
+        let message = match action {
+            MenuAction::Console | MenuAction::FrameStats => unreachable!(),
             MenuAction::Presentation => match renderer.toggle_present_mode() {
-                Some(true) => println!("F5 presentation: UNLOCKED (Immediate, tearing possible)"),
-                Some(false) => println!("F5 presentation: VSYNC (FIFO)"),
-                None => println!(
-                    "F5 unavailable: Immediate presentation not supported in this benchmark."
-                ),
+                Some(true) => "F5 presentation: UNLOCKED (Immediate, tearing possible)".into(),
+                Some(false) => "F5 presentation: VSYNC (FIFO)".into(),
+                None => "F5 unavailable: Immediate presentation not supported in this benchmark.".into(),
             },
             MenuAction::ChunkCulling => match renderer.toggle_chunk_culling() {
-                Some(true) => println!("F4 nearby-chunk culling: ON"),
-                Some(false) => println!("F4 nearby-chunk culling: OFF (all resident chunks drawn)"),
-                None => println!("F4 available only in multi-chunk benchmark mode."),
+                Some(true) => "F4 nearby-chunk culling: ON".into(),
+                Some(false) => "F4 nearby-chunk culling: OFF (all resident chunks drawn)".into(),
+                None => "F4 available only in multi-chunk benchmark mode.".into(),
             },
             MenuAction::UvChecker => {
                 let active = renderer.toggle_checker();
-                println!("P0 UV checker: {}", if active { "ON" } else { "OFF" });
+                format!("P0 UV checker: {}", if active { "ON" } else { "OFF" })
             }
             MenuAction::UvDensity => {
-                println!(
-                    "P0 checker scale: {} texels/metre",
-                    renderer.cycle_density()
-                );
+                format!("P0 checker scale: {} texels/metre", renderer.cycle_density())
             }
             MenuAction::V2Materials => match renderer.toggle_v2_preview() {
-                Some(true) => println!("V2 candidate gallery: ON"),
-                Some(false) => println!("V2 candidate gallery: OFF (P0)"),
-                None => {
-                    println!("V2 gallery unavailable: bake compatible candidate textures first.")
-                }
+                Some(true) => "V2 candidate gallery: ON".into(),
+                Some(false) => "V2 candidate gallery: OFF (P0)".into(),
+                None => "V2 gallery unavailable: bake compatible candidate textures first.".into(),
             },
             MenuAction::SurfacePreset => match renderer.cycle_surface_preset() {
-                Some(name) => println!("F8 surface preset: {name}"),
-                None => println!("F9 unavailable: bake v2 candidate art first."),
+                Some(name) => format!("F8 surface preset: {name}"),
+                None => "F9 unavailable: bake v2 candidate art first.".into(),
             },
             MenuAction::MetalGlints => match renderer.toggle_metallic_glints() {
-                Some(true) => println!("F8 copper metallic glints: ON"),
-                Some(false) => println!("F8 copper metallic glints: OFF"),
-                None => println!("F10 unavailable: bake v2 candidate art first."),
+                Some(true) => "F8 copper metallic glints: ON".into(),
+                Some(false) => "F8 copper metallic glints: OFF".into(),
+                None => "F10 unavailable: bake v2 candidate art first.".into(),
             },
             MenuAction::GrayCopper => match renderer.toggle_grayscale_copper() {
-                Some(true) => println!("F11 copper comparison: grayscale mask + shader palette"),
-                Some(false) => println!("F11 copper comparison: original full-color candidate"),
-                None => {
-                    println!("F11 unavailable: enable F8 with a baked native-copper candidate.")
-                }
+                Some(true) => "F11 copper comparison: grayscale mask + shader palette".into(),
+                Some(false) => "F11 copper comparison: original full-color candidate".into(),
+                None => "F11 unavailable: enable F8 with a baked native-copper candidate.".into(),
             },
+        };
+        if can_change && self.benchmark_logging {
+            self.reset_benchmark_trial();
         }
-        if self.benchmark_logging {
-            self.reset_benchmark_window(); // never mix settings within one benchmark interval
-        }
+        self.console_log.record(message);
     }
 
     fn input(&self) -> MoveInput {
