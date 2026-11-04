@@ -17,6 +17,22 @@ finite-water physics, climate, ecology and planet-scale generation.
 
 ## Run and inspect
 
+For an **opt-in 200-chunk static material benchmark** (the one-chunk
+gallery remains the default):
+
+```powershell
+cargo run --release --bin material-baker -- bake
+cargo run --release -- --benchmark-200
+```
+
+Press **F3** for periodic CPU frame/visible-chunk statistics and
+**F4** to toggle nearby-chunk culling against all 200 resident
+chunks. Keep the camera fixed when comparing **F8/F11**. These
+statistics include vsync and are **not GPU shader timings**.
+See [benchmark test notes](docs/benchmark-200-chunks.md).
+
+
+
 Requires [Rust](https://www.rust-lang.org/tools/install) and a working
 graphics adapter supported by wgpu. Launch the native desktop app:
 
