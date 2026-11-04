@@ -216,12 +216,9 @@ mod tests {
 
     #[test]
     fn straight_growth_is_connected_and_consumes_its_target() {
-        let result = grow(
-            Vec3::ZERO,
-            &[Vec3::new(3.0, 0.0, 0.0)],
-            params(),
-            |_, _| true,
-        )
+        let result = grow(Vec3::ZERO, &[Vec3::new(3.0, 0.0, 0.0)], params(), |_, _| {
+            true
+        })
         .unwrap();
         assert_eq!(result.stop_reason, StopReason::AllAttractorsReached);
         assert_eq!(result.remaining_attractors, 0);
@@ -266,12 +263,9 @@ mod tests {
     fn node_budget_is_enforced() {
         let mut limited = params();
         limited.max_nodes = 2;
-        let result = grow(
-            Vec3::ZERO,
-            &[Vec3::new(5.0, 0.0, 0.0)],
-            limited,
-            |_, _| true,
-        )
+        let result = grow(Vec3::ZERO, &[Vec3::new(5.0, 0.0, 0.0)], limited, |_, _| {
+            true
+        })
         .unwrap();
         assert_eq!(result.nodes.len(), 2);
         assert_eq!(result.stop_reason, StopReason::NodeLimit);
