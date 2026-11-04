@@ -444,8 +444,9 @@ mod tests {
         use materials_p0::Material;
         assert_eq!(layers.len(), materials_p0::LAYER_COUNT + 1);
         let gray = &layers[materials_p0::LAYER_COUNT];
-        assert!(gray.chunks_exact(4).all(|pixel| pixel[0] == pixel[1]
-            && pixel[1] == pixel[2]));
+        assert!(gray
+            .chunks_exact(4)
+            .all(|pixel| pixel[0] == pixel[1] && pixel[1] == pixel[2]));
         assert!(gray.chunks_exact(4).any(|pixel| pixel[3] > 32));
         assert!(gray.chunks_exact(4).any(|pixel| pixel[3] == 0));
         assert_ne!(
@@ -478,8 +479,8 @@ mod tests {
     fn grayscale_copper_preserves_coverage_independent_of_tonal_detail() {
         let input = [
             255, 255, 255, 0, // transparent bright pigment
-            0, 0, 0, 255,     // fully covered black pigment
-            255, 0, 0, 128,   // partially covered red pigment
+            0, 0, 0, 255, // fully covered black pigment
+            255, 0, 0, 128, // partially covered red pigment
         ];
         let gray = grayscale_copper_tile(&input);
         assert_eq!(gray.len(), input.len());
