@@ -8,4 +8,5 @@ pub mod geography;
 pub mod material_contract;
 pub mod material_lab;
 pub mod player;
+pub mod surface_layers;
 pub mod world;

@@ -132,6 +132,8 @@ production-ready.
 - `F7`: cycle **checker diagnostic** at 64 / 128 / 256 texels per metre.
 - `F8`: switch between the default P0 gallery and the opt-in baked v2
   candidate granite, shale and copper preview (after running the v2 baker).
+- `F9`: cycle independent wet/moss/frost surface states for **F8 rock faces**.
+- `F10`: compare copper's directional metallic glints ON/OFF in F8 mode.
 - The middle display row is one metre higher so vertical transitions can be
   inspected in first-person view.
 
@@ -157,6 +159,17 @@ granite, shale, and native-copper transparent overlay. The default P0
 display is unchanged; the separate F8 gallery preview shows candidates
 only after a successful v2 bake. It does not yet support arbitrary v2
 materials, full per-face role variation or streamed texture resources.
+
+## P2.2 reactive surface preview
+
+The F8 rock/ore gallery now exercises **localized copper metallic response**,
+**wetness**, **moss / lichen** and **frost**, without changing saved material
+identities or the default P0 scene. These are explicitly controlled preview
+states, not climate or ecology simulation. Only copper is metallic; not all
+ore or minerals should use its lighting response.
+
+See [P2.2 surface states and visual QA](docs/p2-2-reactive-surfaces.md) for
+shading limitations, the F9/F10 controls, layer ownership and next review gates.
 
 ## Tests and engineering roadmap
 

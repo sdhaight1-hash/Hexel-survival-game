@@ -18,6 +18,10 @@ texture-compressor = "0.2"
 wgpu = "24"
 winit = "0.30"
 
+[dev-dependencies]
+# Already pulled by wgpu; validate WGSL before a user launches the GPU renderer.
+naga = { version = "24", features = ["wgsl-in"] }
+
 [build-dependencies]
 png = "0.17"
 bcdec_rs = "0.2"

@@ -10,6 +10,7 @@ use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
 use hexel_survival_game::{
     player::Player,
+    surface_layers::SurfacePreset,
     world::{ChunkPos, World},
 };
 use std::{borrow::Cow, sync::Arc};
@@ -21,6 +22,8 @@ use winit::{dpi::PhysicalSize, window::Window};
 struct CameraUniform {
     view_proj: [[f32; 4]; 4],
     options: [f32; 4],
+    eye_position: [f32; 4],
+    surface: [f32; 4],
 }
 
 #[repr(C)]
@@ -56,6 +59,8 @@ pub struct Renderer {
     _material_texture: wgpu::Texture,
     v2_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
     v2_preview_enabled: bool,
+    surface_preset: SurfacePreset,
+    metallic_glints: bool,
     terrain_buffer: wgpu::Buffer,
     terrain_vertices: u32,
     crosshair_buffer: wgpu::Buffer,
@@ -128,6 +133,8 @@ impl Renderer {
             contents: bytemuck::bytes_of(&CameraUniform {
                 view_proj: Mat4::IDENTITY.to_cols_array_2d(),
                 options: [0.0, 1.0, 0.0, 0.0],
+                eye_position: [0.0, 0.0, 0.0, 0.0],
+                surface: [0.0, 0.0, 0.0, 1.0],
             }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
@@ -514,6 +521,8 @@ impl Renderer {
             _material_texture: material_texture,
             v2_materials,
             v2_preview_enabled: false,
+            surface_preset: SurfacePreset::Dry,
+            metallic_glints: true,
             terrain_buffer,
             terrain_vertices: mesh.len() as u32,
             crosshair_buffer,
@@ -529,6 +538,20 @@ impl Renderer {
         self.v2_materials.as_ref()?;
         self.v2_preview_enabled = !self.v2_preview_enabled;
         Some(self.v2_preview_enabled)
+    }
+
+    /// Change only the F8 material gallery, not saved weather or ecology.
+    pub fn cycle_surface_preset(&mut self) -> Option<&'static str> {
+        self.v2_materials.as_ref()?;
+        self.surface_preset = self.surface_preset.next();
+        Some(self.surface_preset.label())
+    }
+
+    /// A/B compare ore specular response without changing ore color or grade.
+    pub fn toggle_metallic_glints(&mut self) -> Option<bool> {
+        self.v2_materials.as_ref()?;
+        self.metallic_glints = !self.metallic_glints;
+        Some(self.metallic_glints)
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
@@ -561,8 +584,10 @@ impl Renderer {
 
     pub fn draw(&mut self, player: &Player) -> Result<(), wgpu::SurfaceError> {
         let aspect = self.config.width as f32 / self.config.height as f32;
+        let eye = player.eye_position();
         let view_proj = Mat4::perspective_rh(70.0_f32.to_radians(), aspect, 0.05, 200.0)
-            * Mat4::look_to_rh(player.eye_position(), player.forward(), Vec3::Y);
+            * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
+        let conditions = self.surface_preset.conditions();
         self.queue.write_buffer(
             &self.camera_buffer,
             0,
@@ -571,8 +596,15 @@ impl Renderer {
                 options: [
                     if self.debug_checker { 1.0 } else { 0.0 },
                     self.texels_per_metre as f32 / materials_p0::REFERENCE_TEXELS_PER_METRE,
+                    if self.v2_preview_enabled { 1.0 } else { 0.0 },
                     0.0,
-                    0.0,
+                ],
+                eye_position: [eye.x, eye.y, eye.z, 0.0],
+                surface: [
+                    conditions.wetness,
+                    conditions.moss,
+                    conditions.frost,
+                    if self.metallic_glints { 1.0 } else { 0.0 },
                 ],
             }),
         );

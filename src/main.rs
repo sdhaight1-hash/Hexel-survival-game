@@ -131,6 +131,8 @@ impl ApplicationHandler for Game {
                 println!("P0 material gallery faces your initial spawn at r=9..12.");
                 println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
                 println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
+                println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
+                println!("F10: toggle native-copper metallic highlights (F8).");
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");
@@ -201,6 +203,25 @@ impl ApplicationHandler for Game {
                                     }
                                     return;
                                 }
+                                KeyCode::F9 => {
+                                    match renderer.cycle_surface_preset() {
+                                        Some(name) => println!("F8 surface preset: {name}"),
+                                        None => {
+                                            println!("F9 unavailable: bake v2 candidate art first.")
+                                        }
+                                    }
+                                    return;
+                                }
+                                KeyCode::F10 => {
+                                    match renderer.toggle_metallic_glints() {
+                                        Some(true) => println!("F8 copper metallic glints: ON"),
+                                        Some(false) => println!("F8 copper metallic glints: OFF"),
+                                        None => println!(
+                                            "F10 unavailable: bake v2 candidate art first."
+                                        ),
+                                    }
+                                    return;
+                                }
                                 _ => {}
                             }
                         }
@@ -268,5 +289,21 @@ fn main() {
     event_loop.set_control_flow(ControlFlow::Poll);
     if let Err(error) = event_loop.run_app(&mut Game::default()) {
         eprintln!("Game event loop stopped: {error}");
+    }
+}
+
+#[cfg(test)]
+mod shader_tests {
+    #[test]
+    fn p2_surface_shader_parses_and_validates() {
+        let source = include_str!("world_shader.wgsl");
+        let module =
+            naga::front::wgsl::parse_str(source).expect("P2.2 world shader must parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("P2.2 world shader must pass Naga semantic validation");
     }
 }

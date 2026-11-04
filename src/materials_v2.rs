@@ -286,6 +286,10 @@ fn composite_ore(base: &[u8], overlay: &[u8]) -> Vec<u8> {
     let mut result = base.to_vec();
     for (dst, ore) in result.chunks_exact_mut(4).zip(overlay.chunks_exact(4)) {
         let alpha = ore[3] as f32 / 255.0;
+        // F8 preview only: preserve the ore footprint in the otherwise
+        // opaque composite layer's alpha for localized material shading.
+        // The terrain shader still writes fully opaque output.
+        dst[3] = ore[3];
         if alpha == 0.0 {
             continue;
         }
@@ -298,7 +302,6 @@ fn composite_ore(base: &[u8], overlay: &[u8]) -> Vec<u8> {
                 dst[c] = linear_to_srgb(host * (1.0 - alpha) + mineral * alpha);
             }
         }
-        dst[3] = 255;
     }
     result
 }
@@ -332,6 +335,14 @@ pub fn preview_layers(p0: &TexturePack<'_>) -> Result<Option<Vec<Vec<u8>>>, Stri
             (Material::Shale, Material::ShaleCopper),
         ] {
             layers[composite as usize] = composite_ore(&layers[host as usize], &mask);
+        }
+    } else {
+        // No v2 ore source: keep the P0 copper coloration but mark its
+        // F8 preview as nonmetallic rather than highlighting an entire face.
+        for layer in [Material::GraniteCopper, Material::ShaleCopper] {
+            for pixel in layers[layer as usize].chunks_exact_mut(4) {
+                pixel[3] = 0;
+            }
         }
     }
     Ok(Some(layers))
@@ -423,6 +434,18 @@ mod tests {
             layers[Material::Shale as usize],
             layers[Material::ShaleCopper as usize]
         );
+        assert!(layers[Material::Granite as usize]
+            .chunks_exact(4)
+            .all(|pixel| pixel[3] == 255));
+        // The ore mask survives the composite as coverage, not as an
+        // opaque rock-swapping texture or a fully shiny surface.
+        for layer in [Material::GraniteCopper, Material::ShaleCopper] {
+            let pixels = &layers[layer as usize];
+            let covered = pixels.chunks_exact(4).filter(|pixel| pixel[3] > 32).count();
+            assert!(covered > 100);
+            assert!(covered < pixels.len() / 4 / 2);
+            assert!(pixels.chunks_exact(4).any(|pixel| pixel[3] == 0));
+        }
     }
 
     #[test]
@@ -430,8 +453,18 @@ mod tests {
         let base = [60u8, 80, 100, 255, 60, 80, 100, 255];
         let overlay = [200u8, 110, 50, 0, 200, 110, 50, 255];
         let out = composite_ore(&base, &overlay);
-        assert_eq!(&out[..4], &base[..4]);
+        assert_eq!(&out[..4], &[60, 80, 100, 0]);
         assert_eq!(&out[4..], &[200, 110, 50, 255]);
+    }
+
+    #[test]
+    fn semi_transparent_ore_keeps_its_mask_without_replacing_host() {
+        let base = [60u8, 80, 100, 255];
+        let overlay = [200u8, 110, 50, 128];
+        let result = composite_ore(&base, &overlay);
+        assert_eq!(result[3], 128);
+        assert_ne!(&result[..3], &base[..3]);
+        assert_ne!(&result[..3], &overlay[..3]);
     }
 
     #[test]
