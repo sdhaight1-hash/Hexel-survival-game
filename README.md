@@ -37,6 +37,7 @@ the mouse.
 | F8 | P0 versus three unapproved v2 candidate rock/ore previews |
 | F9 | Diagnostic dry/wet/moss/frost/mixed states in F8 gallery |
 | F10 | Diagnostic native-copper glints ON/OFF in F8 gallery |
+| F11 | Compare authored-color copper vs grayscale source + shader palette, F8 gallery only |
 
 For F8–F10 preview candidates, first validate/bake the new material
 catalog if no current cache exists:
@@ -104,6 +105,7 @@ state as live survival-game state.
   and art-approval standard only.
 - [Core engineering roadmap](docs/roadmap.md) and
   [material/overlay roadmap](docs/material-overlay-roadmap.md).
+- [F11 grayscale copper comparison](docs/p2-3-grayscale-copper-gallery.md): narrow A/B art fixture (not a new material format).
 - [Material contract](docs/material-authoring-contract.md),
   [P1 catalog and baker](docs/p1-material-pipeline.md), and
   [P2.2 reactive preview](docs/p2-2-reactive-surfaces.md).
