@@ -56,6 +56,82 @@ fix all six older masks, reduce competing rock-host detail, change
 world ore distribution, implement mining, or prove that the vein is
 convincing. Naturalism and density remain visually unapproved.
 
+## P2.5 design extension — spider veining / fracture hierarchy (planned)
+
+**Visual review of the P2.4 screenshots:** World-coordinate continuity is
+working: the broad copper sheet spans multiple exposed faces. It is
+**not final ore art**, because the result is a uniform, softly edged
+peach ribbon with too little fracture structure. The next change should
+refine *one* world-space formation before spawning additional
+material families. Spider veining is a required variant of that work.
+
+### Three related but distinct mineral morphologies
+
+| Prototype | Structural definition | Visual character |
+| --- | --- | --- |
+| Main vein | One dominant finite fracture sheet with a mineral core | Localized pinch/swell, chunky intermittent mineral filling |
+| **Spider vein** | Main fracture with sparse, tapering **secondary and tertiary fracture sheets** that split, fan and sometimes reconnect | Unequal branch lengths/angles, many thin dead ends, a few richer junctions |
+| Stockwork | Several intersecting fracture sets of more comparable importance | Irregular multi-directional network, with nonuniform density |
+
+**No evenly spaced sine stripes or repeating Voronoi/grid web.**
+Spider veining should read like connected fracture propagation, not
+a spiderweb decal. The term here is an *art-direction label*, not
+a newly introduced mineable mineral type.
+
+### Geometry and shader model (future, NOT in this PR)
+
+1. Preserve `v.world_position` as the single input for mineral
+   formation. In 3D, use **thin finite fracture sheets/patches**:
+   their intersection with a 2D exposed rock face forms visible
+   lines. Merely placing 3D curves would often produce spots when
+   the curves intersect the surface. Do not restart at local UVs.
+2. Construct a small **hierarchical fracture graph**: dominant
+   parent, fewer thicker children, more short/thin tertiary branches.
+   Allow asymmetric branch directions, occasional skipped segments,
+   rejoining and termination. Branch width tapers toward endpoints;
+   a few localized junctions thicken or form mineral pockets.
+3. Split the material response into distinct fields:
+   **sharp irregular mineral core** (strong local copper),
+   **low-opacity alteration halo** (host-rock discoloration,
+   not metallic), **sparse internal flakes/stringers** (detail
+   visible only close up), and retained unmineralized host gaps.
+4. Keep glints/specular response **core-weighted**, not applied
+   across the halo; Copper / Hematite / Moonsilver still recolor
+   the same selected morphology without changing footprint.
+5. Compare one parent+spider variant with the P2.4 single
+   world-space vein in the **same fixed-camera F12 gallery**.
+   Avoid silently changing the SOURCE/F11 original baselines
+   or existing masks, worldgen/resource IDs, chunk mesh and F2
+   benchmarks. New variant controls must be disabled unless
+   the F8+F11 preview is active.
+
+### Cost and evidence gates
+
+- **Do not evaluate an unbounded fracture graph per fragment.**
+  First compare a small bounded set of analytic world-space
+  sheets against a precomputed world-aligned low-resolution
+  mineral field; choose whichever is simpler **and** meets the
+  measured GPU budget. Measure the cost of extra noise/sampling.
+- Tests must verify deterministic world-coordinate evaluation at
+  shared cap/side vertices, no local tile restart, tapering branches,
+  and explicit separation of core from halo. Visual review at
+  close/medium distance must verify branch endpoints, pockets,
+  junctions and natural nonperiodic distribution on both hosts.
+- Collect F5 Immediate / F3 with **F1/F2 closed**, same camera,
+  culling, palette and glints settings, >=30 seconds per variant.
+  Report sampled GPU pass time; old FIFO 60 FPS comparisons are
+  not sufficient to prove a shader-performance win.
+- Source **geologic analogs**, not literal image templates:
+  [USGS fissure/branching/horsetail vein descriptions](https://pubs.usgs.gov/pp/0359/report.pdf),
+  [Newfoundland geological guide to stockwork veinlets](https://www.gov.nl.ca/em/files/mines-prospector-matty-mitchell-virtual-guide-to-epithermal-gold-deposits.pdf),
+  and [native-copper stockwork specimen](https://commons.wikimedia.org/wiki/File:Native_copper_stockwork_in_skarn_rock_(Madison_Gold_Skarn_Deposit,_Late_Cretaceous,_80_Ma;_west_of_Silver_Star,_Montana,_USA)_4.jpg).
+  These support fracture-network variety, not a claim that all
+  copper deposits naturally look identical.
+
+**Status: design target only.** No P2.5 spider-vein implementation,
+shader/material change, GPU benchmark or native art approval is
+claimed by these notes.
+
 ## Native acceptance and requested evidence
 
 Run from the existing repository checkout:
