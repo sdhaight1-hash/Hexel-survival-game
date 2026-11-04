@@ -218,6 +218,32 @@ prominence. Favor a **hybrid** only after in-game side-by-side comparison;
 the direction is proposed, not yet approved. Verify readability at
 approximately 1m, 3m and 8m in neutral light and a dark environment.
 
+### Reactive surface layers (P2.2 gallery prototype)
+
+Surface appearance must not collapse the world's distinct facts into a
+single pre-baked texture. The visual stack conceptually distinguishes
+**durable substrate**, **embedded ore/minerals**, **biological or seasonal
+cover** (moss, lichen, grass, leaf litter, snow) and **surface conditions**
+(wetness, frost, weathering, soot, localized damage or tracks). These are
+not necessarily separate draw calls, nor must every category have a PNG.
+
+- Metal-bearing mineral regions may receive *material-specific*, localized
+  and view/light-dependent sheen or sparse glints. Do not assign metallic
+  reflections to every mineral or use full-bright glow to indicate value.
+- Wetness changes darkness and reflected highlight response without
+  making rock metallic. Frost/snow coverage should favor exposed surfaces;
+  accumulated snow or thick ice may require geometry.
+- Moss and lichen are restrained patterned covers, not a flat global green
+  tint. Thin shader coverage is acceptable for a preview; substantial
+  clumps and plants will need geometry.
+- A later decal/mark system may represent footprints, scuffs, mining cuts,
+  ash/soot and structure wear without inventing new substrate IDs.
+- When several conditions overlap, more superficial covers can conceal
+  ore glints. Substrate and resource identity must remain intact.
+- Current shader conditions are **diagnostic F8 presets**, not simulated
+  weather/ecology or persistent world records. Their presence does not
+  constitute artistic approval. See [P2.2 QA](../docs/p2-2-reactive-surfaces.md).
+
 ## 6. Soil, grass and vegetation
 
 ![Vegetation architecture infographic: cutout cards, 3D meshes, hybrid flora, plant life state, procedural structure generation, and LOD](style-infographics/flora-architecture.webp)
