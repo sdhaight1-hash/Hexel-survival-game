@@ -208,7 +208,7 @@ mod tests {
     #[test]
     fn distant_origin_keeps_hex_corners_distinct_and_shared_across_chunks() {
         let mut world = World::streamed(42);
-        let origin = CellPos::new(1_023_984, 0, 0).center();
+        let origin = CellPos::new(1_023_984, 0, 220).center();
         world.stream_around(origin);
         let near = CellPos::at_world_xz(origin.x, origin.z, 220);
         let (section, _) = near.chunk_and_local();
