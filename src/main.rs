@@ -164,7 +164,9 @@ impl ApplicationHandler for Game {
                     println!("STREAM prints 3-second resident/generation/mesh/upload counters.");
                 } else {
                     println!("Hexel Survival: one 16×16×16 chunk, deterministic demo seed 42.");
-                    println!("Chunk edges are temporary barriers; torus wrapping is NOT implemented.");
+                    println!(
+                        "Chunk edges are temporary barriers; torus wrapping is NOT implemented."
+                    );
                     println!("P0 material gallery faces your initial spawn at r=9..12.");
                 }
                 println!(
@@ -369,7 +371,9 @@ impl ApplicationHandler for Game {
 fn main() {
     let event_loop = EventLoop::new().expect("Could not initialize window event loop");
     event_loop.set_control_flow(ControlFlow::Poll);
-    let streamed = std::env::args().skip(1).any(|arg| arg == "--streamed-world");
+    let streamed = std::env::args()
+        .skip(1)
+        .any(|arg| arg == "--streamed-world");
     if let Err(error) = event_loop.run_app(&mut Game::new(streamed)) {
         eprintln!("Game event loop stopped: {error}");
     }
