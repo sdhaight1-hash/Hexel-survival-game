@@ -41,7 +41,12 @@ cargo run --release -- --streamed-world
 The streamer keeps 95 nearby Q/R/Y sections resident and prints CPU
 chunk-generation/mesh-upload counters every 3 seconds. This is an
 **unbounded heightfield test**, not wrapped full-world geography;
-see [native traversal checklist](docs/p3-2-streamed-world.md).
+see [native traversal checklist](docs/p3-2-streamed-world.md). With F3,
+the same session log reports `Is_Moving` and `Is_Looking`, streamed
+event-loop intervals, renderer CPU stage timing, and four-way mouse/look
+comparisons. These are **CPU measurements, not GPU frame timestamps**;
+see [render timing](docs/p3-render-cpu-stage-timing.md).
+The full F2 session is written to `target/benchmark-session.log`.
 
 It opens a 1280 × 800 window. Click the window if needed to capture
 the mouse.
@@ -50,7 +55,10 @@ the mouse.
 | --- | --- |
 | W / A / S / D, mouse | Movement and looking |
 | Space / Left Ctrl / Left Shift | Jump / sprint / sneak |
-| Esc / left click | Release / recapture cursor |
+| Esc / left click | Release / recapture cursor; Esc also closes F1/F2 |
+| F1 | Clickable developer diagnostics menu |
+| F2 | In-game session console; Ctrl+C or COPY copies the full session on Windows |
+| F3 | Toggle streamed-world frame, render-CPU and movement/look timing reports |
 | F6 | Toggle hex-face UV checker |
 | F7 | Cycle checker scale (64 / 128 / 256 texels per metre) |
 | F8 | P0 versus three unapproved v2 candidate rock/ore previews |
@@ -75,6 +83,23 @@ granite, shale and the same ore-only copper artwork over either host.
 These are **display fixtures**, not geological deposits or mineable
 resources. The three new granite/shale/copper PNGs are candidates,
 **not approved production artwork**.
+
+### Opt-in presentation synchronization A/B (native Windows)
+
+The default remains FIFO with desired maximum frame latency 2. To test
+supported alternatives without changing the default:
+
+```sh
+cargo run --release -- --streamed-world --present-mode mailbox
+cargo run --release -- --streamed-world --present-mode immediate
+cargo run --release -- --streamed-world --present-mode fifo --frame-latency 1
+```
+
+Accepted modes: `fifo`, `fifo-relaxed`, `mailbox`, `immediate`;
+frame latency: 1–3. `immediate` may tear. Unsupported modes fall back
+to FIFO, and the startup `PRESENTATION:` line records requested and
+effective settings. Follow the [controlled A/B protocol](docs/p3-presentation-mode-ab.md);
+the initial Windows results have not yet established a preferred mode.
 
 ## Tests
 
