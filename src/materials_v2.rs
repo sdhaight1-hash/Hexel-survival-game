@@ -184,9 +184,8 @@ fn load_default() -> Result<Option<(Index, PathBuf)>, String> {
 }
 
 pub fn inspect_default() -> Result<Option<(usize, usize)>, String> {
-    load_default().map(|loaded| {
-        loaded.map(|(index, _)| (index.textures.len(), index.materials.len()))
-    })
+    load_default()
+        .map(|loaded| loaded.map(|(index, _)| (index.textures.len(), index.materials.len())))
 }
 
 /// Read an individually baked texture, mapped to the P0 gallery's 256px
@@ -234,13 +233,18 @@ fn gallery_rock(index: &Index, directory: &Path, id: &str) -> Result<Option<Vec<
     if material.kind != "rock" || material.representation != "solid" {
         return Err(format!("Unexpected v2 rock recipe: {id}"));
     }
-    let faces = material.faces.as_ref().ok_or_else(|| format!("{id}: missing faces"))?;
+    let faces = material
+        .faces
+        .as_ref()
+        .ok_or_else(|| format!("{id}: missing faces"))?;
     let same_base = faces.top.base == faces.side.base && faces.top.base == faces.bottom.base;
     let no_overlay = [&faces.top, &faces.side, &faces.bottom]
         .iter()
         .all(|face| face.overlay.is_none());
     if !same_base || !no_overlay {
-        return Err(format!("{id}: F8 gallery needs a single unlayered rock base"));
+        return Err(format!(
+            "{id}: F8 gallery needs a single unlayered rock base"
+        ));
     }
     gallery_texture(index, directory, &faces.top.base).map(Some)
 }
