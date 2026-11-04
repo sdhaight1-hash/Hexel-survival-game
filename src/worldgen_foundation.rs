@@ -6,9 +6,7 @@
 
 use crate::{
     generated_terrain::{PrototypeTerrain, PROTOTYPE_TERRAIN_REVISION},
-    geography::{
-        ELEVATION_SAMPLES_PER_AXIS, ELEVATION_TILE_SIDE, WORLD_SIDE_METRES,
-    },
+    geography::{ELEVATION_SAMPLES_PER_AXIS, ELEVATION_TILE_SIDE, WORLD_SIDE_METRES},
 };
 
 /// The geographic raster's wrap is not yet a playable-hex seam mapping.
@@ -157,8 +155,16 @@ mod tests {
         let b = PrototypeTerrain::new(42);
         let c = PrototypeTerrain::new(99);
         let p = CoarseSurfacePatch::sample(&a, -10_000, 20_000, 32, 17).unwrap();
-        assert_eq!(p, CoarseSurfacePatch::sample(&b, -10_000, 20_000, 32, 17).unwrap());
-        assert_ne!(p.heights, CoarseSurfacePatch::sample(&c, -10_000, 20_000, 32, 17).unwrap().heights);
+        assert_eq!(
+            p,
+            CoarseSurfacePatch::sample(&b, -10_000, 20_000, 32, 17).unwrap()
+        );
+        assert_ne!(
+            p.heights,
+            CoarseSurfacePatch::sample(&c, -10_000, 20_000, 32, 17)
+                .unwrap()
+                .heights
+        );
     }
 
     #[test]
