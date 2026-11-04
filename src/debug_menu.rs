@@ -577,7 +577,7 @@ mod tests {
         let lines = VecDeque::from(["1234567890123".to_string(), "tail".to_string()]);
         assert_eq!(
             console_tail_rows(&lines, 5, 3),
-            vec!["123", "tail"]
+            vec!["67890", "123", "tail"]
         );
         let vertices = console_geometry(1280, 800, &lines);
         assert!(!vertices.is_empty());
