@@ -456,10 +456,7 @@ mod tests {
             .all(|pixel| pixel[0] == pixel[1] && pixel[1] == pixel[2]));
         assert!(gray.chunks_exact(4).any(|pixel| pixel[3] > 32));
         assert!(gray.chunks_exact(4).any(|pixel| pixel[3] == 0));
-        for (i, generated) in layers[materials_p0::LAYER_COUNT + 1..]
-            .iter()
-            .enumerate()
-        {
+        for (i, generated) in layers[materials_p0::LAYER_COUNT + 1..].iter().enumerate() {
             assert_eq!(generated, &ore_pattern_study::generate(i + 1));
         }
         assert_ne!(
