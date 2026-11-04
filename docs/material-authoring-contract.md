@@ -76,7 +76,7 @@ Similarly, do not create a distinct opaque ore image for every rock × ore ×
 grade combination. Reuse host-rock textures and transparent ore overlays,
 and allow procedural variation/grade-specific masks later.
 
-## Candidate extension: material families and grayscale-derived overlay palettes
+## Candidate extension: shared grayscale pattern families and material recipes
 
 **Proposal, not an implemented registry format.** Keep **stable material
 identity** (e.g. `ore.native_copper`), **appearance variant** (e.g.
@@ -85,6 +85,37 @@ identity** (e.g. `ore.native_copper`), **appearance variant** (e.g.
 may reference a curated subset of reusable patterns with weights and
 compatibility constraints. A different GPU array layer is an
 implementation detail, never an authoritative species, rock or ore ID.
+
+This is a **cross-domain authored-material tool**, not an ore-specific
+renderer. The same underlying decomposition can support:
+
+| Consumer | Reusable grayscale/detail information | Must remain specific |
+| --- | --- | --- |
+| Rock / mineral base | Crystalline speckling, grain, erosion, stratification *within compatible geology* | Rock species, correct bedding direction, chemical color, roughness/normal and true face geometry |
+| Embedded ore | Exposed inclusion/vein coverage C, internal detail G | Authorized occurrence/grade/stock, mineral morphology and metal/dielectric response |
+| Tree bark | Grooves, ridges, chips, scars, age-related tonal fields | Species trunk/branch form, longitudinal orientation, wood/cut-end face role and bark normal depth |
+| Leaf / needle / grass | Internal veins, pigmentation gradients, blemishes and seasonal tonal masks | Species silhouette/alpha cutout, venation topology, two-sided/transmitted-light appearance, plant instance and life state |
+| Soil / organic cover | Clods, particles, fine organic detail, patch coverage | Soil identity, climate/moisture authority, root/stone geometry and genuine biome context |
+| Environmental overlay | Wetness, frost, moss/lichen, soot or scuff coverage | Real world-state inputs, geometry where thick, physically sensible material response |
+
+**Opaque base vs alpha-cutout vs overlay:** an opaque rock or bark
+material normally uses a full-coverage albedo/tonal field. A leaf-card
+**silhouette alpha** defines the visible leaf geometry; its internal
+grayscale pigment and vein detail are separate. An ore inclusion's
+**coverage** is gated by actual geology. These mask types must not be
+interchanged just because they are all grayscale.
+
+**Pattern orientation is meaningful:** bark streaks track the tree's
+local trunk/branch frame; leaf veins track leaf UV/geometry; shale
+bedding follows geologic strata; a regional ore vein follows feature-
+local coordinates. A single world-space hash for every material will
+make directional structures incoherent.
+
+**Palettes can vary without new bitmaps** (seasonal leaf pigmentation,
+rock oxidation, species color morphs), but cutout edges, normal/height
+and translucency do not follow automatically from recoloring. No
+palette step may change flora species identity or authoritative
+geological resource quantity.
 
 An overlay need not store a full-colored RGBA image per ore species.
 For suitably compatible minerals, author **linear single-channel
