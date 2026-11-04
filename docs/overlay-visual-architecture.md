@@ -10,6 +10,11 @@ overlay compositor, world-state system or production SCA integration.
 **Art/format authority:** [material authoring](material-authoring-contract.md).
 The material renderer must not determine geology, resources, water or ecology.
 
+![Technical design diagram showing authored substrate, geological feature geometry, independent coverage conditions and material response with one continuous copper vein crossing several regular hexagon caps](../assets/diagrams/material-overlay-stack.svg)
+
+*Proposed pipeline. The continuous feature-mask interface is not yet implemented; P2.2 covers only narrow gallery previews.*
+
+
 ## Reactive surface conditions and coverage
 
 Surface appearance must not collapse the world's distinct facts into a
@@ -95,6 +100,15 @@ complicated the generator is. Keep the simpler method if it looks
 better or is cheaper at equivalent clarity. See the
 [revised material and overlay roadmap](material-overlay-roadmap.md) and
 [P2.2 preview record](p2-2-reactive-surfaces.md).
+
+### Shared growth geometry as one optional input
+
+![Space colonization as a reusable structural generator with flora, geology, cave, conduit and surface-pattern consumers, each maintaining its own authoritative rules](../assets/diagrams/spatial-growth-consumers.svg)
+
+Space colonization can provide a **candidate structural skeleton**, while
+ordinary authored masks, geological faults and other deterministic sources
+remain equally valid. The shared-growth prototype is unmerged research
+on PR #30, not a dependency of the overlay renderer.
 
 ## Integration direction
 
