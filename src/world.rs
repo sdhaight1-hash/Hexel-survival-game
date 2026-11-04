@@ -280,9 +280,7 @@ fn benchmark_surface(seed: u32, q: i32, r: i32) -> (i32, bool) {
         + (rf * 0.053 - phase).cos() * 1.8
         + ((qf + rf) * 0.018 + phase).sin() * 1.3;
     let top = (5.0 + wave).round() as i32;
-    let rock_signal = (qf * 0.029 + phase).sin()
-        + (rf * 0.041).cos()
-        + ((qf - rf) * 0.021).sin();
+    let rock_signal = (qf * 0.029 + phase).sin() + (rf * 0.041).cos() + ((qf - rf) * 0.021).sin();
     (top.clamp(2, CHUNK_SIDE - 3), rock_signal > 0.7)
 }
 
@@ -388,11 +386,21 @@ mod tests {
         assert_eq!(a.chunk_positions(), b.chunk_positions());
         assert_eq!(a.chunk_positions().len(), 200);
         assert!(a.chunk(ChunkPos::default()).is_some());
-        assert!(a.chunk(ChunkPos { q: -10, r: -5, y: 0 }).is_some());
+        assert!(a
+            .chunk(ChunkPos {
+                q: -10,
+                r: -5,
+                y: 0
+            })
+            .is_some());
         assert!(a.chunk(ChunkPos { q: 9, r: 4, y: 0 }).is_some());
         assert!(a.chunk(ChunkPos { q: 10, r: 0, y: 0 }).is_none());
-        for pos in [CellPos::new(8, 10, 3), CellPos::new(14, 10, 3),
-            CellPos::new(-45, 18, 5), CellPos::new(88, -42, 3)] {
+        for pos in [
+            CellPos::new(8, 10, 3),
+            CellPos::new(14, 10, 3),
+            CellPos::new(-45, 18, 5),
+            CellPos::new(88, -42, 3),
+        ] {
             assert_eq!(a.get(pos), b.get(pos));
         }
         let reference = World::demo(42);
