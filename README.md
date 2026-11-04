@@ -112,10 +112,10 @@ state as live survival-game state.
   [decisions](docs/decisions.md) and
   [flora registry/asset handoff](docs/flora-to-assets.md).
 
-**Current research:** the reusable space-colonization skeleton and
-optional uses in geology/caves/overlays/water remain in
-[draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30);
-they are **not merged into the game**. A continuous world-space overlay
-proof is planned separately, without requiring SCA.
+**Current research:** the headless [space-colonization skeleton](src/space_colonization.rs)
+and [technical study](docs/space-colonization-study.md) were merged via
+[PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30). The module is **not integrated into
+gameplay, geology, caves, materials or water**. A continuous world-space
+overlay proof remains planned separately, without requiring SCA.
 
 For visual contributions, use [visual development workflow](docs/visual-contribution-guide.md), then review in the real game.
