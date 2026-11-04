@@ -30,11 +30,20 @@ struct Game {
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
     last_frame: Instant,
+    benchmark_logging: bool,
+    benchmark_window_start: Instant,
+    benchmark_frames: u32,
+    benchmark_draw_ms_total: f64,
 }
 
 impl Default for Game {
     fn default() -> Self {
-        let world = World::demo(42);
+        // A deliberately opt-in resident scene, not streaming or worldgen.
+        let world = if std::env::args().any(|arg| arg == "--benchmark-200") {
+            World::benchmark(42)
+        } else {
+            World::demo(42)
+        };
         let player = Player::spawn(&world);
         Self {
             window: None,
@@ -44,6 +53,10 @@ impl Default for Game {
             pressed: HashSet::new(),
             mouse_captured: false,
             last_frame: Instant::now(),
+            benchmark_logging: false,
+            benchmark_window_start: Instant::now(),
+            benchmark_frames: 0,
+            benchmark_draw_ms_total: 0.0,
         }
     }
 }
@@ -97,7 +110,11 @@ impl ApplicationHandler for Game {
         }
         let window = match event_loop.create_window(
             Window::default_attributes()
-                .with_title("Hexel Survival | 16x16x16 | WASD | Mouse | Space | Ctrl | Shift | Esc")
+                .with_title(if self.world.is_benchmark() {
+                    "Hexel Survival | 200-chunk benchmark | F3 stats | F4 culling"
+                } else {
+                    "Hexel Survival | 16x16x16 | WASD | Mouse | Space | Ctrl | Shift | Esc"
+                })
                 .with_inner_size(PhysicalSize::new(1280, 800)),
         ) {
             Ok(window) => Arc::new(window),
@@ -122,18 +139,28 @@ impl ApplicationHandler for Game {
                 self.renderer = Some(renderer);
                 self.capture_mouse();
                 self.last_frame = Instant::now();
-                println!("Hexel Survival: one 16×16×16 chunk, deterministic demo seed 42.");
+                println!(
+                    "Hexel Survival: {} resident 16³ chunk(s), deterministic demo seed 42.",
+                    self.world.chunk_count()
+                );
                 println!(
                     "WASD move | Mouse look | Space jump | Left Ctrl sprint | Left Shift sneak"
                 );
                 println!("Esc release/recapture mouse | Click window to recapture.");
-                println!("Chunk edges are temporary barriers; torus wrapping is NOT implemented.");
+                println!(
+                    "Static loaded-chunk boundaries are barriers; streaming/torus wrapping are NOT implemented."
+                );
                 println!("P0 material gallery faces your initial spawn at r=9..12.");
                 println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
                 println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
                 println!("F10: toggle native-copper metallic highlights (F8).");
                 println!("F11: compare original full-color copper vs shader-colored grayscale copper (F8).");
+                println!("F3: toggle 3-second FPS / CPU frame / visible chunk stats.");
+                if self.world.is_benchmark() {
+                    println!("F4: toggle 112m distance culling vs all 200 resident chunk draws.");
+                    println!("Benchmark: static 20x10x1 chunks with repeated visual ore fixtures, NOT geology/streaming.");
+                }
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");
@@ -181,6 +208,25 @@ impl ApplicationHandler for Game {
                     if event.state == ElementState::Pressed && !event.repeat {
                         if let Some(renderer) = self.renderer.as_mut() {
                             match key {
+                                KeyCode::F3 => {
+                                    self.benchmark_logging = !self.benchmark_logging;
+                                    self.benchmark_window_start = Instant::now();
+                                    self.benchmark_frames = 0;
+                                    self.benchmark_draw_ms_total = 0.0;
+                                    println!(
+                                        "F3 benchmark logging: {}",
+                                        if self.benchmark_logging { "ON" } else { "OFF" }
+                                    );
+                                    return;
+                                }
+                                KeyCode::F4 => {
+                                    match renderer.toggle_chunk_culling() {
+                                        Some(true) => println!("F4 nearby-chunk culling: ON"),
+                                        Some(false) => println!("F4 nearby-chunk culling: OFF (all resident chunks drawn)"),
+                                        None => println!("F4 available only in multi-chunk benchmark mode."),
+                                    }
+                                    return;
+                                }
                                 KeyCode::F6 => {
                                     let active = renderer.toggle_checker();
                                     println!(
@@ -260,7 +306,28 @@ impl ApplicationHandler for Game {
             WindowEvent::RedrawRequested => {
                 if let Some(renderer) = self.renderer.as_mut() {
                     match renderer.draw(&self.player) {
-                        Ok(()) => {}
+                        Ok(()) => {
+                            if self.benchmark_logging {
+                                self.benchmark_frames += 1;
+                                let stats = renderer.stats();
+                                self.benchmark_draw_ms_total += f64::from(stats.draw_cpu_ms);
+                                let elapsed = self.benchmark_window_start.elapsed().as_secs_f64();
+                                if elapsed >= 3.0 {
+                                    println!(
+                                        "BENCH [{}]: {:.1} FPS (wall incl. vsync), {:.2} ms/draw CPU incl. acquire/present, {}/{} visible chunks, {} submitted vertices",
+                                        renderer.material_comparison_label(),
+                                        f64::from(self.benchmark_frames) / elapsed,
+                                        self.benchmark_draw_ms_total / f64::from(self.benchmark_frames),
+                                        stats.visible_chunks,
+                                        self.world.chunk_count(),
+                                        stats.visible_vertices,
+                                    );
+                                    self.benchmark_frames = 0;
+                                    self.benchmark_draw_ms_total = 0.0;
+                                    self.benchmark_window_start = Instant::now();
+                                }
+                            }
+                        }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                             if let Some(window) = self.window.as_ref() {
                                 renderer.resize(window.inner_size());
