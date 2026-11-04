@@ -6,6 +6,8 @@ recorded in [world-generation.md](world-generation.md). The playable
 hex-lattice wrapping transform is not yet chosen. A different rectangular
 extent (e.g. 120 km × 1,024 km) is **not** approved by this branch.
 
+The [review of ten worldgen/LOD/hex-meshing references](worldgen-streaming-reference-review.md) covers Voxy SeedGen, Distant Horizons, hex wraparound, biome blending, visibility, raycasting and geometry reduction. It records a **candidate**, not approved, chunk-aligned axial torus seam translation and separates authoritative near hexels from distant non-authoritative LODs.
+
 ## Architectural correction
 
 **Do not instantiate the entire playable world.** At one-metre-scale
