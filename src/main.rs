@@ -37,6 +37,9 @@ struct Game {
     player: Player,
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
+    pending_mouse_dx: f64,
+    pending_mouse_dy: f64,
+    is_looking: bool,
     last_frame: Instant,
     last_stream_report: Instant,
     streamed_generated: usize,
@@ -85,6 +88,9 @@ impl Game {
             player,
             pressed: HashSet::new(),
             mouse_captured: false,
+            pending_mouse_dx: 0.0,
+            pending_mouse_dy: 0.0,
+            is_looking: false,
             last_frame: now,
             last_stream_report: now,
             streamed_generated: 0,
@@ -130,6 +136,9 @@ impl Game {
         }
         self.mouse_captured = false;
         self.pressed.clear();
+        self.pending_mouse_dx = 0.0;
+        self.pending_mouse_dy = 0.0;
+        self.is_looking = false;
     }
 
     fn toggle_menu(&mut self) {
@@ -413,6 +422,7 @@ impl ApplicationHandler for Game {
             }
             WindowEvent::RedrawRequested => {
                 let is_moving = self.is_moving();
+                let is_looking = self.is_looking;
                 if let Some(renderer) = self.renderer.as_mut() {
                     let menu = self
                         .menu_open
@@ -423,7 +433,7 @@ impl ApplicationHandler for Game {
                     match renderer.draw(&self.player, menu, console) {
                         Ok(timings) => {
                             if self.world.is_streamed() {
-                                self.render_cpu_metrics.record(timings, is_moving);
+                                self.render_cpu_metrics.record(timings, is_moving, is_looking);
                             }
                         }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -449,6 +459,10 @@ impl ApplicationHandler for Game {
         if self.mouse_captured {
             if let DeviceEvent::MouseMotion { delta: (dx, dy) } = event {
                 self.player.look(dx as f32, dy as f32);
+                if dx.is_finite() && dy.is_finite() {
+                    self.pending_mouse_dx += dx.abs();
+                    self.pending_mouse_dy += dy.abs();
+                }
             }
         }
     }
@@ -457,6 +471,13 @@ impl ApplicationHandler for Game {
         let now = Instant::now();
         let dt = now.duration_since(self.last_frame).as_secs_f32();
         let is_moving = self.is_moving();
+        // Sum relative mouse motion between updates, not just cursor capture.
+        // A 1-pixel threshold avoids flagging tiny event noise.
+        self.is_looking = self.mouse_captured
+            && self.pending_mouse_dx + self.pending_mouse_dy >= 1.0;
+        self.pending_mouse_dx = 0.0;
+        self.pending_mouse_dy = 0.0;
+        let is_looking = self.is_looking;
         if self.world.is_streamed() {
             self.stream_metrics
                 .record_frame_interval(f64::from(dt) * 1000.0, is_moving);
@@ -486,7 +507,7 @@ impl ApplicationHandler for Game {
                     .as_ref()
                     .map_or((0, 0), Renderer::terrain_counts);
                 self.console_log.record(format!(
-                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s); Is_Moving={is_moving}.",
+                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s); Is_Moving={is_moving}; Is_Looking={is_looking} (latest update).",
                     self.world.chunk_count(),
                     gpu_meshes,
                     submitted_vertices,
