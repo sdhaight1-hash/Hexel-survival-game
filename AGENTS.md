@@ -36,9 +36,10 @@ offline baker/index validator, opt-in F8 gallery and F9/F10
 diagnostic effects are implemented. **General v2 GPU material
 binding, continuous world-space mineral masks, living ecosystem,
 planet streaming, finite water and cinematic lighting are not.**
-The SCA research prototype resides on
-[draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
-not the default branch. The 55-source v2 catalog has **three
+The bounded SCA research prototype is now in
+[src/space_colonization.rs](src/space_colonization.rs) following
+[merged PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30); it is **not** integrated with
+world generation, materials or gameplay. The 55-source v2 catalog has **three
 candidates, 52 needs-art and zero approved production artwork**.
 
 Prefer small, validated changes. Preserve stable IDs, gameplay
