@@ -61,11 +61,19 @@ mod tests {
     fn moving_and_idle_draws_are_separate_and_peaks_reset() {
         let mut metrics = RenderCpuMetrics::default();
         metrics.record(
-            DrawCpuTimings { total_ms: 12.0, acquire_ms: 9.0, ..DrawCpuTimings::default() },
+            DrawCpuTimings {
+                total_ms: 12.0,
+                acquire_ms: 9.0,
+                ..DrawCpuTimings::default()
+            },
             true,
         );
         metrics.record(
-            DrawCpuTimings { total_ms: 16.0, present_ms: 11.0, ..DrawCpuTimings::default() },
+            DrawCpuTimings {
+                total_ms: 16.0,
+                present_ms: 11.0,
+                ..DrawCpuTimings::default()
+            },
             false,
         );
         let report = metrics.report_and_reset();
@@ -79,7 +87,13 @@ mod tests {
     #[test]
     fn invalid_samples_do_not_pollute_stats() {
         let mut metrics = RenderCpuMetrics::default();
-        metrics.record(DrawCpuTimings { total_ms: f64::NAN, ..DrawCpuTimings::default() }, true);
+        metrics.record(
+            DrawCpuTimings {
+                total_ms: f64::NAN,
+                ..DrawCpuTimings::default()
+            },
+            true,
+        );
         assert!(metrics.report_and_reset().contains("0 successful draws"));
     }
 }
