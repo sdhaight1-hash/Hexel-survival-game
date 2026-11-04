@@ -5,6 +5,8 @@ struct Camera {
     eye_position: vec4<f32>,
     // Independent *gallery* conditions: wetness, moss, frost, metal glints.
     surface: vec4<f32>,
+    // x: grayscale ore pattern 0..5, y: palette copper/hematite/moonsilver.
+    family: vec4<f32>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var material_tiles: texture_2d_array<f32>;
@@ -58,9 +60,11 @@ fn patch_noise(p: vec2<f32>) -> f32 {
     let is_copper = v.material == 9u || v.material == 10u;
     let gray_copper = !checker && camera.options.z > 0.5
         && camera.options.w > 0.5 && is_copper;
-    // Layer 12 is a shared *grayscale copper source*, never a world ore ID.
-    // Normal F8 remains the full-color baked composite in layers 9 and 10.
-    let source_layer = select(v.material, 12u, gray_copper);
+    // Layers 12..17 share both host rocks; pattern changes coverage and
+    // tonal detail, palette changes only color. No world resource ID changes.
+    let pattern = u32(clamp(camera.family.x, 0.0, 5.0));
+    let palette = u32(clamp(camera.family.y, 0.0, 2.0));
+    let source_layer = select(v.material, 12u + pattern, gray_copper);
     let layer = select(source_layer, 11u, checker);
     let scale = select(1.0, camera.options.y, checker);
     let uv = v.uv * scale;
@@ -79,15 +83,26 @@ fn patch_noise(p: vec2<f32>) -> f32 {
         // Two distinct fields: source RGB is grayscale tonal detail,
         // while source alpha is mineral coverage (even for dark details).
         let tone = clamp(albedo.r, 0.0, 1.0);
-        let dark = vec3<f32>(0.13, 0.045, 0.018);
-        let mid = vec3<f32>(0.39, 0.15, 0.060);
-        let light = vec3<f32>(0.76, 0.40, 0.16);
-        let copper = select(
+        var dark = vec3<f32>(0.13, 0.045, 0.018);
+        var mid = vec3<f32>(0.39, 0.15, 0.060);
+        var light = vec3<f32>(0.76, 0.40, 0.16);
+        if (palette == 1u) {
+            // Iron-oxide/hematite visual study, mostly matte.
+            dark = vec3<f32>(0.080, 0.045, 0.050);
+            mid = vec3<f32>(0.25, 0.11, 0.10);
+            light = vec3<f32>(0.53, 0.30, 0.25);
+        } else if (palette == 2u) {
+            // Fantasy moonsilver, no inferred gameplay mineral ID.
+            dark = vec3<f32>(0.035, 0.090, 0.13);
+            mid = vec3<f32>(0.18, 0.33, 0.43);
+            light = vec3<f32>(0.67, 0.84, 0.91);
+        }
+        let pigment = select(
             mix(dark, mid, min(tone * 2.0, 1.0)),
             mix(mid, light, min(tone * 2.0 - 1.0, 1.0)),
             tone > 0.5
         );
-        color = mix(host.rgb, copper, albedo.a);
+        color = mix(host.rgb, pigment, albedo.a);
     }
 
     // Derivatives are calculated unconditionally for uniformity in WGSL.
@@ -144,7 +159,15 @@ fn patch_noise(p: vec2<f32>) -> f32 {
             let centre = length(fract(fleck_uv) - vec2<f32>(0.5, 0.5));
             let fleck = 1.0 - smoothstep(0.06, 0.29, centre);
             let sparkle = rare * fleck * pow(specular, 8.0) * 0.75;
-            color += exposed * (metal_sheen + sparkle) * vec3<f32>(1.0, 0.69, 0.41);
+            var sheen_tint = vec3<f32>(1.0, 0.69, 0.41);
+            var response = 1.0;
+            if (gray_copper && palette == 1u) {
+                sheen_tint = vec3<f32>(0.69, 0.56, 0.51);
+                response = 0.18; // hematite/oxide should not gleam like copper
+            } else if (gray_copper && palette == 2u) {
+                sheen_tint = vec3<f32>(0.72, 0.92, 1.0);
+            }
+            color += exposed * (metal_sheen + sparkle) * sheen_tint * response;
         }
     }
     return vec4<f32>(clamp(color * v.color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
