@@ -98,7 +98,9 @@ impl PresentationOptions {
                 // Preserve headroom for streamed windows and 16³ mesh neighbors.
                 const LIMIT: u32 = (i32::MAX - 128) as u32;
                 if q.unsigned_abs() > LIMIT || r.unsigned_abs() > LIMIT {
-                    return Err("Distant spawn must stay within the safe i32 coordinate range".into());
+                    return Err(
+                        "Distant spawn must stay within the safe i32 coordinate range".into(),
+                    );
                 }
                 Some((q, r))
             }
@@ -154,9 +156,15 @@ mod tests {
     #[test]
     fn opt_in_distant_spawn_requires_complete_streamed_coordinates() {
         let (streamed, options) = PresentationOptions::parse(
-            ["--streamed-world", "--spawn-q", "1023984", "--spawn-r", "-256"]
-                .into_iter()
-                .map(str::to_owned),
+            [
+                "--streamed-world",
+                "--spawn-q",
+                "1023984",
+                "--spawn-r",
+                "-256",
+            ]
+            .into_iter()
+            .map(str::to_owned),
         )
         .unwrap();
         assert!(streamed);
@@ -166,7 +174,13 @@ mod tests {
             vec!["--spawn-q", "10", "--spawn-r", "20"],
             vec!["--streamed-world", "--spawn-q", "10"],
             vec!["--streamed-world", "--spawn-q", "abc", "--spawn-r", "0"],
-            vec!["--streamed-world", "--spawn-q", "-2147483648", "--spawn-r", "0"],
+            vec![
+                "--streamed-world",
+                "--spawn-q",
+                "-2147483648",
+                "--spawn-r",
+                "0",
+            ],
         ] {
             assert!(PresentationOptions::parse(args.into_iter().map(str::to_owned)).is_err());
         }
