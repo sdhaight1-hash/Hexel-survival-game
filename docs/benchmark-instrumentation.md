@@ -98,5 +98,11 @@ a major mode change if needed. The menu itself is a real GPU overlay:
   but real GPU timestamp accuracy and stable Immediate presentation
   require native runs on the target Windows adapter.
 
+The [benchmark history and console](benchmark-history-console.md)
+adds 30-second/whole-trial weighted means, startup system/adapter
+details, accurate meshed-exposed cell/face counts, and a Windows
+copyable F2 running log. These are separate from isolated GPU
+shader timing or actual camera visibility.
+
 See [200-chunk benchmark](benchmark-200-chunks.md) and
 [F1 diagnostics menu](diagnostics-menu.md).
