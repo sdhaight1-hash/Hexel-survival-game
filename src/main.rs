@@ -308,6 +308,16 @@ impl ApplicationHandler for Game {
 
         match pollster::block_on(Renderer::new(window.clone(), &self.world)) {
             Ok(renderer) => {
+                self.console_log.record(benchmark_log::system_report());
+                self.console_log.record(renderer.hardware_report().to_string());
+                self.console_log.record(renderer.viewport_report());
+                self.console_log.record(renderer.geometry_report().to_string());
+                self.console_log.record(
+                    "METRICS exposed hexels/faces = mesh-exposed; submitted = chunk distance filter; neither means camera/pixel visible"
+                );
+                self.console_log.record(
+                    "LOG F2 bottom overlay | Ctrl+C copy full session | file target/benchmark-session.log"
+                );
                 self.window = Some(window);
                 self.renderer = Some(renderer);
                 self.capture_mouse();
@@ -319,7 +329,8 @@ impl ApplicationHandler for Game {
                 println!(
                     "WASD move | Mouse look | Space jump | Left Ctrl sprint | Left Shift sneak"
                 );
-                println!("F1: clickable diagnostics menu (F1/Esc closes); F3–F11 shortcuts remain active.");
+                println!("F1: clickable diagnostics menu (F1/Esc closes); F2 bottom console, Ctrl+C copy.");
+                println!("F3: every 3s report + rolling 30s / trial averages; F2 full session file/clipboard.");
                 println!(
                     "F5: opt-in VSYNC / UNLOCKED (Immediate) benchmark presentation if available."
                 );
@@ -377,6 +388,8 @@ impl ApplicationHandler for Game {
                         if event.state == ElementState::Pressed && !event.repeat {
                             if self.menu_open {
                                 self.toggle_menu();
+                            } else if self.console_open {
+                                self.toggle_console();
                             } else if self.mouse_captured {
                                 self.release_mouse();
                             } else {
@@ -389,6 +402,22 @@ impl ApplicationHandler for Game {
                         if event.state == ElementState::Pressed && !event.repeat {
                             self.toggle_menu();
                         }
+                        return;
+                    }
+                    if key == KeyCode::F2 {
+                        if event.state == ElementState::Pressed && !event.repeat {
+                            self.toggle_console();
+                        }
+                        return;
+                    }
+                    if self.console_open
+                        && key == KeyCode::KeyC
+                        && event.state == ElementState::Pressed
+                        && !event.repeat
+                        && (self.pressed.contains(&KeyCode::ControlLeft)
+                            || self.pressed.contains(&KeyCode::ControlRight))
+                    {
+                        self.copy_console();
                         return;
                     }
                     if event.state == ElementState::Pressed && !event.repeat {
@@ -418,7 +447,16 @@ impl ApplicationHandler for Game {
                 button: MouseButton::Left,
                 ..
             } => {
-                if self.menu_open {
+                if self.console_open {
+                    if let (Some((x, y)), Some(window)) =
+                        (self.menu_cursor, self.window.as_ref())
+                    {
+                        let size = window.inner_size();
+                        if console_copy_hit_test(x, y, size.width, size.height) {
+                            self.copy_console();
+                        }
+                    }
+                } else if self.menu_open {
                     if let (Some((x, y)), Some(window), Some(renderer)) = (
                         self.menu_cursor,
                         self.window.as_ref(),
@@ -446,7 +484,10 @@ impl ApplicationHandler for Game {
                             self.menu_hover,
                         )
                     });
-                    match renderer.draw(&self.player, menu) {
+                    let console = self.console_open.then(|| {
+                        (self.console_log.lines(), self.console_log.generation())
+                    });
+                    match renderer.draw(&self.player, menu, console) {
                         Ok(()) => {
                             if self.benchmark_logging {
                                 let now = Instant::now();
