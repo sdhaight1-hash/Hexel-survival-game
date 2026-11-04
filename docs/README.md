@@ -33,6 +33,7 @@ implementation; the project owner approves art and deliberate design changes.
 | How do continuous feature masks and optional SCA fit? | [Overlay architecture](overlay-visual-architecture.md) | [Material roadmap](material-overlay-roadmap.md), [SCA research study](space-colonization-study.md) |
 | How are material IDs, files and BC7 baked? | [P1 material pipeline](p1-material-pipeline.md) | [Texture compression](texture-compression.md), [v2 format history](material-format-v2.md), [asset catalog](../assets/materials/README.md) |
 | How does vegetation look and render? | [Style guide](../assets/STYLE_GUIDE.md) for look; [vegetation architecture](vegetation-visual-architecture.md) for structure | [Flora research/assets](flora-to-assets.md), [flora registry](../assets/flora/README.md) |
+| How to use the clickable F1 developer menu? | [Diagnostics menu](diagnostics-menu.md) | [200-chunk benchmark](benchmark-200-chunks.md) |
 | How to run the optional 200-chunk visual benchmark? | [200-chunk benchmark notes](benchmark-200-chunks.md) | [F11 grayscale gallery](p2-3-grayscale-copper-gallery.md) |
 | What rendering effects are built or planned? | [Rendering and asset pipeline](rendering-and-asset-pipeline.md) | [P2.2 surface preview](p2-2-reactive-surfaces.md), [compression](texture-compression.md) |
 | What is the selected world and water invariant? | [World generation](world-generation.md) | [Decisions](decisions.md), [Integration](integration.md) |

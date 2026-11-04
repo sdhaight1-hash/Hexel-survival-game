@@ -1,5 +1,6 @@
 //! First-person one-chunk demo or opt-in 200-chunk material benchmark.
 
+mod debug_menu;
 mod materials_p0;
 mod materials_v2;
 mod mesh;
@@ -7,6 +8,7 @@ mod render;
 mod texture_codec;
 mod texture_pack;
 
+use debug_menu::{hit_test, MenuAction};
 use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
@@ -29,6 +31,9 @@ struct Game {
     player: Player,
     pressed: HashSet<KeyCode>,
     mouse_captured: bool,
+    menu_open: bool,
+    menu_cursor: Option<(f64, f64)>,
+    menu_hover: Option<MenuAction>,
     last_frame: Instant,
     benchmark_logging: bool,
     benchmark_window_start: Instant,
@@ -52,6 +57,9 @@ impl Default for Game {
             player,
             pressed: HashSet::new(),
             mouse_captured: false,
+            menu_open: false,
+            menu_cursor: None,
+            menu_hover: None,
             last_frame: Instant::now(),
             benchmark_logging: false,
             benchmark_window_start: Instant::now(),
@@ -85,6 +93,79 @@ impl Game {
         }
         self.mouse_captured = false;
         self.pressed.clear();
+    }
+
+    fn toggle_menu(&mut self) {
+        self.menu_open = !self.menu_open;
+        self.menu_hover = None;
+        self.menu_cursor = None;
+        self.pressed.clear(); // avoid held movement keys leaking out of the menu
+        if self.menu_open {
+            self.release_mouse();
+            println!("F1 diagnostics menu: OPEN (click a row; F1/Esc closes)");
+        } else {
+            self.capture_mouse();
+            println!("F1 diagnostics menu: CLOSED");
+        }
+    }
+
+    /// One action path for F-keys and mouse-selected menu rows.
+    fn apply_debug_action(&mut self, action: MenuAction) {
+        if action == MenuAction::FrameStats {
+            self.benchmark_logging = !self.benchmark_logging;
+            self.benchmark_window_start = Instant::now();
+            self.benchmark_frames = 0;
+            self.benchmark_draw_ms_total = 0.0;
+            println!(
+                "F3 benchmark logging: {}",
+                if self.benchmark_logging { "ON" } else { "OFF" }
+            );
+            return;
+        }
+        let Some(renderer) = self.renderer.as_mut() else {
+            return;
+        };
+        match action {
+            MenuAction::FrameStats => unreachable!(),
+            MenuAction::ChunkCulling => match renderer.toggle_chunk_culling() {
+                Some(true) => println!("F4 nearby-chunk culling: ON"),
+                Some(false) => println!("F4 nearby-chunk culling: OFF (all resident chunks drawn)"),
+                None => println!("F4 available only in multi-chunk benchmark mode."),
+            },
+            MenuAction::UvChecker => {
+                let active = renderer.toggle_checker();
+                println!("P0 UV checker: {}", if active { "ON" } else { "OFF" });
+            }
+            MenuAction::UvDensity => {
+                println!(
+                    "P0 checker scale: {} texels/metre",
+                    renderer.cycle_density()
+                );
+            }
+            MenuAction::V2Materials => match renderer.toggle_v2_preview() {
+                Some(true) => println!("V2 candidate gallery: ON"),
+                Some(false) => println!("V2 candidate gallery: OFF (P0)"),
+                None => {
+                    println!("V2 gallery unavailable: bake compatible candidate textures first.")
+                }
+            },
+            MenuAction::SurfacePreset => match renderer.cycle_surface_preset() {
+                Some(name) => println!("F8 surface preset: {name}"),
+                None => println!("F9 unavailable: bake v2 candidate art first."),
+            },
+            MenuAction::MetalGlints => match renderer.toggle_metallic_glints() {
+                Some(true) => println!("F8 copper metallic glints: ON"),
+                Some(false) => println!("F8 copper metallic glints: OFF"),
+                None => println!("F10 unavailable: bake v2 candidate art first."),
+            },
+            MenuAction::GrayCopper => match renderer.toggle_grayscale_copper() {
+                Some(true) => println!("F11 copper comparison: grayscale mask + shader palette"),
+                Some(false) => println!("F11 copper comparison: original full-color candidate"),
+                None => {
+                    println!("F11 unavailable: enable F8 with a baked native-copper candidate.")
+                }
+            },
+        }
     }
 
     fn input(&self) -> MoveInput {
@@ -146,6 +227,7 @@ impl ApplicationHandler for Game {
                 println!(
                     "WASD move | Mouse look | Space jump | Left Ctrl sprint | Left Shift sneak"
                 );
+                println!("F1: clickable diagnostics menu (F1/Esc closes); F3–F11 shortcuts remain active.");
                 println!("Esc release/recapture mouse | Click window to recapture.");
                 println!(
                     "Static loaded-chunk boundaries are barriers; streaming/torus wrapping are NOT implemented."
@@ -197,7 +279,9 @@ impl ApplicationHandler for Game {
                 if let PhysicalKey::Code(key) = event.physical_key {
                     if key == KeyCode::Escape {
                         if event.state == ElementState::Pressed && !event.repeat {
-                            if self.mouse_captured {
+                            if self.menu_open {
+                                self.toggle_menu();
+                            } else if self.mouse_captured {
                                 self.release_mouse();
                             } else {
                                 self.capture_mouse();
@@ -205,86 +289,16 @@ impl ApplicationHandler for Game {
                         }
                         return;
                     }
+                    if key == KeyCode::F1 {
+                        if event.state == ElementState::Pressed && !event.repeat {
+                            self.toggle_menu();
+                        }
+                        return;
+                    }
                     if event.state == ElementState::Pressed && !event.repeat {
-                        if let Some(renderer) = self.renderer.as_mut() {
-                            match key {
-                                KeyCode::F3 => {
-                                    self.benchmark_logging = !self.benchmark_logging;
-                                    self.benchmark_window_start = Instant::now();
-                                    self.benchmark_frames = 0;
-                                    self.benchmark_draw_ms_total = 0.0;
-                                    println!(
-                                        "F3 benchmark logging: {}",
-                                        if self.benchmark_logging { "ON" } else { "OFF" }
-                                    );
-                                    return;
-                                }
-                                KeyCode::F4 => {
-                                    match renderer.toggle_chunk_culling() {
-                                        Some(true) => println!("F4 nearby-chunk culling: ON"),
-                                        Some(false) => println!("F4 nearby-chunk culling: OFF (all resident chunks drawn)"),
-                                        None => println!("F4 available only in multi-chunk benchmark mode."),
-                                    }
-                                    return;
-                                }
-                                KeyCode::F6 => {
-                                    let active = renderer.toggle_checker();
-                                    println!(
-                                        "P0 UV checker: {}",
-                                        if active { "ON" } else { "OFF" }
-                                    );
-                                    return;
-                                }
-                                KeyCode::F7 => {
-                                    println!(
-                                        "P0 checker scale: {} texels/metre",
-                                        renderer.cycle_density()
-                                    );
-                                    return;
-                                }
-                                KeyCode::F8 => {
-                                    match renderer.toggle_v2_preview() {
-                                        Some(true) => println!("V2 candidate gallery: ON"),
-                                        Some(false) => println!("V2 candidate gallery: OFF (P0)"),
-                                        None => println!("V2 gallery unavailable: bake compatible candidate textures first."),
-                                    }
-                                    return;
-                                }
-                                KeyCode::F9 => {
-                                    match renderer.cycle_surface_preset() {
-                                        Some(name) => println!("F8 surface preset: {name}"),
-                                        None => {
-                                            println!("F9 unavailable: bake v2 candidate art first.")
-                                        }
-                                    }
-                                    return;
-                                }
-                                KeyCode::F10 => {
-                                    match renderer.toggle_metallic_glints() {
-                                        Some(true) => println!("F8 copper metallic glints: ON"),
-                                        Some(false) => println!("F8 copper metallic glints: OFF"),
-                                        None => println!(
-                                            "F10 unavailable: bake v2 candidate art first."
-                                        ),
-                                    }
-                                    return;
-                                }
-                                KeyCode::F11 => {
-                                    match renderer.toggle_grayscale_copper() {
-                                        Some(true) => println!(
-                                            "F11 copper comparison: grayscale mask + shader palette"
-                                        ),
-                                        Some(false) => println!(
-                                            "F11 copper comparison: original full-color candidate"
-                                        ),
-                                        None => println!(
-                                            "F11 unavailable: enable F8 with a baked native-copper candidate."
-                                        ),
-                                    }
-                                    return;
-                                }
-                                _ => {}
-                            }
+                        if let Some(action) = MenuAction::from_key(key) {
+                            self.apply_debug_action(action);
+                            return;
                         }
                     }
                     if event.state == ElementState::Pressed {
@@ -294,18 +308,49 @@ impl ApplicationHandler for Game {
                     }
                 }
             }
+            WindowEvent::CursorMoved { position, .. } => {
+                self.menu_cursor = Some((position.x, position.y));
+                if self.menu_open {
+                    if let Some(window) = self.window.as_ref() {
+                        let size = window.inner_size();
+                        self.menu_hover = hit_test(position.x, position.y, size.width, size.height);
+                    }
+                }
+            }
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
                 button: MouseButton::Left,
                 ..
             } => {
-                if !self.mouse_captured {
+                if self.menu_open {
+                    if let (Some((x, y)), Some(window), Some(renderer)) = (
+                        self.menu_cursor,
+                        self.window.as_ref(),
+                        self.renderer.as_ref(),
+                    ) {
+                        let size = window.inner_size();
+                        if let Some(action) = hit_test(x, y, size.width, size.height) {
+                            if renderer
+                                .menu_snapshot(self.benchmark_logging)
+                                .enabled(action)
+                            {
+                                self.apply_debug_action(action);
+                            }
+                        }
+                    }
+                } else if !self.mouse_captured {
                     self.capture_mouse();
                 }
             }
             WindowEvent::RedrawRequested => {
                 if let Some(renderer) = self.renderer.as_mut() {
-                    match renderer.draw(&self.player) {
+                    let menu = self.menu_open.then(|| {
+                        (
+                            renderer.menu_snapshot(self.benchmark_logging),
+                            self.menu_hover,
+                        )
+                    });
+                    match renderer.draw(&self.player, menu) {
                         Ok(()) => {
                             if self.benchmark_logging {
                                 self.benchmark_frames += 1;
@@ -376,6 +421,19 @@ fn main() {
 
 #[cfg(test)]
 mod shader_tests {
+    #[test]
+    fn debug_menu_shader_parses_and_validates() {
+        let source = include_str!("debug_menu.wgsl");
+        let module =
+            naga::front::wgsl::parse_str(source).expect("debug menu shader must parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("debug menu shader must pass Naga semantic validation");
+    }
+
     #[test]
     fn p2_surface_shader_parses_and_validates() {
         let source = include_str!("world_shader.wgsl");
