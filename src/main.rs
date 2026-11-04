@@ -282,6 +282,14 @@ impl Game {
                 Some(false) => "F11 copper comparison: original full-color candidate".into(),
                 None => "F11 unavailable: enable F8 with a baked native-copper candidate.".into(),
             },
+            MenuAction::OrePattern => match renderer.cycle_ore_pattern() {
+                Some(name) => format!("F12 grayscale ore morphology: {name}"),
+                None => "F12 requires F8 + F11 grayscale preview.".into(),
+            },
+            MenuAction::OrePalette => match renderer.cycle_ore_palette() {
+                Some(name) => format!("P grayscale ore palette: {name}"),
+                None => "P requires F8 + F11 grayscale preview.".into(),
+            },
         };
         if can_change && self.benchmark_logging {
             self.reset_benchmark_trial();
@@ -376,6 +384,7 @@ impl ApplicationHandler for Game {
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
                 println!("F10: toggle native-copper metallic highlights (F8).");
                 println!("F11: compare original full-color copper vs shader-colored grayscale copper (F8).");
+                println!("F12: cycle six grayscale ore masks | P: cycle copper / hematite / moonsilver pigment (F8+F11).");
                 println!("F3: toggle 3-second FPS / CPU frame / visible chunk stats.");
                 if self.world.is_benchmark() {
                     println!("F4: toggle 112m distance culling vs all 200 resident chunk draws.");
@@ -669,7 +678,9 @@ fn benchmark_mode_label(
         "CLOSED"
     };
     format!(
-        "{material} | {presentation} | F4 {culling} | F9 {surface} | F10 {glints} | F6 {} | F7 {} | UI {ui}",
+        "{material} | {presentation} | PATTERN {} | PALETTE {} | F4 {culling} | F9 {surface} | F10 {glints} | F6 {} | F7 {} | UI {ui}",
+        snapshot.ore_pattern.unwrap_or("N/A"),
+        snapshot.ore_palette.unwrap_or("N/A"),
         flag(snapshot.uv_checker),
         snapshot.uv_density,
     )
@@ -720,12 +731,16 @@ mod benchmark_stats_tests {
             surface: Some("Dry"),
             metal_glints: Some(true),
             gray_copper: Some(true),
+            ore_pattern: Some("HAIRLINE"),
+            ore_palette: Some("COPPER"),
         };
         let dry = benchmark_mode_label("F11 grayscale", "IMMEDIATE", snapshot, false, false);
         snapshot.surface = Some("Moss / lichen");
         let moss = benchmark_mode_label("F11 grayscale", "IMMEDIATE", snapshot, false, true);
         assert_ne!(dry, moss);
         assert!(dry.contains("F9 Dry"));
+        assert!(dry.contains("PATTERN HAIRLINE"));
+        assert!(dry.contains("PALETTE COPPER"));
         assert!(dry.contains("UI CLOSED"));
         assert!(moss.contains("F9 Moss / lichen"));
         assert!(moss.contains("UI F2 OPEN"));
