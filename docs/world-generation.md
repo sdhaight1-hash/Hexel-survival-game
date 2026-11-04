@@ -1,6 +1,6 @@
 # Procedural world-generation foundation
 
-**Status:** design specification; not yet a functioning world generator. Based on
+**Status:** design specification; a headless deterministic terrain-source prototype now exists, but no interactive streaming, world topology or real global terrain generation is implemented. Based on
 the project's supplied "Our Procedural World Generation System — Complete Design"
 and the [Voxel Game Engine design-decision register](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/procedural-world-design-decisions.md).
 This document distinguishes agreed direction from implementation candidates.
@@ -82,6 +82,9 @@ to any permanent format.
   **unresolved**; naïve independent Q/R modulo is not approved.
 - Deterministic local generation: exposed rock, soils, faults, strata, ore
   deposits, caves, overhangs and groundwater below/above the saved elevation.
+  The first [world-scale groundwork](world-scale-foundation.md) provides a
+  versioned prototype terrain sampler at arbitrary absolute Q/R/Y coordinates.
+  It is **not periodic hex topology, geology or a streamed world**.
 - Maintain persistent mutations (mined ore, placed/removed cells, harvested
   trees and environmental state) separately from reproducible base generation.
   Cache meshes/chunks as disposable derived products, not sources of truth.
