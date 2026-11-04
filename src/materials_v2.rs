@@ -441,10 +441,7 @@ mod tests {
         // opaque rock-swapping texture or a fully shiny surface.
         for layer in [Material::GraniteCopper, Material::ShaleCopper] {
             let pixels = &layers[layer as usize];
-            let covered = pixels
-                .chunks_exact(4)
-                .filter(|pixel| pixel[3] > 32)
-                .count();
+            let covered = pixels.chunks_exact(4).filter(|pixel| pixel[3] > 32).count();
             assert!(covered > 100);
             assert!(covered < pixels.len() / 4 / 2);
             assert!(pixels.chunks_exact(4).any(|pixel| pixel[3] == 0));
