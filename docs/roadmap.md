@@ -38,6 +38,33 @@ complete M1 game-state integration; those remain below.
 **Acceptance:** A test/demo can change a cell or tree, close and reopen its
 world, and observe the same persistent change.
 
+## Material and overlay track — P0–P7 (cross-cutting)
+
+The **reconciled, status-checked** art/texture program is documented in
+[Material and overlay roadmap](material-overlay-roadmap.md), with the
+[canonical art direction](../assets/STYLE_GUIDE.md) as the visual gate.
+
+- **Delivered prototypes, not approved art:** P0 in-game BC7 gallery;
+  P1 v2 catalog/BC7 baker/startup index check plus narrow F8 preview;
+  revised P2.1 granite/shale/copper candidates; P2.2 F9 wet/moss/frost
+  and F10 copper-highlight diagnostic gallery.
+- **Next high-value work:** native visual approval for reference rock/ore
+  assets; general v2 runtime material binding; a deterministic
+  **world-space feature-mask** proof on adjacent hexel faces (P2.3).
+- **Optional, subsequent:** compare a bounded space-colonization graph
+  against a simpler vein/spline baseline (P2.4). The research solver
+  is in [draft PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30),
+  not a current production texture or world generator.
+- **Later:** resource/cover state authority and save/reload; staged
+  replacement of all 55 identities and approved flora; environment-driven
+  effects; measured mip/streaming/LOD optimization.
+
+**Exit condition for the next art/overlay slice:** a player can identify
+candidate copper on granite/shale at 1m/3m/8m and inspect one continuous
+feature across neighboring hexel caps/sides without false ore identity,
+discontinuous masks or loss of P0 fallback. No dependence on SCA is required
+for ordinary materials, wetness or general overlay composition.
+
 ## M2 — Repeatable global geography
 
 - [ ] Persist a versioned world manifest (seed, topology, height, revisions).
