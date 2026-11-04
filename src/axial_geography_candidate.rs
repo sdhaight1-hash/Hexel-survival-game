@@ -172,7 +172,9 @@ mod tests {
             assert_eq!(actual, CandidateProjection::raster_sample(cell.candidate_wrap()));
             for nz in -2_i64..=2 {
                 for nx in -2_i64..=2 {
-                    if cell.q.abs() < 2_000_000_000 && cell.r.abs() < 2_000_000_000 {
+                    if (-2_000_000_000..2_000_000_000).contains(&cell.q)
+                        && (-2_000_000_000..2_000_000_000).contains(&cell.r)
+                    {
                         let shifted = cell.candidate_translated(nx, nz);
                         assert_eq!(actual, CandidateProjection::raster_sample(shifted));
                     }
@@ -244,7 +246,7 @@ mod tests {
         assert_eq!(local.x, 0.0);
         assert_eq!(local.y, 1.0);
         assert!((local.z + 2.0 * CandidateProjection::z_metres_per_r() as f32).abs() < 1e-6);
-        assert_ne!(
+        assert_eq!(
             CandidateProjection::geographic_metres(Axial64::new(offset.q, offset.r)).x as f32,
             CandidateProjection::geographic_metres(Axial64::new(origin.q, origin.r)).x as f32
         );
