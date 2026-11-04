@@ -203,6 +203,12 @@ impl Game {
         self.console_log.record(message);
     }
 
+    // Input intent, not physical velocity: sprint/sneak modifiers alone do not move.
+    fn is_moving(&self) -> bool {
+        let input = self.input();
+        input.forward || input.backward || input.left || input.right || input.jump
+    }
+
     fn input(&self) -> MoveInput {
         if !self.mouse_captured {
             return MoveInput::default();
@@ -441,9 +447,10 @@ impl ApplicationHandler for Game {
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         let now = Instant::now();
         let dt = now.duration_since(self.last_frame).as_secs_f32();
+        let is_moving = self.is_moving();
         if self.world.is_streamed() {
             self.stream_metrics
-                .record_frame_interval(f64::from(dt) * 1000.0);
+                .record_frame_interval(f64::from(dt) * 1000.0, is_moving);
         }
         self.last_frame = now;
         self.player.step(&self.world, self.input(), dt);
@@ -470,7 +477,7 @@ impl ApplicationHandler for Game {
                     .as_ref()
                     .map_or((0, 0), Renderer::terrain_counts);
                 self.console_log.record(format!(
-                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s).",
+                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s); Is_Moving={is_moving}.",
                     self.world.chunk_count(),
                     gpu_meshes,
                     submitted_vertices,
