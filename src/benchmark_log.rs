@@ -15,8 +15,7 @@ pub fn system_report() -> String {
     let threads = std::thread::available_parallelism()
         .map(|n| n.get().to_string())
         .unwrap_or_else(|_| "N/A".into());
-    let mut cpu = std::env::var("PROCESSOR_IDENTIFIER")
-        .unwrap_or_else(|_| "unknown CPU".into());
+    let mut cpu = std::env::var("PROCESSOR_IDENTIFIER").unwrap_or_else(|_| "unknown CPU".into());
     #[cfg(windows)]
     {
         // Standard Windows registry API exposed by built-in reg.exe; this
@@ -248,9 +247,11 @@ impl ConsoleLog {
                 .stderr(Stdio::null())
                 .spawn()
                 .map_err(|error| error.to_string())?;
-            let mut stdin = child.stdin.take().ok_or("Clipboard input pipe unavailable")?;
-            let complete_log = fs::read_to_string(LOG_FILE)
-                .unwrap_or_else(|_| self.text());
+            let mut stdin = child
+                .stdin
+                .take()
+                .ok_or("Clipboard input pipe unavailable")?;
+            let complete_log = fs::read_to_string(LOG_FILE).unwrap_or_else(|_| self.text());
             stdin
                 .write_all(complete_log.as_bytes())
                 .map_err(|error| error.to_string())?;
@@ -264,7 +265,9 @@ impl ConsoleLog {
         }
         #[cfg(not(windows))]
         {
-            Err(format!("Clipboard copy is Windows-only; open {LOG_FILE} instead"))
+            Err(format!(
+                "Clipboard copy is Windows-only; open {LOG_FILE} instead"
+            ))
         }
     }
 }
@@ -277,12 +280,18 @@ mod tests {
     fn history_uses_time_and_sample_weighted_means() {
         let mut history = BenchHistory::default();
         history.record_window(BenchSample {
-            seconds: 3.0, frames: 300, cpu_draw_ms_total: 120.0,
-            gpu_pass_ms_total: 2.0, gpu_samples: 10,
+            seconds: 3.0,
+            frames: 300,
+            cpu_draw_ms_total: 120.0,
+            gpu_pass_ms_total: 2.0,
+            gpu_samples: 10,
         });
         history.record_window(BenchSample {
-            seconds: 3.0, frames: 600, cpu_draw_ms_total: 180.0,
-            gpu_pass_ms_total: 6.0, gpu_samples: 20,
+            seconds: 3.0,
+            frames: 600,
+            cpu_draw_ms_total: 180.0,
+            gpu_pass_ms_total: 6.0,
+            gpu_samples: 20,
         });
         let all = history.trial();
         assert_eq!(all.fps(), 150.0);
@@ -298,7 +307,9 @@ mod tests {
         let mut history = BenchHistory::default();
         for i in 0..100 {
             history.record_window(BenchSample {
-                seconds: 3.0, frames: (i + 1) * 30, ..BenchSample::default()
+                seconds: 3.0,
+                frames: (i + 1) * 30,
+                ..BenchSample::default()
             });
         }
         let latest = history.recent(30.0);
