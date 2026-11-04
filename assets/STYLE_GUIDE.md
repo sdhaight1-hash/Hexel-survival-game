@@ -21,6 +21,21 @@ that every effect described below already runs in the engine. Where a specific
 look or renderer feature is still unapproved, it is labeled **candidate** or
 **future**, not falsely called complete.
 
+**Illustrated companion infographics:**
+[1 — Visual identity](style-infographics/01-visual-style.png) ·
+[2 — Geology and terrain materials](style-infographics/02-terrain-materials.png) ·
+[3 — Flora and vegetation architecture](style-infographics/03-flora-architecture.png).
+
+**Important:** These are **AI-generated concept/reference diagrams**, not production
+textures, implementation screenshots, or precise engineering specifications.
+Some miniature panels simplify hexagonal prisms as blocky/cube-like shapes
+or contain approximate/inaccurate shorthand text. **The written rules
+in this guide and the source contracts take precedence**: a hexel has
+a hexagonal top and bottom plus six rectangular sides; the project
+has **no mandatory 4 or 32 texels/metre standard**; ore is composited
+*on* its host rock; and vegetation cutout cards need **not** be
+camera-facing billboards. Illustration does not imply a feature is implemented.
+
 ## 1. Visual influences and how they fit together
 
 | Reference direction | Keep | Do not copy / overgeneralize |
@@ -39,6 +54,14 @@ two-dimensional illustration pasted onto hexel geometry.
 **Style guardrail:** avoid the extremes of bright uniform pixel-cartoon,
 grainy photoreal scans, or illustration-level clutter. Use *purposefully
 simplified* detail within a grounded material palette.
+
+### Illustrated reference — the visual pillars
+
+[![Hexel Survival visual style infographic: artistic influences, palette,
+hexel readability and asset approval criteria](style-infographics/01-visual-style.png)](style-infographics/01-visual-style.png)
+
+*Companion board 1/3: a visual mood and style reference, **not** a definitive
+face-geometry or texel-density diagram. See §4 for exact hexel dimensions.*
 
 ## 2. Non-negotiable visual principles
 
@@ -144,6 +167,16 @@ or artistic finish threshold.
 
 ## 5. Geological and ore art rules
 
+### Illustrated reference — terrain and material hierarchy
+
+[![Hexel Survival material infographic: geology, soil cover, ore overlays,
+UVs, texture production and readability](style-infographics/02-terrain-materials.png)](style-infographics/02-terrain-materials.png)
+
+*Companion board 2/3: conceptual material layering and ore-readability
+examples. Rock, soil and ore are **not** always physically stacked as shown;
+an ore overlay belongs on its host material. The prose, catalog and UV
+contracts below are authoritative.*
+
 ### Host-rock bases
 
 - **Igneous:** grouped crystalline masses or volcanic structure; granite
@@ -192,6 +225,16 @@ the direction is proposed, not yet approved. Verify readability at
 approximately 1m, 3m and 8m in neutral light and a dark environment.
 
 ## 6. Soil, grass and vegetation
+
+### Illustrated reference — hybrid vegetation and procedural growth
+
+[![Hexel Survival flora infographic: cutout cards, 3D meshes, hybrids,
+plant growth methods, LOD and persistence](style-infographics/03-flora-architecture.png)](style-infographics/03-flora-architecture.png)
+
+*Companion board 3/3: visual design goals and prototype concepts, **not**
+proof of live ecosystem features. Many foliage cards are fixed-angle
+crossed planes, not necessarily billboards; tree and plant mechanics
+remain subject to the source/runtime distinctions below.*
 
 ### Soil + living ground cover
 
