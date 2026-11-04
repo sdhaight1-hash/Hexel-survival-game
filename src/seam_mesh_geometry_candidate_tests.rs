@@ -19,7 +19,7 @@ const NEIGHBORS_BY_MESH_SIDE: [(i64, i64); 6] = [
     (1, -1),
     (1, 0),
 ];
-const HEX_CORNER_RADIUS: f64 = 1.0 / 3.0_f64.sqrt();
+const HEX_CORNER_RADIUS: f64 = 0.577_350_269_189_625_8;
 
 #[derive(Clone, Copy)]
 enum PhysicalMetric {
