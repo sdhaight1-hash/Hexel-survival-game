@@ -306,9 +306,27 @@ fn composite_ore(base: &[u8], overlay: &[u8]) -> Vec<u8> {
     result
 }
 
-/// Create a *separate*, opt-in RGBA preview array of the same 12 display
-/// slots as P0. Only granite, shale and shared copper-mask candidates are
-/// currently wired; all other P0 gallery materials remain unchanged.
+/// Extract two independent concepts from a colored ore-only input:
+/// alpha is mineral coverage; linear-light luminance is internal tonal detail.
+/// Store tonal detail as sRGB grayscale because the temporary F8 preview
+/// array is Rgba8UnormSrgb. Alpha remains linear on texture sampling.
+fn grayscale_copper_tile(overlay: &[u8]) -> Vec<u8> {
+    let mut result = overlay.to_vec();
+    for pixel in result.chunks_exact_mut(4) {
+        let tone = 0.2126 * srgb_to_linear(pixel[0])
+            + 0.7152 * srgb_to_linear(pixel[1])
+            + 0.0722 * srgb_to_linear(pixel[2]);
+        let gray = linear_to_srgb(tone);
+        pixel[..3].fill(gray);
+        // Keep the original coverage byte, including for dark minerals.
+    }
+    result
+}
+
+/// Create a *separate*, opt-in RGBA preview array of the original 12 display
+/// slots as P0, plus a shared grayscale copper source at layer 12 when
+/// a compatible candidate exists. The default P0 pack remains unchanged.
+/// Only granite, shale and shared copper-mask candidates are currently wired.
 pub fn preview_layers(p0: &TexturePack<'_>) -> Result<Option<Vec<Vec<u8>>>, String> {
     let Some((index, directory)) = load_default()? else {
         return Ok(None);
@@ -336,6 +354,9 @@ pub fn preview_layers(p0: &TexturePack<'_>) -> Result<Option<Vec<Vec<u8>>>, Stri
         ] {
             layers[composite as usize] = composite_ore(&layers[host as usize], &mask);
         }
+        // One source mask serves *both* rock hosts. Layer 12 is only sampled
+        // in the shader-driven F11 comparison, never as world/resource data.
+        layers.push(grayscale_copper_tile(&mask));
     } else {
         // No v2 ore source: keep the P0 copper coloration but mark its
         // F8 preview as nonmetallic rather than highlighting an entire face.
@@ -421,7 +442,13 @@ mod tests {
             return;
         };
         use materials_p0::Material;
-        assert_eq!(layers.len(), materials_p0::LAYER_COUNT);
+        assert_eq!(layers.len(), materials_p0::LAYER_COUNT + 1);
+        let gray = &layers[materials_p0::LAYER_COUNT];
+        assert!(gray
+            .chunks_exact(4)
+            .all(|pixel| pixel[0] == pixel[1] && pixel[1] == pixel[2]));
+        assert!(gray.chunks_exact(4).any(|pixel| pixel[3] > 32));
+        assert!(gray.chunks_exact(4).any(|pixel| pixel[3] == 0));
         assert_ne!(
             layers[Material::Granite as usize],
             layers[Material::Shale as usize]
@@ -446,6 +473,35 @@ mod tests {
             assert!(covered < pixels.len() / 4 / 2);
             assert!(pixels.chunks_exact(4).any(|pixel| pixel[3] == 0));
         }
+    }
+
+    #[test]
+    fn grayscale_copper_preserves_coverage_independent_of_tonal_detail() {
+        let input = [
+            255, 255, 255, 0, // transparent bright pigment
+            0, 0, 0, 255, // fully covered black pigment
+            255, 0, 0, 128, // partially covered red pigment
+        ];
+        let gray = grayscale_copper_tile(&input);
+        assert_eq!(gray.len(), input.len());
+        for (src, out) in input.chunks_exact(4).zip(gray.chunks_exact(4)) {
+            assert_eq!(src[3], out[3], "coverage is never inferred from tone");
+            assert_eq!(out[0], out[1]);
+            assert_eq!(out[1], out[2]);
+        }
+        assert_eq!(gray[4], 0);
+        assert_eq!(gray[7], 255, "dark mineral is still fully covered");
+        assert!(gray[8] > 0 && gray[8] < 255);
+        assert_eq!(gray[11], 128);
+    }
+
+    #[test]
+    fn grayscale_copper_luminance_is_gamma_correct_and_deterministic() {
+        let input = [128, 128, 128, 200, 128, 128, 128, 200];
+        let one = grayscale_copper_tile(&input);
+        let two = grayscale_copper_tile(&input);
+        assert_eq!(one, two);
+        assert_eq!(one, input);
     }
 
     #[test]

@@ -133,6 +133,7 @@ impl ApplicationHandler for Game {
                 println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
                 println!("F10: toggle native-copper metallic highlights (F8).");
+                println!("F11: compare original full-color copper vs shader-colored grayscale copper (F8).");
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");
@@ -218,6 +219,20 @@ impl ApplicationHandler for Game {
                                         Some(false) => println!("F8 copper metallic glints: OFF"),
                                         None => println!(
                                             "F10 unavailable: bake v2 candidate art first."
+                                        ),
+                                    }
+                                    return;
+                                }
+                                KeyCode::F11 => {
+                                    match renderer.toggle_grayscale_copper() {
+                                        Some(true) => println!(
+                                            "F11 copper comparison: grayscale mask + shader palette"
+                                        ),
+                                        Some(false) => println!(
+                                            "F11 copper comparison: original full-color candidate"
+                                        ),
+                                        None => println!(
+                                            "F11 unavailable: enable F8 with a baked native-copper candidate."
                                         ),
                                     }
                                     return;

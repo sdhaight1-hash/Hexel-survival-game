@@ -1,6 +1,6 @@
 struct Camera {
     view_proj: mat4x4<f32>,
-    // x: checker, y: checker scale, z: F8 candidate preview active
+    // x: checker, y: checker scale, z: F8 candidate preview, w: F11 gray copper
     options: vec4<f32>,
     eye_position: vec4<f32>,
     // Independent *gallery* conditions: wetness, moss, frost, metal glints.
@@ -55,10 +55,40 @@ fn patch_noise(p: vec2<f32>) -> f32 {
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
     // Hexel UVs are in metres, with 1m repeats for gallery candidates.
     let checker = camera.options.x > 0.5;
-    let layer = select(v.material, 11u, checker);
+    let is_copper = v.material == 9u || v.material == 10u;
+    let gray_copper = !checker && camera.options.z > 0.5
+        && camera.options.w > 0.5 && is_copper;
+    // Layer 12 is a shared *grayscale copper source*, never a world ore ID.
+    // Normal F8 remains the full-color baked composite in layers 9 and 10.
+    let source_layer = select(v.material, 12u, gray_copper);
+    let layer = select(source_layer, 11u, checker);
     let scale = select(1.0, camera.options.y, checker);
-    let albedo = textureSample(material_tiles, tile_sampler, v.uv * scale, i32(layer));
+    let uv = v.uv * scale;
+    let albedo = textureSample(material_tiles, tile_sampler, uv, i32(layer));
     var color = albedo.rgb;
+
+    // Explicit gradients keep the extra host lookup valid inside a
+    // material-dependent branch; all derivative operations are outside it.
+    let uv_dx = dpdx(uv);
+    let uv_dy = dpdy(uv);
+    if (gray_copper) {
+        let host_layer = select(7u, 8u, v.material == 10u);
+        let host = textureSampleGrad(
+            material_tiles, tile_sampler, uv, i32(host_layer), uv_dx, uv_dy
+        );
+        // Two distinct fields: source RGB is grayscale tonal detail,
+        // while source alpha is mineral coverage (even for dark details).
+        let tone = clamp(albedo.r, 0.0, 1.0);
+        let dark = vec3<f32>(0.13, 0.045, 0.018);
+        let mid = vec3<f32>(0.39, 0.15, 0.060);
+        let light = vec3<f32>(0.76, 0.40, 0.16);
+        let copper = select(
+            mix(dark, mid, min(tone * 2.0, 1.0)),
+            mix(mid, light, min(tone * 2.0 - 1.0, 1.0)),
+            tone > 0.5
+        );
+        color = mix(host.rgb, copper, albedo.a);
+    }
 
     // Derivatives are calculated unconditionally for uniformity in WGSL.
     let dx = dpdx(v.world_position);
@@ -102,7 +132,6 @@ fn patch_noise(p: vec2<f32>) -> f32 {
         // F8 ore-composite alpha stores the authored copper-only footprint.
         // All other layers (including P0) have no metallic response. The
         // host is still visible; moss/frost can physically cover the ore.
-        let is_copper = v.material == 9u || v.material == 10u;
         if (is_copper && camera.surface.w > 0.5) {
             let exposed = albedo.a * (1.0 - moss) * (1.0 - frost);
             let metal_sheen = pow(specular, 22.0) * 0.35;
