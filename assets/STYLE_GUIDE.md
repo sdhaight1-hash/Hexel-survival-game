@@ -21,6 +21,27 @@ that every effect described below already runs in the engine. Where a specific
 look or renderer feature is still unapproved, it is labeled **candidate** or
 **future**, not falsely called complete.
 
+## Visual companion infographics
+
+Three **original, AI-generated visual reference boards** accompany this
+guide. Click a preview to open the full-resolution PNG stored in this
+repository. The images summarize **style and design intent**, not shipped
+gameplay or renderer features.
+
+| Visual pillars & atmosphere | Terrain, geology & materials | Flora & vegetation architecture |
+|:---:|:---:|:---:|
+| <a href="infographics/hexel_survival_dark_fantasy_style_guide.png"><img src="infographics/hexel_survival_dark_fantasy_style_guide.png" width="260" alt="Art-direction poster: visual pillars, painterly atmosphere, palette, stylized hexel material examples and approval rules"></a> | <a href="infographics/hexel_survival_terrain_materials_guide.png"><img src="infographics/hexel_survival_terrain_materials_guide.png" width="260" alt="Material-system poster: top and side faces, layered soils, geological rock families, host-rock ore overlays and asset pipeline"></a> | <a href="infographics/hexel_survival_vegetation_systems.png"><img src="infographics/hexel_survival_vegetation_systems.png" width="260" alt="Flora poster: cutout foliage cards, 3D meshes, hybrids, plant generation algorithms, LOD and tree authoring"></a> |
+| [Full image](infographics/hexel_survival_dark_fantasy_style_guide.png) | [Full image](infographics/hexel_survival_terrain_materials_guide.png) | [Full image](infographics/hexel_survival_vegetation_systems.png) |
+
+**Accuracy note:** These posters are *concept illustrations* and may
+simplify or mislabel technical details (including cube-like block examples,
+texels-per-metre figures, card/billboard terminology, or pipeline status).
+**For physical hexel geometry, correct UV scaling, cards vs. billboards,
+materials, implementation status and acceptance criteria, follow the
+written guide and validated source code instead of infographic fine print.**
+No pictured material, plant, renderer effect or environment is automatically
+an approved or implemented game asset.
+
 ## 1. Visual influences and how they fit together
 
 | Reference direction | Keep | Do not copy / overgeneralize |
