@@ -19,3 +19,6 @@ pub mod worldgen_foundation;
 
 #[cfg(test)]
 mod seam_integration_candidate_tests;
+
+#[cfg(test)]
+mod seam_mesh_geometry_candidate_tests;
