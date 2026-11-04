@@ -314,13 +314,13 @@ impl ApplicationHandler for Game {
                                 let elapsed = self.benchmark_window_start.elapsed().as_secs_f64();
                                 if elapsed >= 3.0 {
                                     println!(
-                                        "BENCH [{}]: {:.1} FPS (wall incl. vsync), {:.2} ms/draw CPU incl. acquire/present, {}/{} visible chunks, {} submitted vertices",
+                                        "BENCH [{}]: {:.1} FPS (wall incl. vsync), {:.2} ms/draw CPU incl. acquire/present, {}/{} submitted chunks, {} submitted vertices",
                                         renderer.material_comparison_label(),
                                         f64::from(self.benchmark_frames) / elapsed,
                                         self.benchmark_draw_ms_total / f64::from(self.benchmark_frames),
-                                        stats.visible_chunks,
+                                        stats.submitted_chunks,
                                         self.world.chunk_count(),
-                                        stats.visible_vertices,
+                                        stats.submitted_vertices,
                                     );
                                     self.benchmark_frames = 0;
                                     self.benchmark_draw_ms_total = 0.0;
