@@ -1,199 +1,121 @@
 # Hexel Survival Game
 
-Native Rust **first-person hexagonal-prism world prototype** and foundation
-for the planned survival-game runtime.
+Native Rust/wgpu first-person prototype for a planned hexagonal-prism
+survival game. **Current scope:** exactly one bounded 16 × 16 × 16
+hexel chunk (4,096 addressable cells), stepped demo terrain,
+camera/movement, gravity, collision, visible-face meshing and a
+small material/overlay **test gallery**. This is **not** world generation.
 
-**Current playable slice:** exactly one bounded **16 × 16 × 16 hexel chunk**
-(4,096 addressable cells). A seeded, stepped grassy landscape is shown in a
-native wgpu 3D window with depth testing, face culling and a central crosshair.
-It supports walking, mouse-look, sprinting, sneaking, gravity and jumping.
+The player is 1⅔ m tall. Each regular hexel is 1 m across its
+opposing flats and 1 m high, with six rectangular sides, a top hexagon
+and a bottom hexagon. These are prototype dimensions; the final
+toroidal grid translations and elevation mapping are still undecided.
 
-The landscape is deliberately simple **demo terrain**, *not* planet generation.
-The player is **1⅔ m tall**, so a 1 m-high hexel is exactly **3/5 of
-character height**. The current P0 gallery derives **256px visual previews from our original
-high-resolution soil, granite, shale, forest-floor and copper artwork**,
-with hex-specific face UVs and grass/ore compositing. See
-[P0 material gallery](docs/p0-material-gallery.md) for current controls,
-and [first-person scale](docs/first-person-textures.md) for the prototype
-dimensions.
-No cross-chunk streaming, toroidal movement, digging/building, saves, ecology,
-climate, caves, finite water or diffusion inference exists in this slice.
+**Not implemented:** digging/building, save/load, chunk streaming,
+toroidal movement, real caves/mineral deposits, flora spawning,
+finite-water physics, climate, ecology and planet-scale generation.
 
-## Visual direction and asset standards
+## Run and inspect
 
-**Canonical reference for all future art and rendering work:**
-[Hexel Survival Art Direction & Style Guide](assets/STYLE_GUIDE.md).
-It reconciles Hytale-like gameplay readability, the older full-3D foliage
-concept, Vintage Story-like geological/ecological depth and the user's
-Luis Royo-influenced painterly atmosphere. It specifies hexel face/overlay
-rules, ore recognition, grass/flora design, palette and lighting direction,
-compression/performance expectations, and in-game approval checks.
-**Future renderer features are described as goals, not shipped features.**
-Contributors and coding assistants should read the guide before visual changes.
-
-## Launch
-
-Requires [Rust](https://www.rust-lang.org/tools/install) and a working graphics
-driver with a backend supported by wgpu.
+Requires [Rust](https://www.rust-lang.org/tools/install) and a working
+graphics adapter supported by wgpu. Launch the native desktop app:
 
 ```sh
 cargo run --release
 ```
 
-Or use `cargo run` for a quicker debug build. This is a **native desktop app**,
-not a browser game. It opens a 1280 × 800 window. If mouse capture fails on
-your OS, click the window to try again.
+It opens a 1280 × 800 window. Click the window if needed to capture
+the mouse.
 
-### Minecraft-style first-person controls
-
-| Input | Action |
+| Control | Function |
 | --- | --- |
-| W / A / S / D | Walk forward / left / back / right |
-| Mouse | Look around |
-| Space | Jump (with gravity and landing) |
-| Left Ctrl | Sprint while held |
-| Left Shift | Sneak / move slowly while held |
-| Esc | Release or recapture the mouse |
-| Left click (when mouse is released) | Recapture mouse |
-| Close window | Exit |
+| W / A / S / D, mouse | Movement and looking |
+| Space / Left Ctrl / Left Shift | Jump / sprint / sneak |
+| Esc / left click | Release / recapture cursor |
+| F6 | Toggle hex-face UV checker |
+| F7 | Cycle checker scale (64 / 128 / 256 texels per metre) |
+| F8 | P0 versus three unapproved v2 candidate rock/ore previews |
+| F9 | Diagnostic dry/wet/moss/frost/mixed states in F8 gallery |
+| F10 | Diagnostic native-copper glints ON/OFF in F8 gallery |
 
-The chunk has **temporary, non-wrapping bounds** so you cannot wander into
-unloaded geometry. These boundaries are scaffolding only. They are not the
-selected final world's shape and do not imply an infinite or bounded-flat game.
+For F8–F10 preview candidates, first validate/bake the new material
+catalog if no current cache exists:
 
-## Why this implementation is structured this way
+```sh
+cargo run --bin material-baker -- validate
+cargo run --release --bin material-baker -- bake
+```
 
-- `src/world.rs`: authoritative Q/R/Y cell identifiers, 16³ chunk storage,
-  one seeded demo chunk, and world-space hex-coordinate conversion.
-- `src/player.rs`: testable movement, camera direction, gravity, collision
-  with demo topography and world-boundary constraints (no GPU dependency).
-- `src/mesh.rs`: exposed hexagonal-prism faces with neighboring-cell checks;
-  generated geometry is derived data, not the world state.
-- `src/render.rs`, `src/main.rs`, WGSL shaders: window, mouse and keyboard
-  input, and wgpu rendering, separate from world simulation.
-- `src/geography.rs`: earlier independent 32,768² *rectangular periodic
-  geography raster* index. It is **not** the hexel torus coordinate system.
+This creates an ignored `target/materials-v2/` cache. The default P0
+gallery is built into the executable and retains BC7 GPU compression
+with CPU RGBA fallback. The separate F8 preview does **not** prove
+general-purpose v2 runtime material loading.
 
-This demo uses **1 metre across opposing flats × 1 metre high** hexagonal-prism
-cells to align with the existing Foliage authoring output. These are the
-prototype's adopted playable dimensions only; the final global hex-lattice
-period translations, world mapping and geographic elevation-to-Y transform
-remain unresolved. The first chunk intentionally does **not** fake torus
-wrapping by applying an unvalidated Q/R modulo.
+The demo has a raised sample strip for looking at soil/grass cover,
+granite, shale and the same ore-only copper artwork over either host.
+These are **display fixtures**, not geological deposits or mineable
+resources. The three new granite/shale/copper PNGs are candidates,
+**not approved production artwork**.
 
-## Project boundaries
-
-- [Hexel Game Engine](https://github.com/sdhaight1-hash/Hexel-Game-Engine):
-  existing Rust/wgpu playable prototype and geometry reference. Its earlier
-  **spherical** planet direction conflicts with the newer **toroidal**
-  specification. Do not silently mix those systems.
-- [Voxel Game Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine):
-  existing Nodes, Presets, Foliage and Assets authoring app, plus the
-  [world design decisions](https://github.com/sdhaight1-hash/Voxel-Game-Engine/blob/main/docs/procedural-world-design-decisions.md).
-  Keep authorship separate from simulation authority.
-
-## Greater world design
-
-The selected direction remains a finite **1,024 × 1,024 km flat-coordinate
-torus** with globally periodic fields, synthetic tectonics, climate, one-time
-constrained terrain refinement, stored immutable geography and streamed
-deterministic local terrain. Save player edits and finite resource depletion
-in authoritative overlays; never regenerate harvested material from cached
-base chunks. Water must be globally conserved across simulation scales.
-
-None of these planetary systems is claimed to work in this first chunk.
-
-## Compressed texture pipeline
-
-The original high-resolution geology source art now gets processed **at
-build time**, not every launch. An embedded **BC7** texture pack uses only
-**0.75 MiB** of GPU memory for all 12 current 256px gallery layers on
-adapters supporting native BC compression (versus **3 MiB** uncompressed).
-The GPU decompresses BC7 automatically during sampling. Unsupported
-adapters use a **one-time CPU BC7 decoder** and the ordinary RGBA8 path,
-so the game remains playable without BC texture support.
-
-The console reports the selected mode. There is no additional install or
-asset-baking command: `cargo run --release` runs the offline bake as
-needed through Cargo. See [compression pipeline](docs/texture-compression.md).
-
-## P0 in-game material gallery
-
-The 16³ demo currently includes a **temporary reference strip** with bare,
-very sparse, sparse and fully grassy soil, plus granite and shale both with
-and without a shared copper overlay. The P0 gallery now builds 256px visual
-prototypes from the **original high-resolution soil, granite, shale, forest
-floor and copper textures**, with seam reduction and independent grass
-and ore overlays. Physical-metre UVs and distinct hexel face roles remain
-unchanged. None of the 55 legacy art files has been overwritten or certified
-production-ready.
-
-- `F6`: toggle a checker grid for spotting stretching and face seams.
-- `F7`: cycle **checker diagnostic** at 64 / 128 / 256 texels per metre.
-- `F8`: switch between the default P0 gallery and the opt-in baked v2
-  candidate granite, shale and copper preview (after running the v2 baker).
-- `F9`: cycle independent wet/moss/frost surface states for **F8 rock faces**.
-- `F10`: compare copper's directional metallic glints ON/OFF in F8 mode.
-- The middle display row is one metre higher so vertical transitions can be
-  inspected in first-person view.
-
-Read [P0 gallery guide](docs/p0-material-gallery.md) and
-[material format v2 proposal](docs/material-format-v2.md).
-The overarching P0–P7 geology/flora texture program is [issue #14](https://github.com/sdhaight1-hash/Hexel-survival-game/issues/14).
-
-## P1 material authoring and offline BC7 tooling
-
-The new [P1 material pipeline](docs/p1-material-pipeline.md) inventories **all
-55 legacy geology and organic-cover sources**. Three have unapproved candidate
-artwork and the other 52 remain pending.
-No old atlas crop has been promoted to production art. A versioned
-`assets/materials/catalog.v2.json` defines stable IDs, distinct hexel
-top/side/bottom material recipes and independent cover/ore overlays.
-
-Validate the catalog with `cargo run --bin material-baker -- validate`.
-Once new art has been approved for registration, bake it with
-`cargo run --release --bin material-baker -- bake`; files go to
-`target/materials-v2`. This tool supports **rectangular and square RGBA**
-textures with appropriate physical repeat scales and emits BC7. Three **unapproved original candidate** art assets are now registered:
-granite, shale, and native-copper transparent overlay. The default P0
-display is unchanged; the separate F8 gallery preview shows candidates
-only after a successful v2 bake. It does not yet support arbitrary v2
-materials, full per-face role variation or streamed texture resources.
-
-## P2.2 reactive surface preview
-
-The F8 rock/ore gallery now exercises **localized copper metallic response**,
-**wetness**, **moss / lichen** and **frost**, without changing saved material
-identities or the default P0 scene. These are explicitly controlled preview
-states, not climate or ecology simulation. Only copper is metallic; not all
-ore or minerals should use its lighting response.
-
-See [P2.2 surface states and visual QA](docs/p2-2-reactive-surfaces.md) for
-shading limitations, the F9/F10 controls, layer ownership and next review gates.
-
-## Tests and engineering roadmap
+## Tests
 
 ```sh
 cargo fmt --all -- --check
 cargo test --all-targets
+python3 scripts/validate_material_catalog.py
+python3 scripts/validate_flora_registry.py
 ```
 
-GitHub Actions runs those checks on pushes and pull requests. Headless tests
-cover data layout, coordinate round trips, determinism, movement, boundaries,
-jumping and geometry sanity; they cannot certify in-person GPU/gameplay quality.
+GitHub Actions validates the code and catalogs; native graphics/art
+approval still requires actual first-person review.
 
-All new terrain, ore, soil-cover and grass texture work follows the
-[material and vegetation contract](docs/material-authoring-contract.md). The
-legacy demo art is not yet a production-ready face set. Run
-`python3 scripts/validate_material_catalog.py` to verify registered assets.
+## Architecture in brief
 
-Flora species, habitat research and eventual plant appearances are now tracked
-separately from terrain materials. See [Flora to assets](docs/flora-to-assets.md)
-and the research inventory at `assets/flora/reference_registry.v1.json`.
-None of its species currently spawn in the demo. Run
-`python3 scripts/validate_flora_registry.py` to check that inventory.
+- `src/world.rs`: Q/R/Y cells and a bounded deterministic demo chunk.
+- `src/player.rs`: movement, collision, camera and bounded demo behavior.
+- `src/mesh.rs`: exposed prism faces; meshes are disposable derived data.
+- `src/render.rs` and WGSL: native first-person rendering.
+- `src/geography.rs`: periodic **rectangular** geographic indexing;
+  it does not establish a valid wrapped hexel lattice.
+- `src/material_contract.rs`: renderer-independent substrate/cover/ore
+  distinctions; not a saved gameplay mineral inventory.
+- `src/materials_v2.rs`: startup material-cache validation and a narrow
+  F8 preview, not a generalized production GPU material dispatcher.
 
-Read [World generation](docs/world-generation.md),
-[Integration boundaries](docs/integration.md),
-[Decisions](docs/decisions.md) and
-[Roadmap](docs/roadmap.md) before expanding the prototype.
+Selected long-term direction: a finite 1,024 km × 1,024 km
+flat-coordinate toroidal geography with deterministic synthetic
+tectonics, climate, geology, editable 3D hexels, persistent finite
+resource stock, and water conservation across global/regional/local
+simulation scales. **Those systems are mostly plans, not present
+runtime behavior.**
+
+The adjacent
+[Hexel Game Engine](https://github.com/sdhaight1-hash/Hexel-Game-Engine)
+and [Voxel Game Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine)
+are reference implementations/authoring projects; do not import
+their older spherical-world assumption or treat their asset-editor
+state as live survival-game state.
+
+## Documentation — start here
+
+- [Documentation map and topic ownership](docs/README.md): navigate
+  canonical art, architecture, roadmaps, milestone reports and history.
+- [Canonical style guide](assets/STYLE_GUIDE.md): the visual direction
+  and art-approval standard only.
+- [Core engineering roadmap](docs/roadmap.md) and
+  [material/overlay roadmap](docs/material-overlay-roadmap.md).
+- [Material contract](docs/material-authoring-contract.md),
+  [P1 catalog and baker](docs/p1-material-pipeline.md), and
+  [P2.2 reactive preview](docs/p2-2-reactive-surfaces.md).
+- [World generation](docs/world-generation.md),
+  [integration boundaries](docs/integration.md),
+  [decisions](docs/decisions.md) and
+  [flora registry/asset handoff](docs/flora-to-assets.md).
+
+**Current research:** the headless [space-colonization skeleton](src/space_colonization.rs)
+and [technical study](docs/space-colonization-study.md) were merged via
+[PR #30](https://github.com/sdhaight1-hash/Hexel-survival-game/pull/30). The module is **not integrated into
+gameplay, geology, caves, materials or water**. A continuous world-space
+overlay proof remains planned separately, without requiring SCA.
+
+For visual contributions, use [visual development workflow](docs/visual-contribution-guide.md), then review in the real game.

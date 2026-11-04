@@ -1,25 +1,34 @@
-# Illustrated style-guide companions
+# Original illustrated reference posters — relevance audit
 
-These three original illustrated infographics are **visual summaries** for
-[Hexel Survival's canonical art direction](../STYLE_GUIDE.md):
+These three original AI-generated WebP concept posters are retained as
+**visual references**, not technical definitions or final game artwork.
+Their topics remain relevant after the documentation split, but their
+appropriate locations differ:
 
-1. **visual-identity.webp** — art pillars, atmospheric color, material
-   readability, hexel roles, and acceptance tests.
-2. **terrain-geology.webp** — geology, soil/grass cover, host-rock + ore-only
-   overlays, metre-scaled UVs, materials pipeline and QA.
-3. **flora-architecture.webp** — separate vegetation state layers; cutout
-   cards, 3D meshes and hybrids; plant-generation approaches; LOD and QA.
+| Original artwork | Keep? | Best current home | Reason / limits |
+| --- | --- | --- | --- |
+| [visual-identity.webp](visual-identity.webp) | **Keep** | [Canonical style guide](../STYLE_GUIDE.md) | Still summarizes painterly warm/cool atmosphere, player-scale readability and identity. Any schematic block proportions or numeric values are nonauthoritative. |
+| [terrain-geology.webp](terrain-geology.webp) | **Keep** | [Canonical style guide](../STYLE_GUIDE.md), geology section | Still illustrates distinct rock/soil, face roles, host+ore appearance. Its old pipeline and arbitrary scale labels do not replace the P1/P2.3 implementation contracts. |
+| [flora-architecture.webp](flora-architecture.webp) | **Keep, move its embedding** | [Vegetation visual architecture](../../docs/vegetation-visual-architecture.md) | Still useful for cutout cards, meshes/hybrid silhouettes and generation/LOD concepts. Its topic is engineering/asset structure rather than purely art direction. |
 
-**Format:** original-size 1055 × 1491 px, high-quality compressed WebP.
-These are documentation illustrations, **not** shipped game assets,
-photographs, technical UV templates, or proof of implemented features.
+**Decision:** No original image was deleted on topical relevance alone.
+The flora illustration has been removed from the *style guide's inline
+display* and placed with its subject-specific technical design. The
+other two remain connected to the visual-direction sections they serve.
 
-**Authority:** prose in `assets/STYLE_GUIDE.md` and the linked engine
-contracts takes precedence over image captions, schematic geometry or
-illustrative example numbers. In particular, there is **no fixed
-four-texels-per-metre rule**, no assumption that all cutout cards must face
-the camera, and no universal glowing ore appearance.
+**Format:** original 1055 × 1491 px compressed WebP. Their presence
+does not mean that every pixel-level design detail has passed a new
+art-acceptance review; the original captions and warnings remain
+applicable. The written visual specification and current implementation
+records take precedence over apparent cubic geometry, unrealistic
+textures, unsupported numeric UV claims, universal glowing ores or
+camera-facing foliage cards.
 
-Source artwork: original AI-generated illustrations prepared in the
-project conversation. No Hytale/Vintage Story/Luis Royo image assets were
-imported or copied into this repository.
+**New visuals:** four editable, correctly labeled SVG architecture
+diagrams are documented in [technical diagrams](../diagrams/README.md).
+Those diagrams cover the *system contracts* the original painted posters
+were never meant to establish.
+
+**Authorship:** original AI-generated concept/reference illustrations
+produced in the project conversation. No proprietary reference-game or
+artist textures were extracted or copied into these assets.

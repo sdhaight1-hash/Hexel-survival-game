@@ -24,9 +24,9 @@ the eye position from `Player`. Do not scale rendered hexels independently
 to make them appear shorter; physical dimensions must agree with collision
 and eventual construction/asset sizes.
 
-## Currently visible material mapping
+## Original 32px material mapping (historical)
 
-The demo now displays **real 32×32 PNGs** from `assets/textures`:
+The **initial demo displayed** real 32×32 PNGs from `assets/textures`:
 
 | Face in the demo | Material asset |
 | --- | --- |

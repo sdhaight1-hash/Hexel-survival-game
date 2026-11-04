@@ -22,6 +22,11 @@ not imported code or currently implemented features.
 - A torus does **not** reproduce Earth's poles or exact atmospheric circulation.
   Use plausible periodic climate forcing rather than claiming Earth realism.
 
+![World-generation architecture showing versioned world seed, periodic geology and climate, immutable geography, deterministic derived hexel terrain, separate persisted player edits and disposable GPU render caches](../assets/diagrams/worldgen-persistence.svg)
+
+*Architectural design only: the full planet generator, saved edits and
+section streaming are not implemented in the present one-chunk demo.*
+
 ## World-creation pipeline (proposed)
 
 1. **Seed and manifest:** size, generator revisions, world-height settings and
@@ -104,6 +109,11 @@ does not prove 1 m of real-world relief fits into each Y level.
   unless a physical boundary explains the abrupt change.
 - Long-term ecology uses global/regional aggregate state plus individual
   simulation around active players; this remains a future requirement.
+
+![Finite-water conservation hierarchy showing global ocean and atmosphere mass accounting, regional basins and aquifers, and local conservative face-to-face hexel transfers](../assets/diagrams/finite-water-hierarchy.svg)
+
+*Design invariant: all water transfer must remain balanced. The game
+does not yet have a global/regional/local water solver.*
 
 ## Water conservation is mandatory
 

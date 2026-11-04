@@ -9,7 +9,7 @@ been imported into this game.
 | --- | --- | --- |
 | [Hexel Game Engine](https://github.com/sdhaight1-hash/Hexel-Game-Engine) | Rust/wgpu playable flat hexel prototype, 16³ chunks, camera, collisions, editing, some tree and geology data | Candidate runtime techniques and gameplay prototype; validate code before reusing |
 | [Voxel Game Engine](https://github.com/sdhaight1-hash/Voxel-Game-Engine) | Rust procedural asset editor (Nodes, Presets, Foliage, Assets), wgpu asset preview and authoring exports | Authoring tools and reusable **baked** assets, not world-simulation authority |
-| **This repository** | Bootstrap Rust geography indexing and project documents | Future game runtime integration, persistent world state and global-field consumers |
+| **This repository** | Actual native Rust/wgpu one-chunk first-person prototype, P0/P1 material infrastructure, and separate periodic raster-index tests | Game runtime integration, persistent world state and global-field consumers; full planet systems still planned |
 
 **Topological conflict to resolve:** Hexel Game Engine's README still describes
 a future **sphere**, while the latest supplied world-generation specification
@@ -43,6 +43,11 @@ The runtime decides **where** a tree or rock occurs, its quantities, and what
 changes after harvest; authored assets define **what** it is and how it looks.
 Do not evaluate CPU material graphs per terrain cell or run ecology inside the
 asset editor. Meshes and GPU buffers are derived caches.
+
+The [world generation and persistence infographic](../assets/diagrams/worldgen-persistence.svg) illustrates this ownership
+boundary, including immutable seed-derived geography, separately
+saved mutations and disposable render caches. The diagram is a
+**proposed integration contract**, not a save/streaming implementation.
 
 ## Coordinates and authority
 
