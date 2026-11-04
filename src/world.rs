@@ -523,6 +523,76 @@ mod tests {
     }
 
     #[test]
+    fn rapid_target_changes_preserve_cpu_gpu_delta_contract_and_center_priority() {
+        let mut world = World::streamed(123);
+        let origin = CellPos::new(1, 1, 220).center();
+        world.stream_around(origin);
+        // Mirror only residency membership: real GPU entries intentionally omit
+        // all-air sections, and render::sync_stream asserts mesh subset ownership.
+        let mut mirrored_residents: HashSet<_> = world.chunk_positions().collect();
+        let targets = [
+            CellPos::new(200, -120, 245),
+            CellPos::new(-80, 160, 195),
+            CellPos::new(200, -120, 245),
+            CellPos::new(1, 1, 220),
+        ];
+        for target in targets {
+            let center = target.chunk_and_local().0;
+            let mut previous_pending = usize::MAX;
+            for tick in 0..4 {
+                let delta = world.stream_around_budgeted(target.center(), 1);
+                assert!(delta.added.len() <= 1);
+                assert_eq!(delta.added.len(), delta.removed.len());
+                assert!(delta.pending <= previous_pending);
+                previous_pending = delta.pending;
+                for pos in delta.removed {
+                    assert!(mirrored_residents.remove(&pos));
+                    assert!(world.chunk(pos).is_none());
+                }
+                for pos in delta.added {
+                    assert!(mirrored_residents.insert(pos));
+                    assert!(world.chunk(pos).is_some());
+                    if tick == 0 {
+                        assert_eq!(pos, center); // nearest player section first
+                    }
+                }
+                assert_eq!(mirrored_residents.len(), 95);
+                assert_eq!(
+                    mirrored_residents,
+                    world.chunk_positions().collect::<HashSet<_>>()
+                );
+            }
+        }
+        let destination = CellPos::new(-80, 160, 195).center();
+        for _ in 0..95 {
+            let delta = world.stream_around_budgeted(destination, 1);
+            for pos in delta.removed {
+                assert!(mirrored_residents.remove(&pos));
+            }
+            for pos in delta.added {
+                assert!(mirrored_residents.insert(pos));
+            }
+            if delta.pending == 0 {
+                break;
+            }
+        }
+        let mut reference = World::streamed(123);
+        reference.stream_around(destination);
+        assert_eq!(
+            mirrored_residents,
+            reference.chunk_positions().collect::<HashSet<_>>()
+        );
+        assert_eq!(mirrored_residents.len(), 95);
+        for cell in [
+            CellPos::new(-80, 160, 195),
+            CellPos::new(1, 1, 220),
+            CellPos::new(200, -120, 245),
+        ] {
+            assert_eq!(world.get(cell), reference.get(cell));
+        }
+    }
+
+    #[test]
     fn unresident_neighbors_are_real_base_terrain_not_false_air() {
         let source = PrototypeTerrain::new(42);
         let mut world = World::streamed(42);
