@@ -21,10 +21,18 @@ pass on GitHub Actions. This is *not* a playable-world milestone.
 - [x] Add native first-person wgpu rendering and Minecraft-style movement.
 - [x] Keep world coordinates, player simulation, and derived rendering separate.
 - [ ] Manually verify desktop graphics and input on a target machine.
-- [ ] Add editable blocks, persistence, and neighboring chunk streaming.
+- [x] Add an opt-in moving **95-section** deterministic local chunk streamer, with incremental GPU mesh updates (P3.2A; not production-scale or persisted).
+- [ ] Add editable blocks, persisted authoritative mutations, and save/unload/reload (independent of the already working moving streamer).
 
 The current demo **does not** establish toroidal hex-lattice wrapping or a
-complete M1 game-state integration; those remain below.
+complete M1 game-state integration; those remain below. The moving
+streamer is validated as a prototype, but does not satisfy editing,
+persisted changes or future global LOD requirements. Runtime F1/F2/F3,
+CPU draw timing, `Is_Moving`/`Is_Looking`, and opt-in presentation
+mode/latency A/B testing are now available as diagnostics, with the
+**Windows presentation-quality gate still open**. See the
+[presentation A/B protocol](p3-presentation-mode-ab.md) and
+[2026-11-04 audit](repository-audit-2026-11-04.md).
 
 ### Remaining M1 work
 
