@@ -675,10 +675,16 @@ mod tests {
         let json = serde_json::to_value(&recipes).unwrap();
         assert_eq!(json[0]["overlays"]["side"], "ore.copper_mask");
         assert_eq!(json[1]["faces"]["top"]["base"], "rock.granite_albedo");
-        assert_eq!(json[1]["faces"]["bottom"]["overlay"], serde_json::Value::Null);
+        assert_eq!(
+            json[1]["faces"]["bottom"]["overlay"],
+            serde_json::Value::Null
+        );
         // Authoring order does not affect the runtime index.
         catalog.materials.reverse();
-        assert_eq!(serde_json::to_value(material_recipes(&catalog)).unwrap(), json);
+        assert_eq!(
+            serde_json::to_value(material_recipes(&catalog)).unwrap(),
+            json
+        );
     }
 
     #[test]
