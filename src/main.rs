@@ -10,7 +10,7 @@ mod texture_codec;
 mod texture_pack;
 
 use benchmark_log::{BenchHistory, BenchSample, ConsoleLog};
-use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
+use debug_menu::{console_copy_hit_test, hit_test, MenuAction, MenuSnapshot};
 use hexel_survival_game::{
     player::{MoveInput, Player},
     world::World,
@@ -194,13 +194,13 @@ impl Game {
         }
         let label = self.renderer.as_ref().map_or_else(
             || "not initialized".into(),
-            |r| {
-                format!(
-                    "{} | {}",
-                    r.material_comparison_label(),
-                    r.presentation_label()
-                )
-            },
+            |r| benchmark_mode_label(
+                r.material_comparison_label(),
+                r.presentation_label(),
+                r.menu_snapshot(self.benchmark_logging),
+                self.menu_open,
+                self.console_open,
+            ),
         );
         self.console_log
             .record(format_average(&label, "TRIAL FINAL", trial));
@@ -551,15 +551,12 @@ impl ApplicationHandler for Game {
                                     } else {
                                         "GPU pass N/A".to_string()
                                     };
-                                    let label = format!(
-                                        "{} | {}{}",
+                                    let label = benchmark_mode_label(
                                         renderer.material_comparison_label(),
                                         renderer.presentation_label(),
-                                        if self.console_open || self.menu_open {
-                                            " | UI OPEN"
-                                        } else {
-                                            ""
-                                        },
+                                        renderer.menu_snapshot(self.benchmark_logging),
+                                        self.menu_open,
+                                        self.console_open,
                                     );
                                     let sample = BenchSample {
                                         seconds: elapsed,
@@ -639,6 +636,43 @@ impl ApplicationHandler for Game {
     }
 }
 
+/// Snapshot the *actual* material/overlay/culling context for each trial.
+/// Inactive F9/F10 preferences remain marked as configured, not rendered.
+fn benchmark_mode_label(
+    material: &str,
+    presentation: &str,
+    snapshot: MenuSnapshot,
+    menu_open: bool,
+    console_open: bool,
+) -> String {
+    let flag = |value: bool| if value { "ON" } else { "OFF" };
+    let culling = snapshot.chunk_culling.map_or("N/A", flag);
+    let surface = match snapshot.surface {
+        Some(name) if snapshot.v2_materials == Some(false) => format!("{name} SET"),
+        Some(name) => name.to_string(),
+        None => "N/A".into(),
+    };
+    let glints = match snapshot.metal_glints {
+        Some(enabled) if snapshot.v2_materials == Some(false) => {
+            format!("{} SET", flag(enabled))
+        }
+        Some(enabled) => flag(enabled).into(),
+        None => "N/A".into(),
+    };
+    let ui = if menu_open {
+        "F1 OPEN"
+    } else if console_open {
+        "F2 OPEN"
+    } else {
+        "CLOSED"
+    };
+    format!(
+        "{material} | {presentation} | F4 {culling} | F9 {surface} | F10 {glints} | F6 {} | F7 {} | UI {ui}",
+        flag(snapshot.uv_checker),
+        snapshot.uv_density,
+    )
+}
+
 /// Weighted FPS and CPU/GPU means, excluding unsupported GPU timings.
 fn format_average(label: &str, name: &str, sample: BenchSample) -> String {
     let gpu = match sample.gpu_ms() {
@@ -669,6 +703,35 @@ fn frame_percentile_ms(sorted: &[f64], percentile: usize) -> f64 {
 #[cfg(test)]
 mod benchmark_stats_tests {
     use super::*;
+
+    #[test]
+    fn benchmark_labels_separate_surface_and_ui_context() {
+        let mut snapshot = MenuSnapshot {
+            console_open: false,
+            frame_stats: true,
+            chunk_culling: Some(true),
+            unlocked_present: Some(true),
+            gpu_timestamps: true,
+            uv_checker: false,
+            uv_density: 128,
+            v2_materials: Some(true),
+            surface: Some("Dry"),
+            metal_glints: Some(true),
+            gray_copper: Some(true),
+        };
+        let dry = benchmark_mode_label("F11 grayscale", "IMMEDIATE", snapshot, false, false);
+        snapshot.surface = Some("Moss / lichen");
+        let moss = benchmark_mode_label("F11 grayscale", "IMMEDIATE", snapshot, false, true);
+        assert_ne!(dry, moss);
+        assert!(dry.contains("F9 Dry"));
+        assert!(dry.contains("UI CLOSED"));
+        assert!(moss.contains("F9 Moss / lichen"));
+        assert!(moss.contains("UI F2 OPEN"));
+        snapshot.v2_materials = Some(false);
+        let inactive = benchmark_mode_label("P0", "FIFO", snapshot, true, false);
+        assert!(inactive.contains("F9 Moss / lichen SET"));
+        assert!(inactive.contains("F10 ON SET"));
+    }
 
     #[test]
     fn averages_reflect_weighted_frame_and_gpu_sample_counts() {
