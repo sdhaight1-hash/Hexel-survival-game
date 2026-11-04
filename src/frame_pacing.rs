@@ -93,7 +93,9 @@ mod tests {
         assert!(!pacer.tick(origin + Duration::from_millis(18)));
         assert!(pacer.tick(origin + Duration::from_millis(100)));
         assert!(!pacer.tick(origin + Duration::from_millis(101)));
-        assert!(pacer.report_and_reset(Duration::from_secs(1)).contains("missed pacing deadlines 1"));
+        assert!(pacer
+            .report_and_reset(Duration::from_secs(1))
+            .contains("missed pacing deadlines 1"));
     }
 
     #[test]
@@ -114,6 +116,8 @@ mod tests {
         let report = pacer.report_and_reset(Duration::from_secs(1));
         assert!(report.contains("2 successful draws"));
         assert!(report.contains("p95 9.00 ms (1 interval samples)"));
-        assert!(pacer.report_and_reset(Duration::from_secs(1)).contains("0 successful draws"));
+        assert!(pacer
+            .report_and_reset(Duration::from_secs(1))
+            .contains("0 successful draws"));
     }
 }
