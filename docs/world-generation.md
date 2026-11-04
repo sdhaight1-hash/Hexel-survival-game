@@ -12,6 +12,8 @@ ecology are causally connected, rather than unrelated noise maps. Geological
 depth (Vintage Story) and interconnected ecology (Eco) are reference goals,
 not imported code or currently implemented features.
 
+A source-grounded [LOD, hex topology and biome generation reference review](worldgen-streaming-reference-review.md) discusses Voxy SeedGen, Distant Horizons, Worley biomes and meshing without claiming those systems have been adopted.
+
 ## Global topology
 
 - **Selected:** 1,024 km by 1,024 km finite flat-coordinate torus.
