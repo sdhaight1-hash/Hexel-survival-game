@@ -121,7 +121,9 @@ mod tests {
         assert!(report.contains("acquire 9.00"));
         assert!(report.contains("present 11.00"));
         assert!(report.contains("Is_Looking samples 1/2"));
-        assert!(report.contains("four states [idle+still 0, idle+look 1, move+still 1, move+look 0]"));
+        assert!(
+            report.contains("four states [idle+still 0, idle+look 1, move+still 1, move+look 0]")
+        );
         assert!(metrics.report_and_reset().contains("0 successful draws"));
     }
 
@@ -145,7 +147,9 @@ mod tests {
             );
         }
         let report = metrics.report_and_reset();
-        assert!(report.contains("four states [idle+still 1, idle+look 1, move+still 1, move+look 1]"));
+        assert!(
+            report.contains("four states [idle+still 1, idle+look 1, move+still 1, move+look 1]")
+        );
         assert!(report.contains("draw p95 4.00/12.00/20.00/40.00 ms"));
         assert!(report.contains("acquire p95 2.00/10.00/18.00/38.00 ms"));
     }
