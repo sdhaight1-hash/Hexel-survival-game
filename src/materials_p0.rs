@@ -213,8 +213,14 @@ mod tests {
         assert_eq!(layers.len(), LAYER_COUNT);
         assert_eq!(LAYER_COUNT, 18);
         for layer in 12..18 {
-            assert_eq!(layers[layer].len(), (TEXTURE_SIZE * TEXTURE_SIZE * 4) as usize);
-            assert_ne!(layers[layer], layers[0], "diagnostic layer must not alias bare soil");
+            assert_eq!(
+                layers[layer].len(),
+                (TEXTURE_SIZE * TEXTURE_SIZE * 4) as usize
+            );
+            assert_ne!(
+                layers[layer], layers[0],
+                "diagnostic layer must not alias bare soil"
+            );
             for previous in 12..layer {
                 assert_ne!(
                     layers[layer], layers[previous],
