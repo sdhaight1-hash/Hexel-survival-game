@@ -165,6 +165,10 @@ impl PeriodicTerrainCandidate {
                 Block::Gravel
             } else if cover < 0.46 {
                 Block::Soil
+            } else if cover < 0.55 {
+                Block::GrassSparse
+            } else if moisture < 0.49 {
+                Block::GrassDry
             } else {
                 Block::Grass
             }
@@ -197,7 +201,7 @@ impl PeriodicTerrainCandidate {
                 result.min_height = result.min_height.min(column.top);
                 result.max_height = result.max_height.max(column.top);
                 let slot = match column.cover {
-                    Block::Grass => 0,
+                    Block::Grass | Block::GrassDry | Block::GrassSparse => 0,
                     Block::Rock => 1,
                     Block::Shale => 2,
                     Block::Gravel => 3,
