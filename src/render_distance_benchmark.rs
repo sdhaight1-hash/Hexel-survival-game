@@ -1,5 +1,5 @@
 //! Reproducible full-resolution render-distance experiment (not terrain LOD).
-//! Each 30-second stage reserves at least 5s to warm up; only settled
+//! Each 40-second stage reserves at least 5s to warm up; only settled
 //! samples with zero pending sections are used for steady-frame percentiles.
 use std::{
     fs::{self, File},
