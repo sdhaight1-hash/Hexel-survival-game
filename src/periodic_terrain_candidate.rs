@@ -43,10 +43,8 @@ impl PeriodicTerrainCandidate {
         let uplift = self.periodic_noise_at(x, z, 256, 0xE2A0_0002);
         let plateau_mask = self.periodic_noise_at(x, z, 128, 0xE2A0_0003);
         let basin = smoothstep(0.57, 0.80, 1.0 - macro_height);
-        let mountain = smoothstep(0.48, 0.75, uplift)
-            * (1.0 - basin * 0.80);
-        let plateau = smoothstep(0.62, 0.83, plateau_mask)
-            * (1.0 - mountain) * (1.0 - basin);
+        let mountain = smoothstep(0.48, 0.75, uplift) * (1.0 - basin * 0.80);
+        let plateau = smoothstep(0.62, 0.83, plateau_mask) * (1.0 - mountain) * (1.0 - basin);
 
         // Domain warping bends mountain ridgelines without breaking torus
         // periodicity. The warp is evaluated from a lower-frequency field.
@@ -62,22 +60,17 @@ impl PeriodicTerrainCandidate {
         // Narrow depression corridors suggest drainage and connected
         // valleys. This is analytical *valley structure*, not a claim of
         // simulated hydraulic erosion or validated river flow.
-        let channel = 1.0 - (self.periodic_noise_at(rx, rz, 2048, 0xE2A0_000A)
-            * 2.0 - 1.0).abs();
+        let channel = 1.0 - (self.periodic_noise_at(rx, rz, 2048, 0xE2A0_000A) * 2.0 - 1.0).abs();
         let valley = channel.powi(10);
 
-        let base = 205.0 + (macro_height - 0.5) * 190.0
-            + (uplift - 0.5) * 58.0;
-        let hills = (foothills - 0.5) * 88.0
-            + (rolling - 0.5) * 32.0
-            + (details - 0.5) * 9.0;
+        let base = 205.0 + (macro_height - 0.5) * 190.0 + (uplift - 0.5) * 58.0;
+        let hills = (foothills - 0.5) * 88.0 + (rolling - 0.5) * 32.0 + (details - 0.5) * 9.0;
         let plains = 0.23 + 0.77 * (1.0 - basin);
         let plateau_level = (base / 28.0).round() * 28.0 + 42.0;
-        let elevation = base
-            + hills * plains * (1.0 - plateau * 0.83)
-            + mountain * (68.0 + ridge * 320.0)
-            - valley * (22.0 + mountain * 65.0)
-            - basin * 36.0;
+        let elevation =
+            base + hills * plains * (1.0 - plateau * 0.83) + mountain * (68.0 + ridge * 320.0)
+                - valley * (22.0 + mountain * 65.0)
+                - basin * 36.0;
         lerp(elevation, plateau_level + hills * 0.12, plateau * 0.85).round() as i32
     }
 
@@ -92,8 +85,7 @@ impl PeriodicTerrainCandidate {
             steepest = steepest.max((top - neighbor).abs());
         }
         let canonical = pos.candidate_wrap();
-        let stripe = (canonical.q.div_euclid(96) ^ canonical.r.div_euclid(96))
-            .rem_euclid(4);
+        let stripe = (canonical.q.div_euclid(96) ^ canonical.r.div_euclid(96)).rem_euclid(4);
         if top >= 355 || steepest >= 5 {
             if stripe <= 1 {
                 Block::Rock
