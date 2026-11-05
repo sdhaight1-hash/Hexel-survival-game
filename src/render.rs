@@ -4,7 +4,7 @@
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
     materials_p0, materials_v2,
-    mesh::{build_chunk_mesh_relative, Vertex},
+    mesh::{build_chunk_mesh_relative, torus_guides, Vertex},
     presentation::PresentationOptions,
     texture_pack::TexturePack,
 };
@@ -100,6 +100,11 @@ pub struct Renderer {
     surface_preset: SurfacePreset,
     metallic_glints: bool,
     terrain_meshes: HashMap<ChunkPos, TerrainGpuMesh>,
+    torus_guide_buffer: Option<wgpu::Buffer>,
+    torus_guide_vertices: u32,
+    torus_hud_buffer: Option<wgpu::Buffer>,
+    torus_hud_vertices: u32,
+    torus_hud_cache: Option<String>,
     /// Fixed axial origin shared by all opt-in distant-spawn GPU meshes.
     render_origin: Option<(i32, i32)>,
     crosshair_buffer: wgpu::Buffer,
@@ -593,6 +598,15 @@ impl Renderer {
         if terrain_meshes.is_empty() {
             return Err("No terrain geometry was generated".to_string());
         }
+        let guide_data = world.torus_frame().map(torus_guides).unwrap_or_default();
+        let torus_guide_vertices = guide_data.len() as u32;
+        let torus_guide_buffer = (!guide_data.is_empty()).then(|| {
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Global torus seam guides"),
+                contents: bytemuck::cast_slice(&guide_data),
+                usage: wgpu::BufferUsages::VERTEX,
+            })
+        });
         let crosshair = [
             CrosshairVertex {
                 position: [-0.013, 0.0],
@@ -651,6 +665,11 @@ impl Renderer {
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
             terrain_meshes,
+            torus_guide_buffer,
+            torus_guide_vertices,
+            torus_hud_buffer: None,
+            torus_hud_vertices: 0,
+            torus_hud_cache: None,
             render_origin,
             crosshair_buffer,
             crosshair_vertices: crosshair.len() as u32,
@@ -702,6 +721,34 @@ impl Renderer {
             uploaded_bytes,
             cpu_ms: start.elapsed().as_secs_f64() * 1000.0,
         }
+    }
+
+    /// Rebase invalidates *all* local GPU vertex positions. Never try to
+    /// preserve buffers by chunk key across frame changes.
+    pub fn rebuild_torus_world(&mut self, world: &World) {
+        self.terrain_meshes.clear();
+        for pos in world.chunk_positions() {
+            let vertices = build_chunk_mesh_relative(world, pos, self.render_origin);
+            if vertices.is_empty() { continue; }
+            let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Rebased periodic terrain mesh"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+            self.terrain_meshes.insert(pos, TerrainGpuMesh {
+                buffer,
+                vertices: vertices.len() as u32,
+            });
+        }
+        let guides = world.torus_frame().map(torus_guides).unwrap_or_default();
+        self.torus_guide_vertices = guides.len() as u32;
+        self.torus_guide_buffer = (!guides.is_empty()).then(|| {
+            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Rebased global torus guides"),
+                contents: bytemuck::cast_slice(&guides),
+                usage: wgpu::BufferUsages::VERTEX,
+            })
+        });
     }
 
     pub fn presentation_report(&self) -> &str {
@@ -792,6 +839,7 @@ impl Renderer {
         player: &Player,
         menu: Option<(MenuSnapshot, Option<MenuAction>)>,
         console: Option<(&VecDeque<String>, u64)>,
+        torus_hud: Option<&str>,
     ) -> Result<DrawCpuTimings, wgpu::SurfaceError> {
         let draw_start = Instant::now();
         if let Some((snapshot, hovered)) = menu {
@@ -838,6 +886,20 @@ impl Renderer {
             self.console_vertex_count = 0;
         }
 
+        if self.torus_hud_cache.as_deref() != torus_hud {
+            self.torus_hud_cache = torus_hud.map(str::to_owned);
+            let vertices = torus_hud.map_or_else(Vec::new, |status| {
+                debug_menu::torus_hud_geometry(self.config.width, self.config.height, status)
+            });
+            self.torus_hud_vertices = vertices.len() as u32;
+            self.torus_hud_buffer = (!vertices.is_empty()).then(|| {
+                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Global torus HUD"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                })
+            });
+        }
         let aspect = self.config.width as f32 / self.config.height as f32;
         let absolute_eye = player.eye_position();
         // Vertex buffers for opt-in distant spawns use integer-axial-relative
@@ -928,7 +990,16 @@ impl Renderer {
                 pass.set_vertex_buffer(0, mesh.buffer.slice(..));
                 pass.draw(0..mesh.vertices, 0..1);
             }
+            if let Some(buffer) = &self.torus_guide_buffer {
+                pass.set_vertex_buffer(0, buffer.slice(..));
+                pass.draw(0..self.torus_guide_vertices, 0..1);
+            }
             if menu.is_none() && console.is_none() {
+                if let Some(buffer) = &self.torus_hud_buffer {
+                    pass.set_pipeline(&self.menu_pipeline);
+                    pass.set_vertex_buffer(0, buffer.slice(..));
+                    pass.draw(0..self.torus_hud_vertices, 0..1);
+                }
                 pass.set_pipeline(&self.crosshair_pipeline);
                 pass.set_vertex_buffer(0, self.crosshair_buffer.slice(..));
                 pass.draw(0..self.crosshair_vertices, 0..1);
