@@ -5,7 +5,7 @@ use crate::materials_p0::{self, Material};
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
 use hexel_survival_game::material_contract::HexFace;
-use hexel_survival_game::world::{Block, CellPos, ChunkPos, World, CHUNK_SIDE, HEX_RADIUS};
+use hexel_survival_game::world::{Block, CellPos, ChunkPos, World, CHUNK_SIDE};
 use std::collections::HashSet;
 
 #[repr(C)]
@@ -31,7 +31,7 @@ impl Vertex {
 }
 
 // Six side edges, ordered counter-clockwise from a 30-degree corner.
-const SIDE_NEIGHBORS: [(i32, i32); 6] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)];
+const SIDE_NEIGHBORS: [(i32, i32); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
 fn triangle(
     vertices: &mut Vec<Vertex>,
@@ -127,8 +127,8 @@ pub fn resident_boundary_markers(
         } else {
             (cell_q, cell_r)
         };
-        let x = dq as f32 + dr as f32 * 0.5;
-        let z = dr as f32 * hexel_survival_game::world::HEX_ROW_SPACING;
+        let x = dq as f32;
+        let z = dr as f32;
         let y0 = eye_y - 20.0;
         let y1 = eye_y + 35.0;
         let tint = [1.0, 0.05, 0.8];
@@ -189,99 +189,65 @@ pub fn build_chunk_mesh_relative(
                 if !block.is_solid() {
                     continue;
                 }
-                let center = if let Some((origin_q, origin_r)) = origin {
-                    // Use i64 subtraction to avoid i32 overflow and preserve
-                    // the full metre / half-metre detail at distant spawns.
-                    let dq = i64::from(cell.q) - i64::from(origin_q);
-                    let dr = i64::from(cell.r) - i64::from(origin_r);
-                    Vec3::new(
-                        dq as f32 + dr as f32 * 0.5,
-                        (cell.y as f32 + 0.5),
-                        dr as f32 * hexel_survival_game::world::HEX_ROW_SPACING,
-                    )
+                let (x, z) = if let Some((oq, or)) = origin {
+                    ((i64::from(cell.q) - i64::from(oq)) as f32,
+                     (i64::from(cell.r) - i64::from(or)) as f32)
                 } else {
-                    cell.center()
+                    (cell.q as f32, cell.r as f32)
                 };
-                let bottom = cell.y as f32;
-                let top = bottom + 1.0;
-                let ring: [Vec3; 6] = std::array::from_fn(|i| {
-                    let angle = (30.0 + i as f32 * 60.0).to_radians();
-                    Vec3::new(
-                        center.x + HEX_RADIUS * angle.cos(),
-                        0.0,
-                        center.z + HEX_RADIUS * angle.sin(),
-                    )
-                });
-                let uv = cap_uv;
-                if !world
-                    .get(CellPos::new(cell.q, cell.r, cell.y + 1))
-                    .is_solid()
-                {
-                    let cap = Vec3::new(center.x, top, center.z);
-                    for i in 0..6 {
-                        let j = (i + 1) % 6;
-                        let a = Vec3::new(ring[i].x, top, ring[i].z);
-                        let b = Vec3::new(ring[j].x, top, ring[j].z);
-                        triangle(
-                            &mut vertices,
-                            [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            materials_p0::for_face(block, cell, HexFace::Top),
-                            [1.0, 1.0, 1.0],
-                        );
-                    }
+                let y0 = cell.y as f32;
+                let y1 = y0 + 1.0;
+                let x0 = x - 0.5;
+                let x1 = x + 0.5;
+                let z0 = z - 0.5;
+                let z1 = z + 0.5;
+
+                if !world.get(CellPos::new(cell.q, cell.r, cell.y + 1)).is_solid() {
+                    let p = [
+                        Vec3::new(x0, y1, z0),
+                        Vec3::new(x0, y1, z1),
+                        Vec3::new(x1, y1, z1),
+                        Vec3::new(x1, y1, z0),
+                    ];
+                    cube_quad(
+                        &mut vertices,
+                        p,
+                        materials_p0::for_face(block, cell, HexFace::Top),
+                        [1.0, 1.0, 1.0],
+                        true,
+                    );
                 }
-                if !world
-                    .get(CellPos::new(cell.q, cell.r, cell.y - 1))
-                    .is_solid()
-                {
-                    let cap = Vec3::new(center.x, bottom, center.z);
-                    for i in 0..6 {
-                        let j = (i + 1) % 6;
-                        let a = Vec3::new(ring[j].x, bottom, ring[j].z);
-                        let b = Vec3::new(ring[i].x, bottom, ring[i].z);
-                        triangle(
-                            &mut vertices,
-                            [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            materials_p0::for_face(block, cell, HexFace::Bottom),
-                            [0.77, 0.77, 0.77],
-                        );
-                    }
+                if !world.get(CellPos::new(cell.q, cell.r, cell.y - 1)).is_solid() {
+                    let p = [
+                        Vec3::new(x0, y0, z0),
+                        Vec3::new(x1, y0, z0),
+                        Vec3::new(x1, y0, z1),
+                        Vec3::new(x0, y0, z1),
+                    ];
+                    cube_quad(
+                        &mut vertices,
+                        p,
+                        materials_p0::for_face(block, cell, HexFace::Bottom),
+                        [0.77, 0.77, 0.77],
+                        true,
+                    );
                 }
+                let walls = [
+                    [Vec3::new(x1, y0, z0), Vec3::new(x1, y0, z1), Vec3::new(x1, y1, z1), Vec3::new(x1, y1, z0)],
+                    [Vec3::new(x0, y0, z1), Vec3::new(x0, y0, z0), Vec3::new(x0, y1, z0), Vec3::new(x0, y1, z1)],
+                    [Vec3::new(x1, y0, z1), Vec3::new(x0, y0, z1), Vec3::new(x0, y1, z1), Vec3::new(x1, y1, z1)],
+                    [Vec3::new(x0, y0, z0), Vec3::new(x1, y0, z0), Vec3::new(x1, y1, z0), Vec3::new(x0, y1, z0)],
+                ];
                 for (side, &(dq, dr)) in SIDE_NEIGHBORS.iter().enumerate() {
-                    if world
-                        .get(CellPos::new(cell.q + dq, cell.r + dr, cell.y))
-                        .is_solid()
-                    {
+                    if world.get(CellPos::new(cell.q + dq, cell.r + dr, cell.y)).is_solid() {
                         continue;
                     }
-                    let j = (side + 1) % 6;
-                    let a = Vec3::new(ring[side].x, bottom, ring[side].z);
-                    let b = Vec3::new(ring[j].x, bottom, ring[j].z);
-                    let c = Vec3::new(ring[j].x, top, ring[j].z);
-                    let d = Vec3::new(ring[side].x, top, ring[side].z);
-                    let shade = 0.88 + side as f32 * 0.018;
-                    let material = materials_p0::for_face(block, cell, HexFace::Side(side as u8));
-                    let tint = [shade, shade, shade];
-                    // One side is 0.577m wide x 1m tall. Use metres
-                    // around the hex perimeter, NOT 0..1 across each side.
-                    // Half-texel inset vertically prevents the top-edge
-                    // grass rim from wrapping onto the block bottom.
-                    let u0 = side as f32 * HEX_RADIUS;
-                    let u1 = (side as f32 + 1.0) * HEX_RADIUS;
-                    let half_texel = 0.5 / materials_p0::TEXTURE_SIZE as f32;
-                    let top_v = half_texel;
-                    let bottom_v = 1.0 - half_texel;
-                    triangle(
+                    cube_quad(
                         &mut vertices,
-                        [(a, [u0, bottom_v]), (b, [u1, bottom_v]), (c, [u1, top_v])],
-                        material,
-                        tint,
-                    );
-                    triangle(
-                        &mut vertices,
-                        [(a, [u0, bottom_v]), (c, [u1, top_v]), (d, [u0, top_v])],
-                        material,
-                        tint,
+                        walls[side],
+                        materials_p0::for_face(block, cell, HexFace::Side(side as u8)),
+                        [0.88 + side as f32 * 0.024; 3],
+                        false,
                     );
                 }
             }
@@ -290,12 +256,34 @@ pub fn build_chunk_mesh_relative(
     vertices
 }
 
+fn cube_quad(
+    out: &mut Vec<Vertex>,
+    p: [Vec3; 4],
+    material: Material,
+    color: [f32; 3],
+    top: bool,
+) {
+    let uv = if top {
+        [
+            [p[0].x, p[0].z],
+            [p[1].x, p[1].z],
+            [p[2].x, p[2].z],
+            [p[3].x, p[3].z],
+        ]
+    } else {
+        // Each one-metre cube side repeats its test tile once.
+        [[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]
+    };
+    triangle(out, [(p[0], uv[0]), (p[1], uv[1]), (p[2], uv[2])], material, color);
+    triangle(out, [(p[0], uv[0]), (p[2], uv[2]), (p[3], uv[3])], material, color);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn generated_hex_faces_have_valid_materials_and_uvs() {
+    fn generated_cube_faces_have_valid_materials_and_uvs() {
         let world = World::demo(42);
         let vertices = build_chunk_mesh(&world, ChunkPos::default());
         assert!(!vertices.is_empty());
@@ -310,7 +298,7 @@ mod tests {
     }
 
     #[test]
-    fn distant_origin_keeps_hex_corners_distinct_and_shared_across_chunks() {
+    fn distant_origin_keeps_cube_corners_distinct_and_shared_across_chunks() {
         let mut world = World::streamed(42);
         let origin = CellPos::new(1_023_984, 0, 220).center();
         world.stream_around(origin);
@@ -319,8 +307,7 @@ mod tests {
         let vertices = build_chunk_mesh_relative(&world, section, Some((1_023_984, 0)));
         assert!(!vertices.is_empty());
         assert!(vertices.iter().all(|v| v.position[0].abs() < 100.0));
-        // A top cap's six triangles must retain their distinct adjacent
-        // vertices, rather than snapping to coarse global-f32 increments.
+        // Exact cube corners remain distinct after subtracting the i64 origin.
         let mut distinct = std::collections::HashSet::new();
         for vertex in &vertices {
             distinct.insert((vertex.position[0].to_bits(), vertex.position[2].to_bits()));
@@ -329,12 +316,9 @@ mod tests {
     }
 
     #[test]
-    fn side_uv_span_respects_physical_hex_edge_length() {
-        let edge = HEX_RADIUS;
-        let u0 = 2.0 * edge;
-        let u1 = 3.0 * edge;
-        let texels = (u1 - u0) * materials_p0::REFERENCE_TEXELS_PER_METRE;
-        assert!((texels - 147.8).abs() < 0.1);
+    fn cube_side_uv_spans_one_metre() {
+        let texels = materials_p0::REFERENCE_TEXELS_PER_METRE;
+        assert_eq!(texels, 256.0);
     }
 
     #[test]
