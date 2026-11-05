@@ -152,9 +152,10 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
         dark = vec3<f32>(0.16, 0.18, 0.20);
         light = vec3<f32>(0.30, 0.32, 0.34);
     }
-    let grain_strength = select(0.36, 0.24, rock == 2u);
+    // V5.4: modest increase in inherent rock read, not broad contrast.
+    let grain_strength = select(0.41, 0.28, rock == 2u);
     let tone = clamp(0.50 + (fine - 0.5) * grain_strength
-        + (mid - 0.5) * 0.22, 0.0, 1.0);
+        + (mid - 0.5) * 0.25, 0.0, 1.0);
     var color = mix(dark, light, tone);
 
     if stage >= 1u {
@@ -194,15 +195,52 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
         }
     }
     if stage >= 3u {
-        // Rare 3D accents. Stage D should remain less busy than the V4 art.
-        let accent = smoothstep(0.80, 0.91,
-            v5_noise(p * 0.98 + vec3<f32>(23.0, 11.0, 5.0)));
+        // V5.4: rare, rock-specific *disruptions* in a shared geological
+        // coordinate volume. These overlays are not repeated per hex face.
+        // Wide low-frequency gates prevent every metre from having a crack.
         if rock == 0u {
-            color = mix(color, vec3<f32>(0.62, 0.59, 0.56), accent * 0.38);
+            // Granite: localized joint planes, with very rare pale quartz
+            // traces displaced from the joint. Avoid polygon outlines.
+            let joint_warp = (v5_noise(p * 0.32 + vec3<f32>(13.0, 3.0, 7.0)) - 0.5) * 0.50;
+            let joint_phase = p.x * 0.61 + p.z * 0.24 + p.y * 0.08 + joint_warp;
+            let joint_distance = abs(sin(joint_phase * 3.14159265));
+            let joint_gate = smoothstep(0.57, 0.76,
+                v5_noise(p * 0.47 + vec3<f32>(17.0, 6.0, 2.0)));
+            let joint_line = 1.0 - smoothstep(0.014, 0.052, joint_distance);
+            color *= 1.0 - 0.19 * joint_line * joint_gate;
+            let quartz_gate = smoothstep(0.77, 0.88,
+                v5_noise(p * 0.65 + vec3<f32>(4.0, 18.0, 6.0)));
+            let quartz_line = 1.0 - smoothstep(0.040, 0.105,
+                abs(joint_distance - 0.085));
+            color = mix(color, vec3<f32>(0.65, 0.63, 0.61),
+                quartz_line * quartz_gate * 0.25);
         } else if rock == 1u {
-            color = mix(color, vec3<f32>(0.45, 0.45, 0.42), accent * 0.28);
+            // Shale: a rare displaced bedding/slip zone running through
+            // the volume, not another perfectly regular band on each face.
+            let shear_warp = (v5_noise(p * 0.36 + vec3<f32>(3.0, 15.0, 8.0)) - 0.5) * 0.42;
+            let shear_plane = abs(sin((p.y * 0.70 + p.x * 0.26
+                - p.z * 0.17 + shear_warp) * 3.14159265));
+            let shear_gate = smoothstep(0.59, 0.78,
+                v5_noise(p * 0.54 + vec3<f32>(10.0, 4.0, 20.0)));
+            let slip_trace = (1.0 - smoothstep(0.018, 0.09, shear_plane))
+                * shear_gate;
+            let bruised = smoothstep(0.12, 0.35, shear_plane)
+                * (1.0 - smoothstep(0.35, 0.65, shear_plane)) * shear_gate;
+            color *= 1.0 - 0.20 * slip_trace - 0.045 * bruised;
         } else {
-            color = mix(color, vec3<f32>(0.38, 0.40, 0.39), accent * 0.23);
+            // Basalt: sparse irregular cooling-joint corridors with a
+            // local oxidation tint. These do not form a repeated hex grid.
+            let cool_warp = (v5_noise(p * 0.40 + vec3<f32>(2.0, 7.0, 19.0)) - 0.5) * 0.75;
+            let cool_plane = abs(sin((p.x * 0.48 - p.z * 0.37
+                + p.y * 0.09 + cool_warp) * 3.14159265));
+            let cool_gate = smoothstep(0.64, 0.82,
+                v5_noise(p * 0.52 + vec3<f32>(9.0, 6.0, 12.0)));
+            let cooling_crack = (1.0 - smoothstep(0.012, 0.075, cool_plane))
+                * cool_gate;
+            color *= 1.0 - 0.24 * cooling_crack;
+            let oxidation = (1.0 - smoothstep(0.06, 0.24, cool_plane))
+                * cool_gate * 0.14;
+            color = mix(color, vec3<f32>(0.34, 0.28, 0.24), oxidation);
         }
     }
     return color;
