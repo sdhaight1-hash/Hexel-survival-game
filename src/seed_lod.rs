@@ -66,11 +66,14 @@ impl Worker {
                         let next_spacing = BANDS.get(i + 1).map(|band| band.0);
                         build_band(source, key, spacing, inner, outer, next_spacing)
                     });
-                    if result_tx.send(ResultMesh {
-                        key,
-                        bands,
-                        cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
-                    }).is_err() {
+                    if result_tx
+                        .send(ResultMesh {
+                            key,
+                            bands,
+                            cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
+                        })
+                        .is_err()
+                    {
                         break;
                     }
                 }
