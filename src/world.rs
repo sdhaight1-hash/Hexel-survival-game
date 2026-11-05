@@ -524,6 +524,22 @@ fn demo_surface(seed: u32, q: i32, r: i32) -> i32 {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn rock_gallery_pads_have_correct_width_height_and_gaps() {
+        let world = World::rock_gallery();
+        for i in 0..23 {
+            let q = i * 12;
+            assert_eq!(world.gallery_rock_index(CellPos::new(q, 0, 0)), Some(i as u32));
+            assert_eq!(world.gallery_rock_index(CellPos::new(q + 9, 9, 2)), Some(i as u32));
+            assert!(world.get(CellPos::new(q + 9, 9, 2)).is_solid());
+            assert!(world.get(CellPos::new(q + 10, 5, 2)) == Block::Air);
+            assert!(world.get(CellPos::new(q + 11, 5, 0)) == Block::Air);
+        }
+        assert_eq!(world.get(CellPos::new(5, 13, 0)), Block::Soil);
+        assert_eq!(world.gallery_rock_index(CellPos::new(5, 13, 0)), None);
+        assert_eq!(World::demo(42).gallery_rock_index(CellPos::new(5, 5, 0)), None);
+    }
+
     use super::*;
 
     #[test]
