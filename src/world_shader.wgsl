@@ -182,8 +182,15 @@ fn v59_family_color(rock: u32, family: u32, feature: vec2<f32>) -> vec3<f32> {
             t3 = vec3<f32>(0.3608, 0.3255, 0.3137);
         }
     }
-    let major = smoothstep(0.22, 0.75, feature.x);
-    let minor = smoothstep(0.30, 0.70, feature.y);
+    // Granite mineral ID and shale bedding are lighter toward 1.
+    // Basalt is inverted: a pore value of 1 selects a *dark cavity*,
+    // and secondary groundmass colors must not brighten that cavity.
+    let main_mask = select(feature.x, 1.0 - feature.x, rock == 2u);
+    let major = smoothstep(0.22, 0.75, main_mask);
+    var minor = smoothstep(0.30, 0.70, feature.y);
+    if rock == 2u {
+        minor *= 1.0 - clamp(feature.x, 0.0, 1.0) * 0.94;
+    }
     return mix(mix(t0, t1, major), mix(t2, t3, major), minor);
 }
 
