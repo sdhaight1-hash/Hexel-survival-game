@@ -214,10 +214,11 @@ fn build_hex_near_band(source: PeriodicTerrainCandidate, key: Key, outer: i32) -
     let mut out = Vec::new();
     let extent_r = ((outer as f32 / HEX_ROW_SPACING).ceil() as i32) + 2;
     let extent_q = outer * 2 + 2;
+    let centre_cell = local_cell_from_metres(key.centre.0 as f32, key.centre.1 as f32);
     const NEIGHBORS: [(i32, i32); 6] =
         [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)];
-    for r in -extent_r..=extent_r {
-        for q in -extent_q..=extent_q {
+    for r in centre_cell.r - extent_r..=centre_cell.r + extent_r {
+        for q in centre_cell.q - extent_q..=centre_cell.q + extent_q {
             let x = q as f32 + r as f32 * 0.5;
             let z = r as f32 * HEX_ROW_SPACING;
             if (x - key.centre.0 as f32).abs() > outer as f32
