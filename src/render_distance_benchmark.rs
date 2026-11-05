@@ -1,5 +1,5 @@
 //! Reproducible full-resolution render-distance experiment (not terrain LOD).
-//! Each 30-second stage reserves at least 5s to warm up; only settled
+//! Each 40-second stage reserves at least 5s to warm up; only settled
 //! samples with zero pending sections are used for steady-frame percentiles.
 use std::{
     fs::{self, File},
@@ -9,8 +9,8 @@ use std::{
 };
 
 pub const CSV_PATH: &str = "target/render-distance-benchmark.csv";
-const RADII: [i32; 7] = [2, 4, 3, 2, 3, 4, 2];
-const STAGE_SECONDS: u64 = 30;
+const RADII: [i32; 5] = [2, 5, 2, 5, 2];
+const STAGE_SECONDS: u64 = 40;
 const WARMUP_SECONDS: u64 = 5;
 
 #[derive(Default)]
@@ -211,15 +211,14 @@ mod tests {
 
     #[test]
     fn deterministic_radius_sequence_has_repeated_baselines() {
-        assert_eq!(RADII, [2, 4, 3, 2, 3, 4, 2]);
+        assert_eq!(RADII, [2, 5, 2, 5, 2]);
         for radius in RADII {
-            assert!((2..=4).contains(&radius));
+            assert!((2..=5).contains(&radius));
             assert_eq!(
                 5 * (1 + 3 * radius * (radius + 1)),
                 match radius {
                     2 => 95,
-                    3 => 185,
-                    4 => 305,
+                    5 => 455,
                     _ => unreachable!(),
                 }
             );
@@ -227,16 +226,16 @@ mod tests {
     }
 
     #[test]
-    fn stage_progression_is_time_based_and_stops_after_seven() {
+    fn stage_progression_is_time_based_and_stops_after_five() {
         let start = Instant::now();
         let mut bench = RenderDistanceBenchmark::new(start);
         assert_eq!(bench.radius(), 2);
         assert!(bench
-            .advance(start + Duration::from_secs(29), 95, 19, 87552)
+            .advance(start + Duration::from_secs(39), 95, 19, 87552)
             .is_empty());
-        for index in 0..7 {
+        for index in 0..5 {
             let messages =
-                bench.advance(start + Duration::from_secs(30 * (index + 1)), 95, 19, 87552);
+                bench.advance(start + Duration::from_secs(40 * (index + 1)), 95, 19, 87552);
             assert!(!messages.is_empty());
         }
         assert!(bench

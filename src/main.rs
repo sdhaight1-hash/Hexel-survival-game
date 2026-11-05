@@ -681,7 +681,8 @@ impl ApplicationHandler for Game {
                     .as_ref()
                     .map_or((0, 0), Renderer::terrain_counts);
                 self.console_log.record(format!(
-                    "STREAM: {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s); Is_Moving={is_moving}; Is_Looking={is_looking} (latest update); pending {} section(s), budget {:?} per tick; peak pending {} (last window), drained {} backlog episode(s), longest drain {:.2} ms, active backlog age {:.2} ms.",
+                    "STREAM: radius R{} | {} resident chunks, {} nonempty GPU meshes, {} submitted vertices; +{}/-{} chunks, {} new GPU buffers, {:.2} MiB uploaded; {:.2} ms CPU generation, {:.2} ms CPU mesh/buffer calls (last {:.1}s); Is_Moving={is_moving}; Is_Looking={is_looking} (latest update); pending {} section(s), budget {:?} per tick; peak pending {} (last window), drained {} backlog episode(s), longest drain {:.2} ms, active backlog age {:.2} ms.",
+                    self.world.horizontal_radius(),
                     self.world.chunk_count(),
                     gpu_meshes,
                     submitted_vertices,
