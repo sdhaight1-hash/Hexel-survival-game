@@ -67,6 +67,14 @@ pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
         Block::Grass => soil_face(CoverDensity::Full, is_top, is_side),
         Block::Soil => Material::SoilBare,
         Block::Rock => Material::Granite,
+        Block::Shale => Material::Shale,
+        Block::Gravel => {
+            if is_top {
+                Material::SoilTopVerySparse
+            } else {
+                Material::SoilBare
+            }
+        },
         Block::Air => unreachable!("Only solid blocks have faces"),
     }
 }
