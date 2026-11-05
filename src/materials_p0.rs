@@ -208,6 +208,23 @@ mod tests {
     }
 
     #[test]
+    fn appended_ground_reference_tiles_are_distinct_from_production_art() {
+        let layers = generate_textures().expect("baked diagnostic ground tiles");
+        assert_eq!(layers.len(), LAYER_COUNT);
+        assert_eq!(LAYER_COUNT, 18);
+        for layer in 12..18 {
+            assert_eq!(layers[layer].len(), (TEXTURE_SIZE * TEXTURE_SIZE * 4) as usize);
+            assert_ne!(layers[layer], layers[0], "diagnostic layer must not alias bare soil");
+            for previous in 12..layer {
+                assert_ne!(
+                    layers[layer], layers[previous],
+                    "each diagnostic tile should be visually distinct"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn grass_cover_is_denser_in_order_and_side_rim_is_not_bottom_grass() {
         let layers = generate_textures().expect("valid source PNGs");
         let base = &layers[Material::SoilBare as usize];
