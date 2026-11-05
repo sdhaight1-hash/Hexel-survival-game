@@ -82,7 +82,7 @@ fn palette_id(grid: vec2<i32>, rock: u32) -> u32 {
 }
 fn palette_rgb(rock: u32, id: u32) -> vec3<f32> {
     if rock == 0u {
-        switch id {
+        switch (id) {
             case 0u: { return vec3<f32>(1.02, 1.00, 0.99); }
             case 1u: { return vec3<f32>(1.20, 0.92, 0.86); }
             case 2u: { return vec3<f32>(0.88, 0.99, 1.17); }
@@ -91,7 +91,7 @@ fn palette_rgb(rock: u32, id: u32) -> vec3<f32> {
         }
     }
     if rock == 1u {
-        switch id {
+        switch (id) {
             case 0u: { return vec3<f32>(1.00, 1.00, 1.00); }
             case 1u: { return vec3<f32>(1.17, 1.03, 0.90); }
             case 2u: { return vec3<f32>(0.87, 1.01, 1.18); }
@@ -99,7 +99,7 @@ fn palette_rgb(rock: u32, id: u32) -> vec3<f32> {
             default: { return vec3<f32>(1.15, 1.13, 0.96); }
         }
     }
-    switch id {
+    switch (id) {
         case 0u: { return vec3<f32>(1.00, 1.00, 1.00); }
         case 1u: { return vec3<f32>(1.18, 1.06, 0.97); }
         case 2u: { return vec3<f32>(0.88, 0.97, 1.17); }
@@ -123,7 +123,7 @@ fn palette_region(p: vec3<f32>, rock: u32) -> vec3<f32> {
 }
 fn palette_id_debug(p: vec3<f32>, rock: u32) -> vec3<f32> {
     let id = palette_id(vec2<i32>(floor(p.xz / 5.0 + vec2<f32>(0.5))), rock);
-    switch id {
+    switch (id) {
         case 0u: { return vec3<f32>(0.93, 0.20, 0.22); }
         case 1u: { return vec3<f32>(0.19, 0.81, 0.27); }
         case 2u: { return vec3<f32>(0.18, 0.46, 0.97); }
