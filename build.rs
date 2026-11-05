@@ -19,6 +19,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         "assets/textures/rock/metamorphic_igneous/granite.png",
         "assets/textures/rock/sedimentary/shale.png",
         "assets/textures/ore/native_copper.png",
+        "assets/diagnostic_ground/lush_grass.png",
+        "assets/diagnostic_ground/dry_grass.png",
+        "assets/diagnostic_ground/sparse_grass.png",
+        "assets/diagnostic_ground/bare_dirt.png",
+        "assets/diagnostic_ground/stony_dirt.png",
+        "assets/diagnostic_ground/dark_shale.png",
     ] {
         println!("cargo:rerun-if-changed={input}");
     }

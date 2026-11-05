@@ -33,9 +33,15 @@ pub enum Material {
     GraniteCopper = 9,
     ShaleCopper = 10,
     Checker = 11,
+    DiagnosticLushGrass = 12,
+    DiagnosticDryGrass = 13,
+    DiagnosticSparseGrass = 14,
+    DiagnosticBareDirt = 15,
+    DiagnosticStonyDirt = 16,
+    DiagnosticDarkShale = 17,
 }
 
-pub const LAYER_COUNT: usize = 12;
+pub const LAYER_COUNT: usize = 18;
 
 pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
     let is_top = face == HexFace::Top;
@@ -65,6 +71,20 @@ pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
     }
     match block {
         Block::Grass => soil_face(CoverDensity::Full, is_top, is_side),
+        Block::GrassDry => {
+            if is_top {
+                Material::DiagnosticDryGrass
+            } else {
+                Material::SoilSideSparse
+            }
+        }
+        Block::GrassSparse => {
+            if is_top {
+                Material::DiagnosticSparseGrass
+            } else {
+                Material::SoilSideSparse
+            }
+        }
         Block::Soil => Material::SoilBare,
         Block::Rock => Material::Granite,
         Block::Shale => Material::Shale,
@@ -199,6 +219,29 @@ mod tests {
         assert!(changed(s, cs) > 100);
         // No ore-only texture can silently replace host-rock identity.
         assert!(changed(cg, cs) > 100);
+    }
+
+    #[test]
+    fn appended_ground_reference_tiles_are_distinct_from_production_art() {
+        let layers = generate_textures().expect("baked diagnostic ground tiles");
+        assert_eq!(layers.len(), LAYER_COUNT);
+        assert_eq!(LAYER_COUNT, 18);
+        for layer in 12..18 {
+            assert_eq!(
+                layers[layer].len(),
+                (TEXTURE_SIZE * TEXTURE_SIZE * 4) as usize
+            );
+            assert_ne!(
+                layers[layer], layers[0],
+                "diagnostic layer must not alias bare soil"
+            );
+            for previous in 12..layer {
+                assert_ne!(
+                    layers[layer], layers[previous],
+                    "each diagnostic tile should be visually distinct"
+                );
+            }
+        }
     }
 
     #[test]

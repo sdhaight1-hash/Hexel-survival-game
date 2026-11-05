@@ -2,7 +2,7 @@
 //! This module is used only by build.rs and pixel-quality tests; never per frame.
 
 const TEXTURE_SIZE: u32 = 256;
-const LAYER_COUNT: usize = 12;
+const LAYER_COUNT: usize = 18;
 #[derive(Clone, Copy)]
 enum CoverLevel {
     Bare,
@@ -277,6 +277,22 @@ fn checker_pixel(x: u32, y: u32) -> [u8; 4] {
     }
 }
 
+/// Expand one 16x16 original generated pixel-art tile to the 256x256
+/// BC7 atlas layer using nearest-neighbor sampling. The original tile is
+/// kept in the repo; this happens offline, not at runtime.
+fn diagnostic_tile(bytes: &[u8]) -> Result<Vec<u8>, String> {
+    let image = SourceImage::from_png(bytes)?;
+    if image.width != 16 || image.height != 16 {
+        return Err("Diagnostic ground tiles must be 16x16 RGBA PNGs".into());
+    }
+    Ok(make_tile(|x, y| {
+        let sx = (x / 16) as usize;
+        let sy = (y / 16) as usize;
+        let i = (sy * 16 + sx) * 4;
+        [image.rgba[i], image.rgba[i + 1], image.rgba[i + 2], 255]
+    }))
+}
+
 /// Bake the gallery from *actual* original high-resolution source textures.
 /// Keeping these compositions in separate layers preserves the existing
 /// shader and its diagnostic controls without changing game world state.
@@ -297,7 +313,7 @@ pub fn generate_textures() -> Result<Vec<Vec<u8>>, String> {
         .seamless_tile()?;
     let copper = SourceImage::from_png(include_bytes!("../assets/textures/ore/native_copper.png"))?;
 
-    let result = vec![
+    let mut result = vec![
         soil.clone(),
         grass_top(&soil, &forest, CoverLevel::VerySparse),
         grass_top(&soil, &forest, CoverLevel::Sparse),
@@ -311,6 +327,18 @@ pub fn generate_textures() -> Result<Vec<Vec<u8>>, String> {
         ore_composite(&shale, &copper),
         make_tile(checker_pixel),
     ];
+    // Append diagnostic art; stable P0 and ore layer indices 0..=11
+    // remain unchanged and can still be used with normal world mode.
+    for bytes in [
+        include_bytes!("../assets/diagnostic_ground/lush_grass.png").as_slice(),
+        include_bytes!("../assets/diagnostic_ground/dry_grass.png").as_slice(),
+        include_bytes!("../assets/diagnostic_ground/sparse_grass.png").as_slice(),
+        include_bytes!("../assets/diagnostic_ground/bare_dirt.png").as_slice(),
+        include_bytes!("../assets/diagnostic_ground/stony_dirt.png").as_slice(),
+        include_bytes!("../assets/diagnostic_ground/dark_shale.png").as_slice(),
+    ] {
+        result.push(diagnostic_tile(bytes)?);
+    }
     debug_assert_eq!(result.len(), LAYER_COUNT);
     Ok(result)
 }

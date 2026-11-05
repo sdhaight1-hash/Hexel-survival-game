@@ -189,6 +189,8 @@ fn emit_triangle(out: &mut Vec<Vertex>, a: Vec3, b: Vec3, c: Vec3, material: Mat
 fn material_for_surface(block: Block) -> Material {
     match block {
         Block::Grass => Material::SoilTopFull,
+        Block::GrassDry => Material::DiagnosticDryGrass,
+        Block::GrassSparse => Material::DiagnosticSparseGrass,
         Block::Gravel => Material::SoilTopVerySparse,
         Block::Shale => Material::Shale,
         Block::Rock => Material::Granite,
@@ -264,6 +266,7 @@ fn build_hex_near_band(source: PeriodicTerrainCandidate, key: Key, outer: i32) -
                 );
                 let rim = match profile.cover {
                     Block::Grass => Material::SoilSideFull,
+                    Block::GrassDry | Block::GrassSparse => Material::SoilSideSparse,
                     Block::Gravel => Material::SoilBare,
                     _ => material,
                 };

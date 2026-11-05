@@ -87,7 +87,7 @@ mod tests {
     #[test]
     fn embedded_pack_decodes_every_material_layer() {
         let pack = TexturePack::embedded().unwrap();
-        assert_eq!((pack.width, pack.height, pack.layers), (256, 256, 12));
+        assert_eq!((pack.width, pack.height, pack.layers), (256, 256, 18));
         assert_eq!(pack.bc7_bytes() * 4, pack.rgba_bytes());
         for layer in 0..pack.layers {
             let decoded = pack.decode_layer(layer).unwrap();
