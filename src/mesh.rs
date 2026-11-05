@@ -1,4 +1,4 @@
-//! Mesh hexagonal-prism caps and sides with per-face physically scaled material UVs.
+//! Cube A/B: mesh six faces of each unit block with physically scaled material UVs.
 //! This derived geometry does not own world/material resource state.
 
 use crate::materials_p0::{self, Material};
@@ -30,7 +30,7 @@ impl Vertex {
     }
 }
 
-// Six side edges, ordered counter-clockwise from a 30-degree corner.
+// Four cardinal X/Z neighbors of the orthogonal square cell lattice.
 const SIDE_NEIGHBORS: [(i32, i32); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
 fn triangle(
@@ -49,9 +49,7 @@ fn triangle(
     }
 }
 
-// The image is a square, but the projected top/bottom surface is a real hex.
-// Top/bottom caps use X/Z measured in metres. They are real hexagons,
-// but sampling them requires no hexagonal image file or cube UV layout.
+// Legacy top-cap UV helper retained for the square ground texture atlas.
 fn cap_uv(position: Vec3) -> [f32; 2] {
     [position.x, position.z]
 }
@@ -165,9 +163,8 @@ pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
     build_chunk_mesh_relative(world, chunk, None)
 }
 
-/// In the opt-in distant spawn, build all resident meshes relative to the
-/// same integer axial origin before converting positions to f32. Never add
-/// 0.58m hex corners to million-metre f32 coordinates.
+/// In the opt-in distant spawn, subtract the integer column origin before
+/// converting to f32. Keeps +/-0.5m cube corners precise at distant spawns.
 pub fn build_chunk_mesh_relative(
     world: &World,
     chunk: ChunkPos,
@@ -316,6 +313,18 @@ fn cube_quad(out: &mut Vec<Vertex>, p: [Vec3; 4], material: Material, color: [f3
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cubic_faces_have_only_half_metre_horizontal_corners() {
+        let world = World::demo(42);
+        let vertices = build_chunk_mesh(&world, ChunkPos::default());
+        assert!(!vertices.is_empty());
+        assert!(vertices.iter().all(|v| {
+            (v.position[0] - 0.5).fract().abs() < 0.00001
+                && (v.position[2] - 0.5).fract().abs() < 0.00001
+                && v.position[1].fract().abs() < 0.00001
+        }));
+    }
 
     #[test]
     fn generated_cube_faces_have_valid_materials_and_uvs() {
