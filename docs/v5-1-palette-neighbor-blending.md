@@ -29,7 +29,23 @@ No new PNGs needed. Pads remain:
 - 05-08 shale: control, palette, structure, accent
 - 09-12 basalt: control, palette, structure, accent
 
-The palette is enabled for stages B, C and D.
+The palette is enabled for stages B, C and D. The normal view now uses 1.8x palette deviation from neutral (an artistic diagnostic tuning, not production approval).
+
+## F5: verify the implementation visually
+
+Press **F5** in the running V5 gallery to display exaggerated palette
+interpolation instead of the rock albedo. Neutral gray is a tint of 1.0;
+stronger RGB patches show the palette signal. F5 toggles it back to the
+normal material appearance. This is a diagnostic, **not a proposed art style**.
+
+- Pads **01, 05, 09** (base-only) should be neutral gray.
+- Pads **02–04, 06–08, 10–12** should clearly show color patches that blend.
+- Adjacent solid cells of the same pad must not show a hard color seam.
+- Empty gaps and walkway should not inherit the palette.
+- F6 enables the UV checker independently; turn it off to view the F5 color test.
+
+If the F5 diagnostic produces no visible changes, inspect the branch, the
+vertex-color path and the shader uniform before tuning colors again.
 
 ## Neighbor rules
 
