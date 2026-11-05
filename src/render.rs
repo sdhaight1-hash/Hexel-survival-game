@@ -99,6 +99,7 @@ pub struct Renderer {
     gallery_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
     rock_v5: bool,
     rock_palette_diagnostic: u32,
+    rock_bump_enabled: bool,
     v2_preview_enabled: bool,
     surface_preset: SurfacePreset,
     metallic_glints: bool,
@@ -729,6 +730,7 @@ impl Renderer {
             gallery_materials,
             rock_v5: presentation.rock_v5,
             rock_palette_diagnostic: 0,
+            rock_bump_enabled: true,
             v2_preview_enabled: false,
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
@@ -889,6 +891,13 @@ impl Renderer {
         })
     }
 
+    /// F4 in the V5 gallery: identical materials and light, different normals.
+    pub fn toggle_rock_bump(&mut self) -> Option<bool> {
+        if !self.rock_v5 { return None; }
+        self.rock_bump_enabled = !self.rock_bump_enabled;
+        Some(self.rock_bump_enabled)
+    }
+
     pub fn toggle_checker(&mut self) -> bool {
         self.debug_checker = !self.debug_checker;
         self.debug_checker
@@ -1020,7 +1029,9 @@ impl Renderer {
                 surface: [
                     conditions.wetness,
                     conditions.moss,
-                    conditions.frost,
+                    if self.rock_v5 {
+                        if self.rock_bump_enabled { 1.0 } else { 0.0 }
+                    } else { conditions.frost },
                     if self.metallic_glints { 1.0 } else { 0.0 },
                 ],
             }),
