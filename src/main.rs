@@ -541,7 +541,9 @@ impl ApplicationHandler for Game {
                             self.torus_crossings.north, self.torus_crossings.south
                         )
                     });
-                    if let Some(report) = renderer.refresh_distant_terrain(&self.world, self.player.feet) {
+                    if let Some(report) =
+                        renderer.refresh_distant_terrain(&self.world, self.player.feet)
+                    {
                         self.console_log.record(report);
                     }
                     match renderer.draw(&self.player, menu, console, torus_hud.as_deref()) {
