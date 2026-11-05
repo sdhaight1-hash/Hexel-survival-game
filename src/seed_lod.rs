@@ -14,9 +14,8 @@ use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
 
 /// Square grids use aligned boundaries: no spatial holes between bands.
 /// Outer edge lies beyond the 1000m far plane for an anchor within 32m.
-pub const BANDS: [(i32, i32, i32); 4] = [(2, 0, 64), (4, 64, 192), (8, 192, 448), (16, 448, 1152)];
+pub const BANDS: [(i32, i32, i32); 4] = [(1, 0, 64), (4, 64, 192), (8, 192, 448), (16, 448, 1152)];
 const ANCHOR_STEP: i32 = 32;
-const UNDERLAY_EPSILON: f32 = 0.05;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Key {
@@ -39,6 +38,7 @@ impl Key {
 pub struct ResultMesh {
     pub key: Key,
     pub bands: [Vec<Vertex>; 4],
+    pub cpu_ms: f64,
 }
 
 pub struct Worker {
@@ -60,12 +60,20 @@ impl Worker {
                     while let Ok(newer) = request_rx.try_recv() {
                         key = newer;
                     }
+                    let started = std::time::Instant::now();
                     let bands = std::array::from_fn(|i| {
                         let (spacing, inner, outer) = BANDS[i];
                         let next_spacing = BANDS.get(i + 1).map(|band| band.0);
                         build_band(source, key, spacing, inner, outer, next_spacing)
                     });
-                    if result_tx.send(ResultMesh { key, bands }).is_err() {
+                    if result_tx
+                        .send(ResultMesh {
+                            key,
+                            bands,
+                            cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
+                        })
+                        .is_err()
+                    {
                         break;
                     }
                 }
@@ -109,7 +117,7 @@ impl Worker {
 fn height(source: PeriodicTerrainCandidate, frame: TorusFrame, x: f32, z: f32) -> f32 {
     let local = local_cell_from_metres(x, z);
     let global = frame.cell(local).canonical;
-    (source.surface_y(global) + 1) as f32 - UNDERLAY_EPSILON
+    (source.surface_y(global) + 1) as f32
 }
 
 /// Fine-band outer edges must lie on the neighboring coarse-band edge.

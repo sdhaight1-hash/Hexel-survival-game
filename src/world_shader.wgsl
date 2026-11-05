@@ -5,6 +5,8 @@ struct Camera {
     eye_position: vec4<f32>,
     // Independent *gallery* conditions: wetness, moss, frost, metal glints.
     surface: vec4<f32>,
+    // near chunk Q, R, horizontal radius; used only by distant LOD pass
+    lod_near: vec4<f32>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var material_tiles: texture_2d_array<f32>;
@@ -52,7 +54,7 @@ fn patch_noise(p: vec2<f32>) -> f32 {
     return mix(low, high, t.y);
 }
 
-@fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
+fn shade(v: VertexOut) -> vec4<f32> {
     // Hexel UVs are in metres, with 1m repeats for gallery candidates.
     let checker = camera.options.x > 0.5;
     let layer = select(v.material, 11u, checker);
@@ -119,4 +121,40 @@ fn patch_noise(p: vec2<f32>) -> f32 {
         }
     }
     return vec4<f32>(clamp(color * v.color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
+}
+
+
+@fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
+    return shade(v);
+}
+
+// Distant terrain never draws inside the live full-resolution streaming
+// footprint. Pixel-accurate axial rounding avoids the square-grid overlay
+// piling up against nearby hex-prism cliffs.
+@fragment fn fs_lod(v: VertexOut) -> @location(0) vec4<f32> {
+    // Evaluate implicit texture derivatives before the divergent discard.
+    let shaded = shade(v);
+    let rf = v.world_position.z / 0.8660254;
+    let qf = v.world_position.x - rf * 0.5;
+    let yf = -qf - rf;
+    var q = round(qf);
+    var r = round(rf);
+    let ry = round(yf);
+    let dq = abs(q - qf);
+    let dr = abs(r - rf);
+    let dy = abs(ry - yf);
+    if dq > dy && dq > dr {
+        q = -ry - r;
+    } else if dr > dy {
+        r = -q - ry;
+    }
+    let cq = floor(q / 16.0);
+    let cr = floor(r / 16.0);
+    let oq = cq - camera.lod_near.x;
+    let orr = cr - camera.lod_near.y;
+    let dist = max(abs(oq), max(abs(orr), abs(oq + orr)));
+    if dist <= camera.lod_near.z {
+        discard;
+    }
+    return shaded;
 }
