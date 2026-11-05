@@ -1110,7 +1110,8 @@ impl Renderer {
                     eye.x,
                     eye.y,
                     eye.z,
-                    (self.sun_started.elapsed().as_secs_f32() / 180.0) * std::f32::consts::TAU,
+                    (self.sun_started.elapsed().as_secs_f32() / 180.0) * std::f32::consts::TAU
+                        + std::f32::consts::FRAC_PI_3,
                 ],
                 surface: [
                     conditions.wetness,
