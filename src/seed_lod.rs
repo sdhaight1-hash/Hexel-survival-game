@@ -97,7 +97,7 @@ impl Worker {
                 Err(TryRecvError::Empty | TryRecvError::Disconnected) => break,
             }
         }
-        if self.pending.is_none() {
+        if newest.is_none() && self.pending.is_none() {
             if self.request.send(desired).is_ok() {
                 self.pending = Some(desired);
             }
