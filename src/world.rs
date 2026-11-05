@@ -296,17 +296,23 @@ impl World {
 
     fn periodic_chunk(&self, source: PeriodicTerrainCandidate, section: ChunkPos) -> Chunk {
         let mut chunk = Chunk::default();
-        for y in 0..CHUNK_SIDE {
-            for r in 0..CHUNK_SIDE {
-                for q in 0..CHUNK_SIDE {
-                    let cell = CellPos::new(
-                        section.q * CHUNK_SIDE + q,
-                        section.r * CHUNK_SIDE + r,
-                        section.y * CHUNK_SIDE + y,
-                    );
+        let frame = self.torus_frame.expect("torus frame");
+        // Profile each horizontal cell once, then fill its 16 vertical
+        // blocks from one coherent height/geology/material classification.
+        for r in 0..CHUNK_SIDE {
+            for q in 0..CHUNK_SIDE {
+                let local = CellPos::new(
+                    section.q * CHUNK_SIDE + q,
+                    section.r * CHUNK_SIDE + r,
+                    0,
+                );
+                let global = frame.cell(local).canonical;
+                let profile = source.column_profile(global);
+                for y in 0..CHUNK_SIDE {
+                    let absolute_y = i64::from(section.y * CHUNK_SIDE + y);
                     chunk.set(
                         [q as usize, r as usize, y as usize],
-                        self.periodic_sample(source, cell),
+                        profile.sample(absolute_y),
                     );
                 }
             }
