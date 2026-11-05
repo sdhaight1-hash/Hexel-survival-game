@@ -1287,6 +1287,21 @@ impl Renderer {
             + std::f32::consts::FRAC_PI_3;
         let sun_dir = Vec3::new(phase.cos() * 0.75, phase.sin(), 0.35).normalize();
         let sunlight = ((sun_dir.y + 0.08) / 0.42).clamp(0.0, 1.0);
+        let shadow_view_proj = Mat4::orthographic_rh(
+            -160.0,
+            160.0,
+            -160.0,
+            160.0,
+            0.1,
+            700.0,
+        ) * Mat4::look_at_rh(eye + sun_dir * 300.0, eye, Vec3::Y);
+        if self.seed_lod_worker.is_some() {
+            self.queue.write_buffer(
+                &self.shadow_matrix_buffer,
+                0,
+                bytemuck::bytes_of(&shadow_view_proj.to_cols_array_2d()),
+            );
+        }
         let sun_screen = view_proj.project_point3(eye + sun_dir * 400.0);
         let sun_visible = sun_dir.dot(player.forward()) > 0.0 && sun_dir.y > -0.04;
         self.queue.write_buffer(
@@ -1332,6 +1347,32 @@ impl Renderer {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("World frame"),
             });
+        if self.seed_lod_worker.is_some() && sun_dir.y > 0.0 {
+            let mut shadow_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Near terrain cast-shadow depth"),
+                color_attachments: &[],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.shadow_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+            shadow_pass.set_pipeline(&self.shadow_pipeline);
+            shadow_pass.set_bind_group(0, &self.shadow_camera_bind_group, &[]);
+            for (buffer, count) in self.seed_lod_buffers.iter().take(2) {
+                shadow_pass.set_vertex_buffer(0, buffer.slice(..));
+                shadow_pass.draw(0..*count, 0..1);
+            }
+            for mesh in self.terrain_meshes.values() {
+                shadow_pass.set_vertex_buffer(0, mesh.buffer.slice(..));
+                shadow_pass.draw(0..mesh.vertices, 0..1);
+            }
+        }
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("First-person world pass"),
@@ -1363,6 +1404,7 @@ impl Renderer {
             pass.set_bind_group(0, &self.camera_bind_group, &[]);
             pass.draw(0..3, 0..1);
             pass.set_pipeline(&self.pipeline);
+            pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
             let material_group = if self.v2_preview_enabled {
                 self.v2_materials
                     .as_ref()
