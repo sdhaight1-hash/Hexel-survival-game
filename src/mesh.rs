@@ -166,7 +166,7 @@ pub fn build_chunk_mesh_relative(
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            world.gallery_rock_index(cell).map(|i| i * 3).unwrap_or_else(|| materials_p0::for_face(block, cell, HexFace::Top) as u32),
+                            world.gallery_rock_index(cell).map(|i| i * 3).unwrap_or_else(|| if world.is_rock_gallery() { 69 } else { materials_p0::for_face(block, cell, HexFace::Top) as u32 }),
                             [1.0, 1.0, 1.0],
                         );
                     }
@@ -183,7 +183,7 @@ pub fn build_chunk_mesh_relative(
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            world.gallery_rock_index(cell).map(|i| i * 3 + 2).unwrap_or_else(|| materials_p0::for_face(block, cell, HexFace::Bottom) as u32),
+                            world.gallery_rock_index(cell).map(|i| i * 3 + 2).unwrap_or_else(|| if world.is_rock_gallery() { 69 } else { materials_p0::for_face(block, cell, HexFace::Bottom) as u32 }),
                             [0.77, 0.77, 0.77],
                         );
                     }
@@ -201,7 +201,7 @@ pub fn build_chunk_mesh_relative(
                     let c = Vec3::new(ring[j].x, top, ring[j].z);
                     let d = Vec3::new(ring[side].x, top, ring[side].z);
                     let shade = 0.88 + side as f32 * 0.018;
-                    let material = world.gallery_rock_index(cell).map(|i| i * 3 + 1).unwrap_or_else(|| materials_p0::for_face(block, cell, HexFace::Side(side as u8)) as u32);
+                    let material = world.gallery_rock_index(cell).map(|i| i * 3 + 1).unwrap_or_else(|| if world.is_rock_gallery() { 69 } else { materials_p0::for_face(block, cell, HexFace::Side(side as u8)) as u32 });
                     let tint = [shade, shade, shade];
                     // One side is 0.577m wide x 1m tall. Use metres
                     // around the hex perimeter, NOT 0..1 across each side.
