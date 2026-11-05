@@ -47,50 +47,28 @@ impl CellPos {
         )
     }
 
-    pub fn neighbors(self) -> [Self; 8] {
+    pub fn neighbors(self) -> [Self; 6] {
         [
             Self::new(self.q + 1, self.r, self.y),
-            Self::new(self.q + 1, self.r - 1, self.y),
-            Self::new(self.q, self.r - 1, self.y),
             Self::new(self.q - 1, self.r, self.y),
-            Self::new(self.q - 1, self.r + 1, self.y),
             Self::new(self.q, self.r + 1, self.y),
+            Self::new(self.q, self.r - 1, self.y),
             Self::new(self.q, self.r, self.y + 1),
             Self::new(self.q, self.r, self.y - 1),
         ]
     }
 
+    /// Cube A/B branch: physical world x/z are orthogonal unit grid axes.
     pub fn center(self) -> Vec3 {
         Vec3::new(
-            self.q as f32 + self.r as f32 * 0.5,
+            self.q as f32,
             (self.y as f32 + 0.5) * HEXEL_HEIGHT,
-            self.r as f32 * HEX_ROW_SPACING,
+            self.r as f32,
         )
     }
 
     pub fn at_world_xz(x: f32, z: f32, y: i32) -> Self {
-        let rf = z / HEX_ROW_SPACING;
-        let qf = x - rf * 0.5;
-        let xf = qf;
-        let zf = rf;
-        let yf = -xf - zf;
-
-        // Cube-rounding preserves valid axial coordinates near hex boundaries.
-        let mut rx = xf.round();
-        let mut ry = yf.round();
-        let mut rz = zf.round();
-        let dx = (rx - xf).abs();
-        let dy = (ry - yf).abs();
-        let dz = (rz - zf).abs();
-        if dx > dy && dx > dz {
-            rx = -ry - rz;
-        } else if dy > dz {
-            ry = -rx - rz;
-        } else {
-            rz = -rx - ry;
-        }
-        let _ = ry;
-        Self::new(rx as i32, rz as i32, y)
+        Self::new(x.round() as i32, z.round() as i32, y)
     }
 }
 
