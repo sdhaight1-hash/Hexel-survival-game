@@ -87,6 +87,12 @@ pub struct Renderer {
     pipeline: wgpu::RenderPipeline,
     lod_pipeline: wgpu::RenderPipeline,
     sky_pipeline: wgpu::RenderPipeline,
+    shadow_pipeline: wgpu::RenderPipeline,
+    shadow_matrix_buffer: wgpu::Buffer,
+    shadow_camera_bind_group: wgpu::BindGroup,
+    shadow_sample_bind_group: wgpu::BindGroup,
+    _shadow_texture: wgpu::Texture,
+    shadow_view: wgpu::TextureView,
     lod_near: [f32; 4],
     lod_covered: [[f32; 4]; 128],
     sun_started: Instant,
@@ -464,9 +470,145 @@ impl Renderer {
             label: Some("World shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("world_shader.wgsl").into()),
         });
+        // One 1024x1024 near-terrain shadow cascade. No shadow atlas or
+        // cascade complexity until measured on the target RTX 2060.
+        let shadow_texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Near directional shadow depth"),
+            size: wgpu::Extent3d {
+                width: 1024,
+                height: 1024,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Depth32Float,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        });
+        let shadow_view = shadow_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let shadow_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("Directional shadow comparison"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            compare: Some(wgpu::CompareFunction::LessEqual),
+            ..Default::default()
+        });
+        let shadow_matrix_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Sun view projection"),
+            contents: bytemuck::bytes_of(&Mat4::IDENTITY.to_cols_array_2d()),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let shadow_camera_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Shadow depth camera layout"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+        });
+        let shadow_camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Shadow depth camera"),
+            layout: &shadow_camera_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: shadow_matrix_buffer.as_entire_binding(),
+            }],
+        });
+        let shadow_sample_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Terrain shadow sample layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Depth,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison),
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
+        });
+        let shadow_sample_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Terrain sunlight shadow sampler"),
+            layout: &shadow_sample_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&shadow_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&shadow_sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: shadow_matrix_buffer.as_entire_binding(),
+                },
+            ],
+        });
+        let shadow_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Shadow depth vertex shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shadow_shader.wgsl").into()),
+        });
+        let shadow_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("Shadow pass layout"),
+            bind_group_layouts: &[&shadow_camera_layout],
+            push_constant_ranges: &[],
+        });
+        let shadow_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Near directional terrain shadow pass"),
+            layout: Some(&shadow_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &shadow_shader,
+                entry_point: Some("vs_main"),
+                buffers: &[Vertex::layout()],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: None,
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                cull_mode: None,
+                ..Default::default()
+            },
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            multisample: wgpu::MultisampleState::default(),
+            multiview: None,
+            cache: None,
+        });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("World pipeline layout"),
-            bind_group_layouts: &[&camera_layout, &material_layout],
+            bind_group_layouts: &[&camera_layout, &material_layout, &shadow_sample_layout],
             push_constant_ranges: &[],
         });
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -742,6 +884,12 @@ impl Renderer {
             pipeline,
             lod_pipeline,
             sky_pipeline,
+            shadow_pipeline,
+            shadow_matrix_buffer,
+            shadow_camera_bind_group,
+            shadow_sample_bind_group,
+            _shadow_texture: shadow_texture,
+            shadow_view,
             lod_near: [0.0, 0.0, world.horizontal_radius() as f32, 0.0],
             lod_covered: [[0.0; 4]; 128],
             sun_started: Instant::now(),
