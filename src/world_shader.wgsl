@@ -9,10 +9,14 @@ struct Camera {
     lod_near: vec4<f32>,
     // Complete surface columns only; incomplete near sections retain LOD.
     lod_covered: array<vec4<f32>, 128>,
+    sky: vec4<f32>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var material_tiles: texture_2d_array<f32>;
 @group(1) @binding(1) var tile_sampler: sampler;
+@group(2) @binding(0) var shadow_depth: texture_depth_2d;
+@group(2) @binding(1) var shadow_compare: sampler_comparison;
+@group(2) @binding(2) var<uniform> sun_view_proj: mat4x4<f32>;
 
 struct VertexIn {
     @location(0) position: vec3<f32>,
@@ -66,16 +70,23 @@ fn shade(v: VertexOut) -> vec4<f32> {
     // High-contrast original diagnostic pixel material set, opt-in LOD only.
     // This deliberately does not replace the authored production texture pack.
     if camera.options.w > 0.5 && !checker {
+        // Separate broad geology patches from fine pixel noise; neither
+        // requires copying Minecraft art or changing saved block IDs.
         let pixel = floor(v.uv * 12.0);
-        let fleck = (hash21(pixel) - 0.5) * 0.18;
-        if v.material >= 7u && v.material <= 10u {
-            color = vec3<f32>(0.46, 0.48, 0.52) + fleck;
-        } else if v.material == 0u {
-            color = vec3<f32>(0.47, 0.29, 0.17) + fleck;
-        } else if v.material >= 4u && v.material <= 6u {
-            color = vec3<f32>(0.44, 0.31, 0.17) + fleck;
+        let fleck = (hash21(pixel) - 0.5) * 0.15;
+        let region_patch = patch_noise(v.world_position.xz * 0.028) - 0.5;
+        if v.material == 7u || v.material == 9u {
+            color = vec3<f32>(0.49, 0.51, 0.54) + fleck + region_patch * 0.12;
+        } else if v.material == 8u || v.material == 10u {
+            color = vec3<f32>(0.30, 0.35, 0.41) + fleck * 0.85 + region_patch * 0.10;
+        } else if v.material == 1u {
+            color = vec3<f32>(0.66, 0.59, 0.39) + fleck + region_patch * 0.18;
+        } else if v.material == 0u || v.material >= 4u && v.material <= 6u {
+            color = vec3<f32>(0.47, 0.30, 0.17) + fleck + region_patch * 0.11;
+        } else if v.material == 2u {
+            color = vec3<f32>(0.42, 0.51, 0.20) + fleck + region_patch * 0.19;
         } else {
-            color = vec3<f32>(0.24, 0.64, 0.20) + fleck;
+            color = vec3<f32>(0.26, 0.59, 0.20) + fleck + region_patch * 0.17;
         }
     }
 
@@ -139,11 +150,26 @@ fn shade(v: VertexOut) -> vec4<f32> {
     }
     let phase = camera.eye_position.w;
     let sun_direction = normalize(vec3<f32>(cos(phase) * 0.75, sin(phase), 0.35));
-    let daylight = max(sun_direction.y, 0.0);
+    let daylight = smoothstep(-0.12, 0.30, sun_direction.y);
     let sun_factor = max(dot(normal, sun_direction), 0.0);
-    let ambient = 0.34 + 0.18 * daylight;
-    let direct = 0.70 * daylight * sun_factor;
-    let lit = ambient + direct;
+    let ambient = 0.10 + 0.38 * daylight;
+    let direct = 0.78 * max(sun_direction.y, 0.0) * sun_factor;
+    var lit = ambient + direct;
+    if camera.options.w > 0.5 && daylight > 0.01 {
+        // Real cast shadows for the bounded near cascade. Shadow texture is
+        // rendered from the directional sun each frame. Distant terrain
+        // outside this cascade retains diffuse lighting.
+        let light_clip = sun_view_proj * vec4<f32>(v.world_position + normal * 0.04, 1.0);
+        let light_ndc = light_clip.xyz / light_clip.w;
+        if abs(light_ndc.x) < 1.0 && abs(light_ndc.y) < 1.0
+            && light_ndc.z > 0.0 && light_ndc.z < 1.0 {
+            let uv = vec2<f32>(light_ndc.x * 0.5 + 0.5, 0.5 - light_ndc.y * 0.5);
+            let visible = textureSampleCompareLevel(
+                shadow_depth, shadow_compare, uv, light_ndc.z - 0.0015
+            );
+            lit = ambient + direct * visible;
+        }
+    }
     return vec4<f32>(clamp(color * v.color * lit, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }
 

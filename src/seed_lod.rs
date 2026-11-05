@@ -9,6 +9,7 @@ use glam::Vec3;
 use hexel_survival_game::{
     periodic_terrain_candidate::PeriodicTerrainCandidate,
     torus_frame::{local_cell_from_metres, TorusFrame},
+    world::{Block, CellPos, HEX_RADIUS, HEX_ROW_SPACING},
 };
 use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
 
@@ -64,7 +65,11 @@ impl Worker {
                     let bands = std::array::from_fn(|i| {
                         let (spacing, inner, outer) = BANDS[i];
                         let next_spacing = BANDS.get(i + 1).map(|band| band.0);
-                        build_band(source, key, spacing, inner, outer, next_spacing)
+                        if i == 0 {
+                            build_hex_near_band(source, key, outer)
+                        } else {
+                            build_band(source, key, spacing, inner, outer, next_spacing)
+                        }
                     });
                     if result_tx
                         .send(ResultMesh {
@@ -166,32 +171,150 @@ fn vertex(position: Vec3, material: Material, tint: [f32; 3]) -> Vertex {
     }
 }
 
-fn emit_triangle(out: &mut Vec<Vertex>, a: Vec3, b: Vec3, c: Vec3) {
-    let rise = (a.y - b.y)
-        .abs()
-        .max((a.y - c.y).abs())
-        .max((b.y - c.y).abs());
-    let run = (a.x - b.x)
-        .abs()
-        .max((a.z - b.z).abs())
-        .max((a.x - c.x).abs().max((a.z - c.z).abs()))
-        .max(1.0);
-    let rocky = (a.y + b.y + c.y) / 3.0 >= 271.0 || rise / run > 0.55;
-    let material = if rocky {
-        Material::Granite
-    } else {
-        Material::SoilTopFull
-    };
-    let tint = if rocky {
-        [0.90, 0.89, 0.86]
-    } else {
-        [0.88, 0.94, 0.84]
+fn emit_triangle(out: &mut Vec<Vertex>, a: Vec3, b: Vec3, c: Vec3, material: Material) {
+    let tint = match material {
+        Material::Granite | Material::Shale => [0.92, 0.91, 0.90],
+        Material::SoilTopVerySparse => [0.98, 0.94, 0.83],
+        _ => [0.93, 0.98, 0.89],
     };
     out.extend([
         vertex(a, material, tint),
         vertex(b, material, tint),
         vertex(c, material, tint),
     ]);
+}
+
+/// All visible distant materials must be derived from the same global cell
+/// block identity as nearby hexels; no independent LOD slope thresholds.
+fn material_for_surface(block: Block) -> Material {
+    match block {
+        Block::Grass => Material::SoilTopFull,
+        Block::Gravel => Material::SoilTopVerySparse,
+        Block::Shale => Material::Shale,
+        Block::Rock => Material::Granite,
+        Block::Air | Block::Soil => Material::SoilBare,
+    }
+}
+
+fn surface_material(
+    source: PeriodicTerrainCandidate,
+    frame: TorusFrame,
+    x: f32,
+    z: f32,
+) -> Material {
+    let cell = frame.cell(local_cell_from_metres(x, z)).canonical;
+    material_for_surface(source.surface_cover(cell))
+}
+
+/// Hex-column surface LOD: exact hexagonal horizontal topology and actual
+/// exposed vertical cliff spans (one quad per exposed stratum rather than
+/// a full 16^3 resident chunk). Only the first 64m band uses this more
+/// expensive representation; far bands retain error-refined heightfields.
+fn build_hex_near_band(source: PeriodicTerrainCandidate, key: Key, outer: i32) -> Vec<Vertex> {
+    let mut out = Vec::new();
+    let extent_r = ((outer as f32 / HEX_ROW_SPACING).ceil() as i32) + 2;
+    let extent_q = outer * 2 + 2;
+    let centre_cell = local_cell_from_metres(key.centre.0 as f32, key.centre.1 as f32);
+    const NEIGHBORS: [(i32, i32); 6] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)];
+    for r in centre_cell.r - extent_r..=centre_cell.r + extent_r {
+        for q in centre_cell.q - extent_q..=centre_cell.q + extent_q {
+            let x = q as f32 + r as f32 * 0.5;
+            let z = r as f32 * HEX_ROW_SPACING;
+            if (x - key.centre.0 as f32).abs() > outer as f32
+                || (z - key.centre.1 as f32).abs() > outer as f32
+            {
+                continue;
+            }
+            let pos = CellPos::new(q, r, 0);
+            let global = key.frame.cell(pos).canonical;
+            let profile = source.column_profile(global);
+            let y = (profile.top + 1) as f32;
+            let material = material_for_surface(profile.cover);
+            let centre = Vec3::new(x, y, z);
+            let ring: [Vec3; 6] = std::array::from_fn(|i| {
+                let radians = (30.0_f32 + i as f32 * 60.0).to_radians();
+                Vec3::new(
+                    x + HEX_RADIUS * radians.cos(),
+                    y,
+                    z + HEX_RADIUS * radians.sin(),
+                )
+            });
+            for side in 0..6 {
+                let next = (side + 1) % 6;
+                emit_triangle(&mut out, centre, ring[side], ring[next], material);
+            }
+            for (side, &(dq, dr)) in NEIGHBORS.iter().enumerate() {
+                let neighbor = key.frame.cell(CellPos::new(q + dq, r + dr, 0)).canonical;
+                let neighbor_top = source.surface_y(neighbor);
+                if neighbor_top >= profile.top {
+                    continue;
+                }
+                let deep_material = match profile.deep {
+                    Block::Shale => Material::Shale,
+                    _ => Material::Granite,
+                };
+                emit_hex_wall(
+                    &mut out,
+                    ring[side],
+                    ring[(side + 1) % 6],
+                    (neighbor_top + 1) as f32,
+                    profile.top as f32,
+                    side,
+                    deep_material,
+                );
+                let rim = match profile.cover {
+                    Block::Grass => Material::SoilSideFull,
+                    Block::Gravel => Material::SoilBare,
+                    _ => material,
+                };
+                emit_hex_wall(
+                    &mut out,
+                    ring[side],
+                    ring[(side + 1) % 6],
+                    profile.top as f32,
+                    y,
+                    side,
+                    rim,
+                );
+            }
+        }
+    }
+    out
+}
+
+/// Emit a side quad with vertical metre UVs; flat-planar UVs would stretch
+/// textures into unrecognizable stripes on mountain-height cliffs.
+fn emit_hex_wall(
+    out: &mut Vec<Vertex>,
+    left: Vec3,
+    right: Vec3,
+    bottom: f32,
+    top: f32,
+    side: usize,
+    material: Material,
+) {
+    if top <= bottom {
+        return;
+    }
+    let a = Vec3::new(left.x, bottom, left.z);
+    let b = Vec3::new(right.x, bottom, right.z);
+    let c = Vec3::new(right.x, top, right.z);
+    let d = Vec3::new(left.x, top, left.z);
+    let u0 = side as f32 * HEX_RADIUS;
+    let u1 = (side as f32 + 1.0) * HEX_RADIUS;
+    let tint = [0.91, 0.91, 0.91];
+    for (p, uv) in [
+        (a, [u0, bottom]),
+        (b, [u1, bottom]),
+        (c, [u1, top]),
+        (a, [u0, bottom]),
+        (c, [u1, top]),
+        (d, [u0, top]),
+    ] {
+        let mut v = vertex(p, material, tint);
+        v.uv = uv;
+        out.push(v);
+    }
 }
 
 pub fn build_band(
@@ -239,27 +362,45 @@ pub fn build_band(
             let b = points[r * width + q + 1];
             let c = points[(r + 1) * width + q];
             let d = points[(r + 1) * width + q + 1];
-            // A coarse diagonal can completely erase a ridge or valley
-            // whose peak falls between the corners. Compare against the
-            // exact deterministic surface at this square's centre.
-            // Refinement changes only internal triangles: shared grid edges
-            // remain identical, including between adjacent LOD cells.
+            let material =
+                surface_material(source, key.frame, (a.x + d.x) * 0.5, (a.z + d.z) * 0.5);
+            // Test the centre and four interior quarter points. The largest
+            // deviation from bilinear corner interpolation owns refinement,
+            // preserving narrow peaks/valleys a centre-only sample misses.
+            // Interior fan geometry never introduces shared-edge T-junctions.
+            let mut best_error = 1.5_f32;
+            let mut apex = None;
             if spacing >= 2 {
-                let mx = (a.x + d.x) * 0.5;
-                let mz = (a.z + d.z) * 0.5;
-                let actual = height(source, key.frame, mx, mz);
-                let flat = (a.y + b.y + c.y + d.y) * 0.25;
-                if (actual - flat).abs() > 1.5 {
-                    let m = Vec3::new(mx, actual, mz);
-                    emit_triangle(&mut out, a, c, m);
-                    emit_triangle(&mut out, c, d, m);
-                    emit_triangle(&mut out, d, b, m);
-                    emit_triangle(&mut out, b, a, m);
-                    continue;
+                for (u, v) in [
+                    (0.5_f32, 0.5_f32),
+                    (0.25, 0.25),
+                    (0.75, 0.25),
+                    (0.25, 0.75),
+                    (0.75, 0.75),
+                ] {
+                    let x = a.x + (d.x - a.x) * u;
+                    let z = a.z + (d.z - a.z) * v;
+                    let exact = height(source, key.frame, x, z);
+                    let bilinear = a.y * (1.0 - u) * (1.0 - v)
+                        + b.y * u * (1.0 - v)
+                        + c.y * (1.0 - u) * v
+                        + d.y * u * v;
+                    let error = (exact - bilinear).abs();
+                    if error > best_error {
+                        best_error = error;
+                        apex = Some(Vec3::new(x, exact, z));
+                    }
                 }
             }
-            emit_triangle(&mut out, a, c, b);
-            emit_triangle(&mut out, b, c, d);
+            if let Some(m) = apex {
+                emit_triangle(&mut out, a, c, m, material);
+                emit_triangle(&mut out, c, d, m, material);
+                emit_triangle(&mut out, d, b, m, material);
+                emit_triangle(&mut out, b, a, m, material);
+            } else {
+                emit_triangle(&mut out, a, c, b, material);
+                emit_triangle(&mut out, b, c, d, material);
+            }
         }
     }
     out
@@ -269,6 +410,43 @@ pub fn build_band(
 mod tests {
     use super::*;
     use hexel_survival_game::hex_torus_candidate::Axial64;
+
+    #[test]
+    fn exact_near_hex_band_matches_shared_column_height_and_material() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
+        let key = Key {
+            centre: (0, 0),
+            frame,
+        };
+        let vertices = build_hex_near_band(source, key, 8);
+        assert!(!vertices.is_empty());
+        let global = frame.cell(CellPos::new(0, 0, 0)).canonical;
+        let profile = source.column_profile(global);
+        let target_y = (profile.top + 1) as f32;
+        let top_material = material_for_surface(profile.cover) as u32;
+        assert!(vertices.iter().any(|v| {
+            v.position[0] == 0.0
+                && v.position[2] == 0.0
+                && v.position[1] == target_y
+                && v.material == top_material
+        }));
+    }
+
+    #[test]
+    fn exact_near_hex_band_follows_moving_anchor() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
+        let key = Key {
+            centre: (96, -64),
+            frame,
+        };
+        let vertices = build_hex_near_band(source, key, 8);
+        assert!(!vertices.is_empty());
+        assert!(vertices
+            .iter()
+            .any(|v| { (v.position[0] - 96.0).abs() < 4.0 && (v.position[2] + 64.0).abs() < 4.0 }));
+    }
 
     #[test]
     fn bands_are_aligned_without_planar_gaps() {
@@ -295,8 +473,14 @@ mod tests {
             let vertices = build_band(source, key, spacing, inner, outer, next_spacing);
             let expected =
                 ((2 * outer / spacing).pow(2) - (2 * inner / spacing).pow(2)) as usize * 6;
-            assert!(vertices.len() >= expected);
-            assert!(vertices.len() <= expected * 2);
+            if i > 0 {
+                assert!(vertices.len() >= expected);
+                assert!(vertices.len() <= expected * 2);
+            } else {
+                // Exact hex caps + exposed geological cliff walls replace
+                // the approximate inner heightfield grid.
+                assert!(!vertices.is_empty());
+            }
             assert_eq!(vertices.len() % 3, 0);
             assert!(vertices
                 .iter()

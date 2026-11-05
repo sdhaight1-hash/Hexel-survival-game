@@ -130,6 +130,25 @@ impl Game {
             .render_benchmark
             .then(|| RenderDistanceBenchmark::new(now));
         let mut console_log = ConsoleLog::new();
+        if let Some((source, _)) = world.distant_surface_source() {
+            let center = world
+                .torus_cell(player.feet.x, player.feet.z)
+                .expect("torus cell")
+                .canonical;
+            let survey = source.survey_region(center, 512, 64);
+            let message = format!(
+                "TERRAIN V4: 1024m regional survey height {}..{} ({}m relief) | grass {} granite {} shale {} gravel {} | seed 42",
+                survey.min_height,
+                survey.max_height,
+                survey.max_height - survey.min_height,
+                survey.materials[0],
+                survey.materials[1],
+                survey.materials[2],
+                survey.materials[3],
+            );
+            println!("{message}");
+            console_log.record(message);
+        }
         if let Some(benchmark) = distance_benchmark.as_ref() {
             console_log.record(benchmark.introduction());
         }
@@ -801,6 +820,31 @@ mod shader_tests {
         assert!(game.world.chunk(center.chunk_and_local().0).is_some());
         let default = super::Game::new(true, PresentationOptions::default());
         assert!(default.player.feet.x < 100.0);
+    }
+
+    #[test]
+    fn near_shadow_shader_parses_and_validates() {
+        let source = include_str!("shadow_shader.wgsl");
+        let module =
+            naga::front::wgsl::parse_str(source).expect("shadow shader must parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("shadow shader must pass Naga semantic validation");
+    }
+
+    #[test]
+    fn sky_shader_parses_and_validates() {
+        let source = include_str!("sky_shader.wgsl");
+        let module = naga::front::wgsl::parse_str(source).expect("sky shader must parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("sky shader must pass Naga semantic validation");
     }
 
     #[test]
