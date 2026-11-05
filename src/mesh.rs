@@ -1,7 +1,7 @@
 //! Mesh hexagonal-prism caps and sides with per-face physically scaled material UVs.
 //! This derived geometry does not own world/material resource state.
 
-use crate::materials_p0::{self, Material};
+use crate::materials_p0;
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
 use hexel_survival_game::material_contract::HexFace;
@@ -35,7 +35,7 @@ const SIDE_NEIGHBORS: [(i32, i32); 6] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, 
 fn triangle(
     vertices: &mut Vec<Vertex>,
     points: [(Vec3, [f32; 2]); 3],
-    material: Material,
+    material: u32,
     color: [f32; 3],
 ) {
     for (position, uv) in points {
@@ -43,7 +43,7 @@ fn triangle(
             position: position.to_array(),
             color,
             uv,
-            material: material as u32,
+            material,
         });
     }
 }
@@ -166,7 +166,7 @@ pub fn build_chunk_mesh_relative(
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            materials_p0::for_face(block, cell, HexFace::Top),
+                            World::gallery_rock_index(cell).map(|i| i * 3).unwrap_or_else(|| materials_p0::for_face(block, cell, HexFace::Top) as u32),
                             [1.0, 1.0, 1.0],
                         );
                     }
@@ -183,7 +183,7 @@ pub fn build_chunk_mesh_relative(
                         triangle(
                             &mut vertices,
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
-                            materials_p0::for_face(block, cell, HexFace::Bottom),
+                            World::gallery_rock_index(cell).map(|i| i * 3 + 2).unwrap_or_else(|| materials_p0::for_face(block, cell, HexFace::Bottom) as u32),
                             [0.77, 0.77, 0.77],
                         );
                     }
@@ -201,7 +201,7 @@ pub fn build_chunk_mesh_relative(
                     let c = Vec3::new(ring[j].x, top, ring[j].z);
                     let d = Vec3::new(ring[side].x, top, ring[side].z);
                     let shade = 0.88 + side as f32 * 0.018;
-                    let material = materials_p0::for_face(block, cell, HexFace::Side(side as u8));
+                    let material = World::gallery_rock_index(cell).map(|i| i * 3 + 1).unwrap_or_else(|| materials_p0::for_face(block, cell, HexFace::Side(side as u8)) as u32);
                     let tint = [shade, shade, shade];
                     // One side is 0.577m wide x 1m tall. Use metres
                     // around the hex perimeter, NOT 0..1 across each side.
