@@ -150,10 +150,10 @@ fn shade(v: VertexOut) -> vec4<f32> {
     }
     let phase = camera.eye_position.w;
     let sun_direction = normalize(vec3<f32>(cos(phase) * 0.75, sin(phase), 0.35));
-    let daylight = max(sun_direction.y, 0.0);
+    let daylight = smoothstep(-0.12, 0.30, sun_direction.y);
     let sun_factor = max(dot(normal, sun_direction), 0.0);
-    let ambient = 0.34 + 0.18 * daylight;
-    let direct = 0.70 * daylight * sun_factor;
+    let ambient = 0.10 + 0.38 * daylight;
+    let direct = 0.78 * max(sun_direction.y, 0.0) * sun_factor;
     var lit = ambient + direct;
     if camera.options.w > 0.5 && daylight > 0.01 {
         // Real cast shadows for the bounded near cascade. Shadow texture is
