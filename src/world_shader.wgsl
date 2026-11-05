@@ -328,7 +328,7 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
 
     // V5.7 retains the V5.6 related-tone per-hexel pigment and the
     // V5.5 edge fade. No bump height, derivatives or normal perturbation.
-    if v5 && !checker && v.material != 69u {
+    if v5 && !checker && v.material != 69u && (v.material / 3u) % 4u != 0u {
         let pad = v.material / 3u;
         let p = v.world_position - vec3<f32>(12.0 * f32(pad % 4u), 0.0, 0.0);
         let micro = v56_micro(v.material, v.pattern_seed, p);
