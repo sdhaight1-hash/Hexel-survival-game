@@ -365,6 +365,22 @@ impl World {
         self.horizontal_radius = radius;
     }
 
+    /// Only fully resident surface columns may occlude seed-derived far LOD.
+    /// A requested but incomplete column must never punch a hole in the LOD.
+    pub fn completed_surface_columns(&self) -> Vec<(i32, i32)> {
+        if !self.surface_following {
+            return Vec::new();
+        }
+        let mut columns = Vec::new();
+        for (&(q, r), &(low, high)) in &self.surface_bounds {
+            if (low..=high).all(|y| self.chunks.contains_key(&ChunkPos { q, r, y })) {
+                columns.push((q, r));
+            }
+        }
+        columns.sort_unstable();
+        columns
+    }
+
     pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
         self.chunks.keys().copied()
     }
