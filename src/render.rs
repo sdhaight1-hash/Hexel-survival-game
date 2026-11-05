@@ -534,7 +534,6 @@ impl Renderer {
             cache: None,
         });
 
-
         let crosshair_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Crosshair shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("crosshair.wgsl").into()),
@@ -856,7 +855,12 @@ impl Renderer {
         };
         let pos = hexel_survival_game::world::CellPos::at_world_xz(feet.x, feet.z, 0);
         let (chunk, _) = pos.chunk_and_local();
-        self.lod_near = [chunk.q as f32, chunk.r as f32, world.horizontal_radius() as f32, 0.0];
+        self.lod_near = [
+            chunk.q as f32,
+            chunk.r as f32,
+            world.horizontal_radius() as f32,
+            0.0,
+        ];
         let desired = seed_lod::Key::at(feet, frame);
         if self.seed_lod_key == Some(desired) {
             return None;
