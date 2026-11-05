@@ -189,8 +189,8 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
             let fracture_field = v5_noise(p * 0.74 + vec3<f32>(2.0, 7.0, 13.0));
             let crack = 1.0 - smoothstep(0.015, 0.06,
                 abs(fracture_field - 0.39));
-            let patch = smoothstep(0.56, 0.76, mid);
-            color *= 1.0 - 0.09 * pores - 0.10 * crack * patch;
+            let fracture_mask = smoothstep(0.56, 0.76, mid);
+            color *= 1.0 - 0.09 * pores - 0.10 * crack * fracture_mask;
         }
     }
     if stage >= 3u {
