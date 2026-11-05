@@ -248,6 +248,13 @@ impl World {
         )
     }
 
+    /// Immutable procedural source for seed-first distant LOD workers.
+    /// The worker samples the exact torus elevation source without generating
+    /// resident voxel sections. No World reference crosses threads.
+    pub fn distant_surface_source(&self) -> Option<(PeriodicTerrainCandidate, TorusFrame)> {
+        Some((self.periodic?, self.torus_frame?))
+    }
+
     pub fn torus_frame(&self) -> Option<TorusFrame> {
         self.torus_frame
     }
