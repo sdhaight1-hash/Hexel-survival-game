@@ -74,30 +74,26 @@ pub fn tint_and_pattern_weight_at(world: &World, cell: CellPos, position: Vec3) 
     let Some(pad) = world.gallery_rock_index(cell) else {
         return ([1.0; 3], 1.0);
     };
-    if pad % 4 == 0 {
-        return [1.0; 3]; // A: untouched neutral base control
-    }
-    let mut total = palette(cell, pad);
+    let neutral_control = pad % 4 == 0;
+    let mut total = if neutral_control { [1.0; 3] } else { palette(cell, pad) };
     let mut weight_sum = 1.0_f32;
+    let mut strongest_contact = 0.0_f32;
     let center = cell.center();
 
     for (index, &(dq, dr)) in DIRECTIONS.iter().enumerate() {
         let neighbor = CellPos::new(cell.q + dq, cell.r + dr, cell.y);
         if !same_solid_rock(world, neighbor, pad) { continue; }
         let theta = (60.0 + index as f32 * 60.0).to_radians();
-        // Circumradius 1/sqrt(3) implies apothem 0.5m.
         let along = (position.x - center.x) * theta.cos()
             + (position.z - center.z) * theta.sin();
         let w = weight((0.5 - along).max(0.0));
-        if w == 0.0 { continue; }
         strongest_contact = strongest_contact.max(w);
-        if !neutral_control {
+        if w > 0.0 && !neutral_control {
             let tint = palette(neighbor, pad);
             for channel in 0..3 { total[channel] += tint[channel] * w; }
             weight_sum += w;
         }
     }
-
     for (y, distance) in [
         (cell.y - 1, position.y - cell.y as f32),
         (cell.y + 1, (cell.y + 1) as f32 - position.y),
@@ -105,10 +101,12 @@ pub fn tint_and_pattern_weight_at(world: &World, cell: CellPos, position: Vec3) 
         let neighbor = CellPos::new(cell.q, cell.r, y);
         if !same_solid_rock(world, neighbor, pad) { continue; }
         let w = weight(distance.max(0.0));
-        if w == 0.0 { continue; }
-        let tint = palette(neighbor, pad);
-        for channel in 0..3 { total[channel] += tint[channel] * w; }
-        weight_sum += w;
+        strongest_contact = strongest_contact.max(w);
+        if w > 0.0 && !neutral_control {
+            let tint = palette(neighbor, pad);
+            for channel in 0..3 { total[channel] += tint[channel] * w; }
+            weight_sum += w;
+        }
     }
     for channel in &mut total { *channel /= weight_sum; }
     (total, 1.0 - strongest_contact)
