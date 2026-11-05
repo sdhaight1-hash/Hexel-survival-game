@@ -412,6 +412,38 @@ mod tests {
     use hexel_survival_game::hex_torus_candidate::Axial64;
 
     #[test]
+    fn exact_near_hex_band_matches_shared_column_height_and_material() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
+        let key = Key { centre: (0, 0), frame };
+        let vertices = build_hex_near_band(source, key, 8);
+        assert!(!vertices.is_empty());
+        let global = frame.cell(CellPos::new(0, 0, 0)).canonical;
+        let profile = source.column_profile(global);
+        let target_y = (profile.top + 1) as f32;
+        let top_material = material_for_surface(profile.cover) as u32;
+        assert!(vertices.iter().any(|v| {
+            v.position[0] == 0.0
+                && v.position[2] == 0.0
+                && v.position[1] == target_y
+                && v.material == top_material
+        }));
+    }
+
+    #[test]
+    fn exact_near_hex_band_follows_moving_anchor() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
+        let key = Key { centre: (96, -64), frame };
+        let vertices = build_hex_near_band(source, key, 8);
+        assert!(!vertices.is_empty());
+        assert!(vertices.iter().any(|v| {
+            (v.position[0] - 96.0).abs() < 4.0
+                && (v.position[2] + 64.0).abs() < 4.0
+        }));
+    }
+
+    #[test]
     fn bands_are_aligned_without_planar_gaps() {
         for pair in BANDS.windows(2) {
             assert_eq!(pair[0].2, pair[1].1);
