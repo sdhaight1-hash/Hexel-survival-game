@@ -357,6 +357,10 @@ mod tests {
         assert_eq!(verts.len() % 3, 0);
         assert!(verts.iter().any(|v| v.palette_id != 0));
         assert!(verts.iter().all(|v| v.palette_id < 5));
+        assert!(verts.iter().any(|v| v.pattern_seed != 0));
+        assert!(verts.iter().any(|v| v.micro_mask < 0.5));
+        assert!(verts.iter().any(|v| v.micro_mask > 0.9));
+        assert!(verts.iter().all(|v| (0.0..=1.0).contains(&v.micro_mask)));
         assert!(verts.iter().all(|v| v.position.iter().all(|x| x.is_finite())));
     }
 
