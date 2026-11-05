@@ -595,8 +595,8 @@ impl ApplicationHandler for Game {
         }
         let feet_before = self.player.feet;
         self.player.step(&self.world, self.input(), dt);
-        let travelled = (self.player.feet - feet_before).truncate();
-        let travelled_m = f64::from(travelled.length());
+        let displacement = self.player.feet - feet_before;
+        let travelled_m = f64::from(displacement.x.hypot(displacement.z));
         if self.world.torus_frame().is_some() {
             if let Some(shift) = self.world.rebase_torus(&mut self.player.feet) {
                 let replacement = self.world.stream_around(self.player.feet);
