@@ -2,7 +2,7 @@
 
 mod benchmark_log;
 mod debug_menu;
-mod distant_terrain;
+mod seed_lod;
 mod frame_pacing;
 mod materials_p0;
 mod materials_v2;
