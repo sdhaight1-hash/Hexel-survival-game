@@ -27,7 +27,7 @@ pub const ROCKS: [(&str, &str); 23] = [
     ("igneous_volcanic", "suevite"),
 ];
 pub const SIZE: u32 = 256;
-pub const LAYERS: u32 = 69;
+pub const LAYERS: u32 = 70; // 69 rock-face images plus a neutral walkway
 
 /// Order matches the mesh mapping: index*3 + (top=0, side=1, bottom=2).
 /// Files must be extracted from the V4 ZIP by scripts/install_rock_gallery_v4.py.
@@ -55,6 +55,8 @@ pub fn load_layers() -> Result<Vec<Vec<u8>>, String> {
             layers.push(buffer[..info.buffer_size()].to_vec());
         }
     }
+    // Neutral, non-rock walkway avoids incorrectly displaying a rock candidate.
+    layers.push(vec![118u8, 117, 112, 255].repeat((SIZE * SIZE) as usize));
     Ok(layers)
 }
 
@@ -64,6 +66,6 @@ mod tests {
     #[test]
     fn gallery_has_one_material_per_repo_rock() {
         assert_eq!(ROCKS.len(), 23);
-        assert_eq!(ROCKS.len() * 3, LAYERS as usize);
+        assert_eq!(ROCKS.len() * 3 + 1, LAYERS as usize);
     }
 }
