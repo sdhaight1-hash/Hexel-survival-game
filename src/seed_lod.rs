@@ -289,8 +289,30 @@ fn emit_cube_wall(
     let b = Vec3::new(right.0, bottom, right.1);
     let c = Vec3::new(right.0, top, right.1);
     let d = Vec3::new(left.0, top, left.1);
-    emit_triangle(out, a, b, c, material);
-    emit_triangle(out, a, c, d, material);
+    // Vertical wall UVs must use actual height; X/Z-only cap UVs would
+    // turn a tall cliff into a smeared single stripe.
+    let u0 = if (left.0 - right.0).abs() < 0.01 {
+        left.1
+    } else {
+        left.0
+    };
+    let u1 = if (left.0 - right.0).abs() < 0.01 {
+        right.1
+    } else {
+        right.0
+    };
+    for (p, uv) in [
+        (a, [u0, bottom]),
+        (b, [u1, bottom]),
+        (c, [u1, top]),
+        (a, [u0, bottom]),
+        (c, [u1, top]),
+        (d, [u0, top]),
+    ] {
+        let mut v = vertex(p, material, [0.91, 0.91, 0.91]);
+        v.uv = uv;
+        out.push(v);
+    }
 }
 
 pub fn build_band(
