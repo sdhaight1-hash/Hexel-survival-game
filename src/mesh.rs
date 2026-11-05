@@ -190,8 +190,10 @@ pub fn build_chunk_mesh_relative(
                     continue;
                 }
                 let (x, z) = if let Some((oq, or)) = origin {
-                    ((i64::from(cell.q) - i64::from(oq)) as f32,
-                     (i64::from(cell.r) - i64::from(or)) as f32)
+                    (
+                        (i64::from(cell.q) - i64::from(oq)) as f32,
+                        (i64::from(cell.r) - i64::from(or)) as f32,
+                    )
                 } else {
                     (cell.q as f32, cell.r as f32)
                 };
@@ -202,7 +204,10 @@ pub fn build_chunk_mesh_relative(
                 let z0 = z - 0.5;
                 let z1 = z + 0.5;
 
-                if !world.get(CellPos::new(cell.q, cell.r, cell.y + 1)).is_solid() {
+                if !world
+                    .get(CellPos::new(cell.q, cell.r, cell.y + 1))
+                    .is_solid()
+                {
                     let p = [
                         Vec3::new(x0, y1, z0),
                         Vec3::new(x0, y1, z1),
@@ -217,7 +222,10 @@ pub fn build_chunk_mesh_relative(
                         true,
                     );
                 }
-                if !world.get(CellPos::new(cell.q, cell.r, cell.y - 1)).is_solid() {
+                if !world
+                    .get(CellPos::new(cell.q, cell.r, cell.y - 1))
+                    .is_solid()
+                {
                     let p = [
                         Vec3::new(x0, y0, z0),
                         Vec3::new(x1, y0, z0),
@@ -233,13 +241,36 @@ pub fn build_chunk_mesh_relative(
                     );
                 }
                 let walls = [
-                    [Vec3::new(x1, y0, z0), Vec3::new(x1, y0, z1), Vec3::new(x1, y1, z1), Vec3::new(x1, y1, z0)],
-                    [Vec3::new(x0, y0, z1), Vec3::new(x0, y0, z0), Vec3::new(x0, y1, z0), Vec3::new(x0, y1, z1)],
-                    [Vec3::new(x1, y0, z1), Vec3::new(x0, y0, z1), Vec3::new(x0, y1, z1), Vec3::new(x1, y1, z1)],
-                    [Vec3::new(x0, y0, z0), Vec3::new(x1, y0, z0), Vec3::new(x1, y1, z0), Vec3::new(x0, y1, z0)],
+                    [
+                        Vec3::new(x1, y0, z0),
+                        Vec3::new(x1, y0, z1),
+                        Vec3::new(x1, y1, z1),
+                        Vec3::new(x1, y1, z0),
+                    ],
+                    [
+                        Vec3::new(x0, y0, z1),
+                        Vec3::new(x0, y0, z0),
+                        Vec3::new(x0, y1, z0),
+                        Vec3::new(x0, y1, z1),
+                    ],
+                    [
+                        Vec3::new(x1, y0, z1),
+                        Vec3::new(x0, y0, z1),
+                        Vec3::new(x0, y1, z1),
+                        Vec3::new(x1, y1, z1),
+                    ],
+                    [
+                        Vec3::new(x0, y0, z0),
+                        Vec3::new(x1, y0, z0),
+                        Vec3::new(x1, y1, z0),
+                        Vec3::new(x0, y1, z0),
+                    ],
                 ];
                 for (side, &(dq, dr)) in SIDE_NEIGHBORS.iter().enumerate() {
-                    if world.get(CellPos::new(cell.q + dq, cell.r + dr, cell.y)).is_solid() {
+                    if world
+                        .get(CellPos::new(cell.q + dq, cell.r + dr, cell.y))
+                        .is_solid()
+                    {
                         continue;
                     }
                     cube_quad(
@@ -256,13 +287,7 @@ pub fn build_chunk_mesh_relative(
     vertices
 }
 
-fn cube_quad(
-    out: &mut Vec<Vertex>,
-    p: [Vec3; 4],
-    material: Material,
-    color: [f32; 3],
-    top: bool,
-) {
+fn cube_quad(out: &mut Vec<Vertex>, p: [Vec3; 4], material: Material, color: [f32; 3], top: bool) {
     let uv = if top {
         [
             [p[0].x, p[0].z],
@@ -274,8 +299,18 @@ fn cube_quad(
         // Each one-metre cube side repeats its test tile once.
         [[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]
     };
-    triangle(out, [(p[0], uv[0]), (p[1], uv[1]), (p[2], uv[2])], material, color);
-    triangle(out, [(p[0], uv[0]), (p[2], uv[2]), (p[3], uv[3])], material, color);
+    triangle(
+        out,
+        [(p[0], uv[0]), (p[1], uv[1]), (p[2], uv[2])],
+        material,
+        color,
+    );
+    triangle(
+        out,
+        [(p[0], uv[0]), (p[2], uv[2]), (p[3], uv[3])],
+        material,
+        color,
+    );
 }
 
 #[cfg(test)]
