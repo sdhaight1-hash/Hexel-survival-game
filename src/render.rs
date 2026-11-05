@@ -501,19 +501,20 @@ impl Renderer {
             contents: bytemuck::bytes_of(&Mat4::IDENTITY.to_cols_array_2d()),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
-        let shadow_camera_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Shadow depth camera layout"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+        let shadow_camera_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Shadow depth camera layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
         let shadow_camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Shadow depth camera"),
             layout: &shadow_camera_layout,
@@ -522,37 +523,38 @@ impl Renderer {
                 resource: shadow_matrix_buffer.as_entire_binding(),
             }],
         });
-        let shadow_sample_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Terrain shadow sample layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Depth,
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        multisampled: false,
+        let shadow_sample_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Terrain shadow sample layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Depth,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison),
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison),
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
+                ],
+            });
         let shadow_sample_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Terrain sunlight shadow sampler"),
             layout: &shadow_sample_layout,
@@ -575,11 +577,12 @@ impl Renderer {
             label: Some("Shadow depth vertex shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shadow_shader.wgsl").into()),
         });
-        let shadow_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Shadow pass layout"),
-            bind_group_layouts: &[&shadow_camera_layout],
-            push_constant_ranges: &[],
-        });
+        let shadow_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Shadow pass layout"),
+                bind_group_layouts: &[&shadow_camera_layout],
+                push_constant_ranges: &[],
+            });
         let shadow_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Near directional terrain shadow pass"),
             layout: Some(&shadow_pipeline_layout),
@@ -1287,14 +1290,8 @@ impl Renderer {
             + std::f32::consts::FRAC_PI_3;
         let sun_dir = Vec3::new(phase.cos() * 0.75, phase.sin(), 0.35).normalize();
         let sunlight = ((sun_dir.y + 0.08) / 0.42).clamp(0.0, 1.0);
-        let shadow_view_proj = Mat4::orthographic_rh(
-            -160.0,
-            160.0,
-            -160.0,
-            160.0,
-            0.1,
-            700.0,
-        ) * Mat4::look_at_rh(eye + sun_dir * 300.0, eye, Vec3::Y);
+        let shadow_view_proj = Mat4::orthographic_rh(-160.0, 160.0, -160.0, 160.0, 0.1, 700.0)
+            * Mat4::look_at_rh(eye + sun_dir * 300.0, eye, Vec3::Y);
         if self.seed_lod_worker.is_some() {
             self.queue.write_buffer(
                 &self.shadow_matrix_buffer,
