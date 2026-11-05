@@ -97,6 +97,58 @@ impl TorusFrame {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CrossingCounts {
+    pub east: u64,
+    pub west: u64,
+    pub north: u64,
+    pub south: u64,
+}
+
+impl CrossingCounts {
+    pub fn total(self) -> u64 {
+        self.east + self.west + self.north + self.south
+    }
+}
+
+/// Emit transitions of canonical identity, never visual guide-plane crossings.
+pub fn crossing_report(
+    before: GlobalCell,
+    after: GlobalCell,
+    counts: &mut CrossingCounts,
+) -> Option<String> {
+    if before.period == after.period {
+        return None;
+    }
+    let de = after.period.east - before.period.east;
+    let dn = after.period.north - before.period.north;
+    let mut directions = Vec::new();
+    if de > 0 { counts.east += de as u64; directions.push("EAST"); }
+    if de < 0 { counts.west += (-de) as u64; directions.push("WEST"); }
+    if dn > 0 { counts.north += dn as u64; directions.push("NORTH"); }
+    if dn < 0 { counts.south += (-dn) as u64; directions.push("SOUTH"); }
+    Some(format!(
+        "TORUS WRAP {} | RAW ({},{}) -> ({},{}) | CANONICAL ({},{}) -> ({},{}) | PERIOD ({},{}) -> ({},{}) | COUNTS E={} W={} N={} S={} TOTAL={} | periodic terrain, NO teleport",
+        directions.join("+"),
+        before.raw.q, before.raw.r, after.raw.q, after.raw.r,
+        before.canonical.q, before.canonical.r, after.canonical.q, after.canonical.r,
+        before.period.east, before.period.north, after.period.east, after.period.north,
+        counts.east, counts.west, counts.north, counts.south, counts.total()
+    ))
+}
+
+/// Local metric locations of the nearest east/west and north/south seam planes.
+/// Designed for the debug renderer, not for game collision.
+pub fn nearest_seams(frame: TorusFrame) -> (f32, f32) {
+    let origin = frame.origin.world_xz_m();
+    let east_span = PERIOD_Q as f64;
+    let north_span = PERIOD_R as f64 * HEX_ROW_METRES;
+    (
+        ((origin.x / east_span).round() * east_span - origin.x) as f32,
+        ((origin.y / north_span).round() * north_span - origin.y) as f32,
+    )
+}
+
 /// Stable canonical terrain identity independent of camera frame.
 pub fn global_identity(raw: Axial64) -> GlobalCell {
     let north = raw.r.div_euclid(PERIOD_R);
@@ -134,6 +186,18 @@ pub fn north_period_metres() -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn crossing_log_counts_both_axes_and_reverses() {
+        let frame = TorusFrame::new(Axial64::new(PERIOD_Q + R_PERIOD_Q_OFFSET - 32, PERIOD_R - 32));
+        let a = frame.axial(31, 31);
+        let b = frame.axial(32, 32);
+        let mut counts = CrossingCounts::default();
+        assert!(crossing_report(a, b, &mut counts).unwrap().contains("EAST+NORTH"));
+        assert!(crossing_report(b, a, &mut counts).unwrap().contains("WEST+SOUTH"));
+        assert_eq!(counts.total(), 4);
+        assert_eq!(nearest_seams(frame), (48.0, (32.0 * HEX_ROW_METRES) as f32));
+    }
 
     #[test]
     fn arbitrary_negative_and_far_spawns_start_near_local_zero() {
