@@ -200,7 +200,8 @@ pub fn build_chunk_mesh_relative(
                     let b = Vec3::new(ring[j].x, bottom, ring[j].z);
                     let c = Vec3::new(ring[j].x, top, ring[j].z);
                     let d = Vec3::new(ring[side].x, top, ring[side].z);
-                    let shade = 0.88 + side as f32 * 0.018;
+                    // V5 isolates texture continuity from P0's per-side orientation tint.
+                    let shade = if world.is_rock_v5() { 1.0 } else { 0.88 + side as f32 * 0.018 };
                     let material = world.gallery_rock_index(cell).map(|i| i * 3 + 1).unwrap_or_else(|| if world.is_rock_gallery() { 69 } else { materials_p0::for_face(block, cell, HexFace::Side(side as u8)) as u32 });
                     let tint = [shade, shade, shade];
                     // One side is 0.577m wide x 1m tall. Use metres
