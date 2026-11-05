@@ -12,6 +12,8 @@ pub struct PresentationOptions {
     pub torus_spawn: Option<(i64, i64)>,
     /// Opt-in, reproducible R2/R3/R4 full-resolution distance benchmark.
     pub render_benchmark: bool,
+    /// Isolated V4 rock texture review fixture.
+    pub rock_gallery: bool,
 }
 
 impl Default for PresentationOptions {
@@ -24,6 +26,7 @@ impl Default for PresentationOptions {
             spawn_cell: None,
             torus_spawn: None,
             render_benchmark: false,
+            rock_gallery: false,
         }
     }
 }
@@ -41,6 +44,7 @@ impl PresentationOptions {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--streamed-world" => streamed = true,
+                "--rock-cluster-gallery" => options.rock_gallery = true,
                 "--render-benchmark" => options.render_benchmark = true,
                 "--torus-test-ne" => {
                     streamed = true;
@@ -121,6 +125,9 @@ impl PresentationOptions {
                 }
                 _ => return Err(format!("Unknown argument '{arg}'")),
             }
+        }
+        if options.rock_gallery && (streamed || torus_mode || spawn_q.is_some() || spawn_r.is_some() || options.render_benchmark) {
+            return Err("--rock-cluster-gallery cannot be combined with streamed, torus, spawn, or benchmark modes".into());
         }
         options.spawn_cell = match (spawn_q, spawn_r) {
             (None, None) => None,
