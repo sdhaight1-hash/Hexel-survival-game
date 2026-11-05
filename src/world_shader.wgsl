@@ -70,19 +70,11 @@ fn shade(v: VertexOut) -> vec4<f32> {
     // this only selects alternate preview artwork in opt-in LOD mode.
     if camera.options.w > 0.5 && !checker {
         if v.material == 3u {
-            // Connected lush/dry/sparse regions are tied to world-space
-            // positions, so the same patch is visible in near and far LOD.
-            let moisture = patch_noise(v.world_position.xz * 0.013);
-            let thinning = patch_noise(
-                v.world_position.xz * 0.043 + vec2<f32>(31.0, 17.0)
-            );
-            if moisture < 0.45 {
-                layer = 13u; // Dry yellow-green grass.
-            } else if thinning < 0.43 {
-                layer = 14u; // Thin grass with exposed soil.
-            } else {
-                layer = 12u; // Lush green grass.
-            }
+            // Rich grass is a real seed-owned surface identity. The dry
+            // and sparse variants already carry their own material IDs.
+            layer = 12u;
+        } else if v.material == 13u || v.material == 14u {
+            layer = v.material;
         } else if v.material == 2u {
             layer = 14u;
         } else if v.material == 0u {
