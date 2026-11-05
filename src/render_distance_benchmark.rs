@@ -118,12 +118,27 @@ impl RenderDistanceBenchmark {
         messages.push(summary);
         if let Some(csv) = self.csv.as_mut() {
             let _ = writeln!(
-                csv, "{},{},{},{},{},{:.2},{:.3},{:.3},{:.3},{},{},{},{:.3},{:.3},{:.3},{:.2},{},{},{}",
-                self.stage + 1, old_radius, STAGE_SECONDS,
-                samples.len(), s.moving_samples, mean, p95, p99, s.max_tick_ms,
-                s.over_33ms, s.peak_pending, s.total_added, s.generation_ms,
-                s.meshing_ms, s.upload_bytes as f64 / 1_048_576.0,
-                s.distance_m, resident, gpu_meshes, vertices
+                csv,
+                "{},{},{},{},{},{:.2},{:.3},{:.3},{:.3},{},{},{},{:.3},{:.3},{:.3},{:.2},{},{},{}",
+                self.stage + 1,
+                old_radius,
+                STAGE_SECONDS,
+                samples.len(),
+                s.moving_samples,
+                mean,
+                p95,
+                p99,
+                s.max_tick_ms,
+                s.over_33ms,
+                s.peak_pending,
+                s.total_added,
+                s.generation_ms,
+                s.meshing_ms,
+                s.upload_bytes as f64 / 1_048_576.0,
+                s.distance_m,
+                resident,
+                gpu_meshes,
+                vertices
             );
             let _ = csv.flush();
         }
@@ -131,7 +146,11 @@ impl RenderDistanceBenchmark {
         self.samples = Samples::default();
         self.started = now;
         if self.stage == RADII.len() {
-            messages.push(format!("RENDER BENCH COMPLETE | {} stages | CSV {} | no further radius changes", RADII.len(), CSV_PATH));
+            messages.push(format!(
+                "RENDER BENCH COMPLETE | {} stages | CSV {} | no further radius changes",
+                RADII.len(),
+                CSV_PATH
+            ));
         } else {
             messages.push(format!(
                 "RENDER BENCH SWITCH | stage {}/{} | R{} -> R{} | target {} resident sections | settle first {}s AND pending=0",
@@ -165,7 +184,9 @@ impl RenderDistanceBenchmark {
         s.upload_bytes += uploaded_bytes;
         s.distance_m += distance_m;
         if now.duration_since(self.started) < Duration::from_secs(WARMUP_SECONDS)
-            || pending != 0 || !interval_ms.is_finite() || interval_ms < 0.0
+            || pending != 0
+            || !interval_ms.is_finite()
+            || interval_ms < 0.0
         {
             return;
         }
@@ -193,9 +214,15 @@ mod tests {
         assert_eq!(RADII, [2, 4, 3, 2, 3, 4, 2]);
         for radius in RADII {
             assert!((2..=4).contains(&radius));
-            assert_eq!(5 * (1 + 3 * radius * (radius + 1)), match radius {
-                2 => 95, 3 => 185, 4 => 305, _ => unreachable!()
-            });
+            assert_eq!(
+                5 * (1 + 3 * radius * (radius + 1)),
+                match radius {
+                    2 => 95,
+                    3 => 185,
+                    4 => 305,
+                    _ => unreachable!(),
+                }
+            );
         }
     }
 
@@ -204,21 +231,56 @@ mod tests {
         let start = Instant::now();
         let mut bench = RenderDistanceBenchmark::new(start);
         assert_eq!(bench.radius(), 2);
-        assert!(bench.advance(start + Duration::from_secs(29), 95, 19, 87552).is_empty());
+        assert!(bench
+            .advance(start + Duration::from_secs(29), 95, 19, 87552)
+            .is_empty());
         for index in 0..7 {
-            let messages = bench.advance(start + Duration::from_secs(30 * (index + 1)), 95, 19, 87552);
+            let messages =
+                bench.advance(start + Duration::from_secs(30 * (index + 1)), 95, 19, 87552);
             assert!(!messages.is_empty());
         }
-        assert!(bench.advance(start + Duration::from_secs(300), 95, 19, 87552).is_empty());
+        assert!(bench
+            .advance(start + Duration::from_secs(300), 95, 19, 87552)
+            .is_empty());
     }
 
     #[test]
     fn warmup_and_pending_samples_are_excluded() {
         let start = Instant::now();
         let mut bench = RenderDistanceBenchmark::new(start);
-        bench.record_tick(start + Duration::from_secs(1), 100.0, true, 0, 1, 2.0, 3.0, 10, 2.0);
-        bench.record_tick(start + Duration::from_secs(10), 100.0, true, 20, 1, 2.0, 3.0, 10, 2.0);
-        bench.record_tick(start + Duration::from_secs(11), 16.7, true, 0, 0, 0.0, 0.0, 0, 2.0);
+        bench.record_tick(
+            start + Duration::from_secs(1),
+            100.0,
+            true,
+            0,
+            1,
+            2.0,
+            3.0,
+            10,
+            2.0,
+        );
+        bench.record_tick(
+            start + Duration::from_secs(10),
+            100.0,
+            true,
+            20,
+            1,
+            2.0,
+            3.0,
+            10,
+            2.0,
+        );
+        bench.record_tick(
+            start + Duration::from_secs(11),
+            16.7,
+            true,
+            0,
+            0,
+            0.0,
+            0.0,
+            0,
+            2.0,
+        );
         assert_eq!(bench.samples.settled_intervals_ms, vec![16.7]);
         assert_eq!(bench.samples.peak_pending, 20);
         assert_eq!(bench.samples.total_added, 2);
