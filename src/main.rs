@@ -9,6 +9,7 @@ mod mesh;
 mod presentation;
 mod render;
 mod render_cpu_metrics;
+mod render_distance_benchmark;
 mod stream_metrics;
 mod texture_codec;
 mod texture_pack;
@@ -25,6 +26,7 @@ use hexel_survival_game::{
 use presentation::PresentationOptions;
 use render::Renderer;
 use render_cpu_metrics::RenderCpuMetrics;
+use render_distance_benchmark::RenderDistanceBenchmark;
 use std::{collections::HashSet, sync::Arc, time::Instant};
 use stream_metrics::StreamFrameMetrics;
 use winit::{
@@ -71,6 +73,7 @@ struct Game {
     console_log: ConsoleLog,
     previous_torus: Option<GlobalCell>,
     torus_crossings: CrossingCounts,
+    distance_benchmark: Option<RenderDistanceBenchmark>,
 }
 
 impl Default for Game {
@@ -118,6 +121,11 @@ impl Game {
         }
         let now = Instant::now();
         let previous_torus = world.torus_cell(player.feet.x, player.feet.z);
+        let distance_benchmark = presentation.render_benchmark.then(|| RenderDistanceBenchmark::new(now));
+        let mut console_log = ConsoleLog::new();
+        if let Some(benchmark) = distance_benchmark.as_ref() {
+            console_log.record(benchmark.introduction());
+        }
         Self {
             window: None,
             renderer: None,
@@ -150,9 +158,10 @@ impl Game {
             menu_cursor: None,
             menu_hover: None,
             frame_stats: false,
-            console_log: ConsoleLog::new(),
+            console_log,
             previous_torus,
             torus_crossings: CrossingCounts::default(),
+            distance_benchmark,
         }
     }
 
@@ -577,7 +586,17 @@ impl ApplicationHandler for Game {
                 .record_frame_interval(f64::from(dt) * 1000.0, is_moving);
         }
         self.last_frame = now;
+        if let Some(benchmark) = self.distance_benchmark.as_mut() {
+            let (meshes, vertices) = self.renderer.as_ref().map_or((0, 0), Renderer::terrain_counts);
+            for message in benchmark.advance(now, self.world.chunk_count(), meshes, vertices) {
+                self.console_log.record(message);
+            }
+            self.world.set_horizontal_radius(benchmark.radius());
+        }
+        let feet_before = self.player.feet;
         self.player.step(&self.world, self.input(), dt);
+        let travelled = (self.player.feet - feet_before).truncate();
+        let travelled_m = f64::from(travelled.length());
         if self.world.torus_frame().is_some() {
             if let Some(shift) = self.world.rebase_torus(&mut self.player.feet) {
                 let replacement = self.world.stream_around(self.player.feet);
@@ -619,6 +638,8 @@ impl ApplicationHandler for Game {
                     .stream_longest_backlog_ms
                     .max(now.duration_since(since).as_secs_f64() * 1000.0);
             }
+            let mut benchmark_mesh_ms = 0.0;
+            let mut benchmark_uploaded_bytes = 0u64;
             if !delta.added.is_empty() || !delta.removed.is_empty() {
                 self.streamed_generated += delta.added.len();
                 self.streamed_evicted += delta.removed.len();
@@ -630,9 +651,18 @@ impl ApplicationHandler for Game {
                     self.streamed_uploaded_bytes += result.uploaded_bytes;
                     self.streamed_meshing_cpu_ms += result.cpu_ms;
                     mesh_upload_ms = result.cpu_ms;
+                    benchmark_mesh_ms = result.cpu_ms;
+                    benchmark_uploaded_bytes = result.uploaded_bytes;
                 }
                 self.stream_metrics
                     .record_stream_update(delta.generation_cpu_ms, mesh_upload_ms);
+            }
+            if let Some(benchmark) = self.distance_benchmark.as_mut() {
+                benchmark.record_tick(
+                    now, f64::from(dt) * 1000.0, is_moving, delta.pending,
+                    delta.added.len(), delta.generation_cpu_ms, benchmark_mesh_ms,
+                    benchmark_uploaded_bytes, travelled_m,
+                );
             }
             if now.duration_since(self.last_stream_report).as_secs_f64() >= 3.0 {
                 let (gpu_meshes, submitted_vertices) = self
