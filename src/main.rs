@@ -811,18 +811,19 @@ mod shader_tests {
     }
 
     #[test]
-    fn v58_pigment_tracks_geology_without_new_noise_or_bump() {
+    fn v59_direct_family_pigment_uses_rock_masks_not_parent_tint() {
         let shader = include_str!("world_shader.wgsl");
-        let start = shader.find("fn v58_pigment(").expect("V5.8 pigment function");
-        let end = shader[start..].find("\nstruct V57Substrate")
-            .expect("V5.8 pigment function boundary") + start;
-        let body = &shader[start..end];
+        let first = shader.find("fn v59_family_color(").expect("V5.9 family function");
+        let end = shader[first..].find("\nstruct V57Substrate")
+            .expect("family function boundary") + first;
+        let body = &shader[first..end];
         assert!(body.contains("feature.x") && body.contains("feature.y"));
         assert!(!body.contains("v5_noise("));
-        assert!(!body.contains("height"));
-        assert!(shader.contains("substrate.main_feature"));
-        assert!(shader.contains("substrate.fine_feature"));
-        assert!(shader.contains("clamp(v.micro_mask, 0.0, 1.0)"));
+        assert!(shader.contains("v.family_weights.x"));
+        assert!(shader.contains("v.family_weight_4"));
+        assert!(!shader.contains("v58_pigment"));
+        assert!(!shader.contains("v.micro_mask"));
+        assert!(!shader.contains("v.pattern_seed"));
     }
 
     #[test]
