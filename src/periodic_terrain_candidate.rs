@@ -13,7 +13,7 @@ use crate::{
 
 /// New experimental algorithm: deliberately distinct from live terrain revision 1.
 /// This is NOT a persistence or world-save generator version.
-pub const PERIODIC_TERRAIN_CANDIDATE_REVISION: u32 = 1;
+pub const PERIODIC_TERRAIN_CANDIDATE_REVISION: u32 = 2;
 
 /// Elevation is sampled from the same periodic raster at either near or
 /// coarse resolution. The 32,768² raster is addressed but never allocated.
@@ -44,18 +44,24 @@ impl PeriodicTerrainCandidate {
         // on the torus and are seed-deterministic.
         let plains = self.periodic_noise_at(x, z, 128, 0xD1A0_0001);
         let relief = smoothstep(0.30, 0.78, plains);
-        let amplitude = 0.20 + 0.80 * relief;
+        // Plains still retain walkable rolling ground. The old 0.20
+        // minimum suppressed nearly every local contour near test spawn.
+        let amplitude = 0.55 + 0.45 * relief;
         let continent = self.periodic_noise_at(x, z, 32, 0xD1A0_0002);
         let regional = self.periodic_noise_at(x, z, 256, 0xD1A0_0003);
         let hills = self.periodic_noise_at(x, z, 1024, 0xD1A0_0004);
         let slopes = self.periodic_noise_at(x, z, 2048, 0xD1A0_0005);
         let fine = self.periodic_noise_at(x, z, 4096, 0xD1A0_0006);
+        let undulation = self.periodic_noise_at(x, z, 8192, 0xD1A0_0007);
+        let micro_relief = self.periodic_noise_at(x, z, 16384, 0xD1A0_0008);
         (220.0
             + (continent - 0.5) * 180.0
             + (regional - 0.5) * 85.0
             + (hills - 0.5) * 105.0 * amplitude
-            + (slopes - 0.5) * 28.0 * amplitude
-            + (fine - 0.5) * 7.0 * amplitude)
+            + (slopes - 0.5) * 50.0 * amplitude
+            + (fine - 0.5) * 72.0 * amplitude
+            + (undulation - 0.5) * 24.0 * amplitude
+            + (micro_relief - 0.5) * 6.0 * amplitude)
             .round() as i32
     }
 
@@ -171,6 +177,7 @@ fn lerp(a: f64, b: f64, t: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::axial_geography_candidate::CandidateProjection;
     use crate::hex_torus_candidate::{PERIOD_Q, PERIOD_R, R_PERIOD_Q_OFFSET};
 
     fn translated(p: Axial64, east: i64, north: i64) -> Axial64 {
@@ -178,6 +185,27 @@ mod tests {
             p.q + east * PERIOD_Q + north * R_PERIOD_Q_OFFSET,
             p.r + north * PERIOD_R,
         )
+    }
+
+    #[test]
+    fn local_relief_is_visibly_nonflat_near_test_spawn() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let centre = Axial64::new(432_776, 1_182_375);
+        let mut min_y = i32::MAX;
+        let mut max_y = i32::MIN;
+        // About a 500-metre walkable region, sampled without resident chunks.
+        for dq in (-256..=256).step_by(32) {
+            for dr in (-256..=256).step_by(32) {
+                let y = source.surface_y(Axial64::new(centre.q + dq, centre.r + dr));
+                min_y = min_y.min(y);
+                max_y = max_y.max(y);
+            }
+        }
+        assert!(
+            max_y - min_y >= 15,
+            "seed 42 spawn remains visually flat: relief = {} m",
+            max_y - min_y
+        );
     }
 
     #[test]
