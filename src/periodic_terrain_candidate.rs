@@ -66,7 +66,9 @@ impl PeriodicTerrainCandidate {
         let base = 205.0 + (macro_height - 0.5) * 190.0 + (uplift - 0.5) * 58.0;
         let hills = (foothills - 0.5) * 88.0 + (rolling - 0.5) * 32.0 + (details - 0.5) * 9.0;
         let plains = 0.23 + 0.77 * (1.0 - basin);
-        let plateau_level = (base / 28.0).round() * 28.0 + 42.0;
+        // Flatten local relief continuously: never quantize the regional
+        // height to bands, which would create artificial 20m seam walls.
+        let plateau_level = base + 42.0;
         let elevation =
             base + hills * plains * (1.0 - plateau * 0.83) + mountain * (68.0 + ridge * 320.0)
                 - valley * (22.0 + mountain * 65.0)
