@@ -9,7 +9,7 @@ use glam::Vec3;
 use hexel_survival_game::{
     periodic_terrain_candidate::PeriodicTerrainCandidate,
     torus_frame::{local_cell_from_metres, TorusFrame},
-    world::{Block, CellPos, HEX_RADIUS, HEX_ROW_SPACING},
+    world::{Block, CellPos},
 };
 use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
 
@@ -66,7 +66,7 @@ impl Worker {
                         let (spacing, inner, outer) = BANDS[i];
                         let next_spacing = BANDS.get(i + 1).map(|band| band.0);
                         if i == 0 {
-                            build_hex_near_band(source, key, outer)
+                            build_cube_near_band(source, key, outer)
                         } else {
                             build_band(source, key, spacing, inner, outer, next_spacing)
                         }
@@ -208,61 +208,58 @@ fn surface_material(
     material_for_surface(source.surface_cover(cell))
 }
 
-/// Hex-column surface LOD: exact hexagonal horizontal topology and actual
-/// exposed vertical cliff spans (one quad per exposed stratum rather than
-/// a full 16^3 resident chunk). Only the first 64m band uses this more
-/// expensive representation; far bands retain error-refined heightfields.
-fn build_hex_near_band(source: PeriodicTerrainCandidate, key: Key, outer: i32) -> Vec<Vertex> {
+/// First LOD band: exact orthogonal 1m square column caps and real
+/// exposed cliff spans. Same global seed, height and material as near cubes.
+fn build_cube_near_band(source: PeriodicTerrainCandidate, key: Key, outer: i32) -> Vec<Vertex> {
     let mut out = Vec::new();
-    let extent_r = ((outer as f32 / HEX_ROW_SPACING).ceil() as i32) + 2;
-    let extent_q = outer * 2 + 2;
-    let centre_cell = local_cell_from_metres(key.centre.0 as f32, key.centre.1 as f32);
-    const NEIGHBORS: [(i32, i32); 6] = [(0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (1, 0)];
-    for r in centre_cell.r - extent_r..=centre_cell.r + extent_r {
-        for q in centre_cell.q - extent_q..=centre_cell.q + extent_q {
-            let x = q as f32 + r as f32 * 0.5;
-            let z = r as f32 * HEX_ROW_SPACING;
-            if (x - key.centre.0 as f32).abs() > outer as f32
-                || (z - key.centre.1 as f32).abs() > outer as f32
-            {
-                continue;
-            }
-            let pos = CellPos::new(q, r, 0);
-            let global = key.frame.cell(pos).canonical;
+    for r in (key.centre.1 - outer)..(key.centre.1 + outer) {
+        for q in (key.centre.0 - outer)..(key.centre.0 + outer) {
+            let global = key.frame.cell(CellPos::new(q, r, 0)).canonical;
             let profile = source.column_profile(global);
             let y = (profile.top + 1) as f32;
+            let x = q as f32;
+            let z = r as f32;
+            let x0 = x - 0.5;
+            let x1 = x + 0.5;
+            let z0 = z - 0.5;
+            let z1 = z + 0.5;
             let material = material_for_surface(profile.cover);
-            let centre = Vec3::new(x, y, z);
-            let ring: [Vec3; 6] = std::array::from_fn(|i| {
-                let radians = (30.0_f32 + i as f32 * 60.0).to_radians();
-                Vec3::new(
-                    x + HEX_RADIUS * radians.cos(),
-                    y,
-                    z + HEX_RADIUS * radians.sin(),
-                )
-            });
-            for side in 0..6 {
-                let next = (side + 1) % 6;
-                emit_triangle(&mut out, centre, ring[side], ring[next], material);
-            }
-            for (side, &(dq, dr)) in NEIGHBORS.iter().enumerate() {
+            emit_triangle(
+                &mut out,
+                Vec3::new(x0, y, z0),
+                Vec3::new(x0, y, z1),
+                Vec3::new(x1, y, z1),
+                material,
+            );
+            emit_triangle(
+                &mut out,
+                Vec3::new(x0, y, z0),
+                Vec3::new(x1, y, z1),
+                Vec3::new(x1, y, z0),
+                material,
+            );
+            for (dq, dr, left, right) in [
+                (1, 0, (x1, z0), (x1, z1)),
+                (-1, 0, (x0, z1), (x0, z0)),
+                (0, 1, (x1, z1), (x0, z1)),
+                (0, -1, (x0, z0), (x1, z0)),
+            ] {
                 let neighbor = key.frame.cell(CellPos::new(q + dq, r + dr, 0)).canonical;
                 let neighbor_top = source.surface_y(neighbor);
                 if neighbor_top >= profile.top {
                     continue;
                 }
-                let deep_material = match profile.deep {
+                let deep = match profile.deep {
                     Block::Shale => Material::Shale,
                     _ => Material::Granite,
                 };
-                emit_hex_wall(
+                emit_cube_wall(
                     &mut out,
-                    ring[side],
-                    ring[(side + 1) % 6],
+                    left,
+                    right,
                     (neighbor_top + 1) as f32,
                     profile.top as f32,
-                    side,
-                    deep_material,
+                    deep,
                 );
                 let rim = match profile.cover {
                     Block::Grass => Material::SoilSideFull,
@@ -270,42 +267,40 @@ fn build_hex_near_band(source: PeriodicTerrainCandidate, key: Key, outer: i32) -
                     Block::Gravel => Material::SoilBare,
                     _ => material,
                 };
-                emit_hex_wall(
-                    &mut out,
-                    ring[side],
-                    ring[(side + 1) % 6],
-                    profile.top as f32,
-                    y,
-                    side,
-                    rim,
-                );
+                emit_cube_wall(&mut out, left, right, profile.top as f32, y, rim);
             }
         }
     }
     out
 }
 
-/// Emit a side quad with vertical metre UVs; flat-planar UVs would stretch
-/// textures into unrecognizable stripes on mountain-height cliffs.
-fn emit_hex_wall(
+fn emit_cube_wall(
     out: &mut Vec<Vertex>,
-    left: Vec3,
-    right: Vec3,
+    left: (f32, f32),
+    right: (f32, f32),
     bottom: f32,
     top: f32,
-    side: usize,
     material: Material,
 ) {
     if top <= bottom {
         return;
     }
-    let a = Vec3::new(left.x, bottom, left.z);
-    let b = Vec3::new(right.x, bottom, right.z);
-    let c = Vec3::new(right.x, top, right.z);
-    let d = Vec3::new(left.x, top, left.z);
-    let u0 = side as f32 * HEX_RADIUS;
-    let u1 = (side as f32 + 1.0) * HEX_RADIUS;
-    let tint = [0.91, 0.91, 0.91];
+    let a = Vec3::new(left.0, bottom, left.1);
+    let b = Vec3::new(right.0, bottom, right.1);
+    let c = Vec3::new(right.0, top, right.1);
+    let d = Vec3::new(left.0, top, left.1);
+    // Vertical wall UVs must use actual height; X/Z-only cap UVs would
+    // turn a tall cliff into a smeared single stripe.
+    let u0 = if (left.0 - right.0).abs() < 0.01 {
+        left.1
+    } else {
+        left.0
+    };
+    let u1 = if (left.0 - right.0).abs() < 0.01 {
+        right.1
+    } else {
+        right.0
+    };
     for (p, uv) in [
         (a, [u0, bottom]),
         (b, [u1, bottom]),
@@ -314,7 +309,7 @@ fn emit_hex_wall(
         (c, [u1, top]),
         (d, [u0, top]),
     ] {
-        let mut v = vertex(p, material, tint);
+        let mut v = vertex(p, material, [0.91, 0.91, 0.91]);
         v.uv = uv;
         out.push(v);
     }
@@ -415,36 +410,36 @@ mod tests {
     use hexel_survival_game::hex_torus_candidate::Axial64;
 
     #[test]
-    fn exact_near_hex_band_matches_shared_column_height_and_material() {
+    fn exact_near_cube_band_matches_shared_column_height_and_material() {
         let source = PeriodicTerrainCandidate::new(42);
         let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
         let key = Key {
             centre: (0, 0),
             frame,
         };
-        let vertices = build_hex_near_band(source, key, 8);
+        let vertices = build_cube_near_band(source, key, 8);
         assert!(!vertices.is_empty());
         let global = frame.cell(CellPos::new(0, 0, 0)).canonical;
         let profile = source.column_profile(global);
         let target_y = (profile.top + 1) as f32;
         let top_material = material_for_surface(profile.cover) as u32;
         assert!(vertices.iter().any(|v| {
-            v.position[0] == 0.0
-                && v.position[2] == 0.0
+            v.position[0] == -0.5
+                && v.position[2] == -0.5
                 && v.position[1] == target_y
                 && v.material == top_material
         }));
     }
 
     #[test]
-    fn exact_near_hex_band_follows_moving_anchor() {
+    fn exact_near_cube_band_follows_moving_anchor() {
         let source = PeriodicTerrainCandidate::new(42);
         let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
         let key = Key {
             centre: (96, -64),
             frame,
         };
-        let vertices = build_hex_near_band(source, key, 8);
+        let vertices = build_cube_near_band(source, key, 8);
         assert!(!vertices.is_empty());
         assert!(vertices
             .iter()

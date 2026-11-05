@@ -51,7 +51,10 @@ impl TorusFrame {
             spawn.r.div_euclid(side) * side,
         );
         let local = Axial64::new(spawn.q - anchor.q, spawn.r - anchor.r);
-        (Self::new(anchor), local.world_xz_m())
+        (
+            Self::new(anchor),
+            DVec2::new(local.q as f64, local.r as f64),
+        )
     }
 
     pub fn cell(&self, local: CellPos) -> GlobalCell {
@@ -73,14 +76,14 @@ impl TorusFrame {
         if x.abs().max(z.abs()) < REBASE_DISTANCE_METRES {
             return None;
         }
-        let local = Axial64::from_world_xz_m(DVec2::new(f64::from(*x), f64::from(*z)));
+        let local = Axial64::new(x.round() as i64, z.round() as i64);
         let side = i64::from(CHUNK_SIDE);
         let dq = local.q.div_euclid(side) * side;
         let dr = local.r.div_euclid(side) * side;
         if dq == 0 && dr == 0 {
             return None;
         }
-        let shift = Axial64::new(dq, dr).world_xz_m();
+        let shift = DVec2::new(dq as f64, dr as f64);
         let new_q = self.origin.q.checked_add(dq)?;
         let new_r = self.origin.r.checked_add(dr)?;
         let new_x = (f64::from(*x) - shift.x) as f32;
@@ -152,13 +155,13 @@ pub fn crossing_report(
 /// Local metric locations of the nearest east/west and north/south seam planes.
 /// Designed for the debug renderer, not for game collision.
 pub fn nearest_seams(frame: TorusFrame) -> (f32, f32) {
-    let origin = frame.origin.world_xz_m();
-    let east_span = PERIOD_Q as f64;
-    let north_span = PERIOD_R as f64 * HEX_ROW_METRES;
-    (
-        ((origin.x / east_span).round() * east_span - origin.x) as f32,
-        ((origin.y / north_span).round() * north_span - origin.y) as f32,
-    )
+    // Debug markers for the square lattice; periodic topology still has
+    // the original north-direction Q offset from the toroidal generator.
+    let east =
+        (frame.origin.q as f64 / PERIOD_Q as f64).round() * PERIOD_Q as f64 - frame.origin.q as f64;
+    let north =
+        (frame.origin.r as f64 / PERIOD_R as f64).round() * PERIOD_R as f64 - frame.origin.r as f64;
+    (east as f32, north as f32)
 }
 
 /// Stable canonical terrain identity independent of camera frame.
@@ -179,11 +182,14 @@ pub fn global_identity(raw: Axial64) -> GlobalCell {
 
 /// Authoritative local metres of an i64-global axial cell relative to the frame.
 pub fn local_metres(frame: TorusFrame, cell: Axial64) -> DVec2 {
-    Axial64::new(cell.q - frame.origin.q, cell.r - frame.origin.r).world_xz_m()
+    DVec2::new(
+        (cell.q - frame.origin.q) as f64,
+        (cell.r - frame.origin.r) as f64,
+    )
 }
 
 pub fn local_cell_from_metres(x: f32, z: f32) -> CellPos {
-    let cell = Axial64::from_world_xz_m(DVec2::new(f64::from(x), f64::from(z)));
+    let cell = Axial64::new(x.round() as i64, z.round() as i64);
     CellPos::new(
         i32::try_from(cell.q).expect("local q exceeded i32"),
         i32::try_from(cell.r).expect("local r exceeded i32"),
@@ -192,7 +198,7 @@ pub fn local_cell_from_metres(x: f32, z: f32) -> CellPos {
 }
 
 pub fn north_period_metres() -> f64 {
-    PERIOD_R as f64 * HEX_ROW_METRES
+    PERIOD_R as f64
 }
 
 #[cfg(test)]
@@ -215,7 +221,10 @@ mod tests {
             .unwrap()
             .contains("WEST+SOUTH"));
         assert_eq!(counts.total(), 4);
-        assert_eq!(nearest_seams(frame), (48.0, (32.0 * HEX_ROW_METRES) as f32));
+        // The cube projection uses orthogonal q/r metres. The Q seam is
+        // sheared relative to the north-period lattice, so this axis
+        // marker is deliberately only an approximate visual guide.
+        assert_eq!(nearest_seams(frame), (-432_768.0, 32.0));
     }
 
     #[test]
@@ -227,7 +236,7 @@ mod tests {
             Axial64::new(-15_000_000, 18_000_000),
         ] {
             let (frame, local) = TorusFrame::at_spawn(spawn);
-            assert!(local.x.abs() < 24.0 && local.y.abs() < 14.0);
+            assert!(local.x.abs() < 16.0 && local.y.abs() < 16.0);
             let cell = local_cell_from_metres(local.x as f32, local.y as f32);
             assert_eq!(frame.cell(cell).raw, spawn);
             assert_eq!(frame.cell(cell).canonical, spawn.candidate_wrap());
