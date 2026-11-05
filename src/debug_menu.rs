@@ -434,13 +434,31 @@ pub fn torus_hud_geometry(width: u32, height: u32, status: &str) -> Vec<MenuVert
     let mut out = Vec::new();
     let size = (width as f32, height as f32);
     rect(
-        &mut out, size, (12.0, 12.0),
+        &mut out,
+        size,
+        (12.0, 12.0),
         (width.min(1150) as f32 - 24.0, 63.0),
-        [0.025, 0.04, 0.055, 0.9]
+        [0.025, 0.04, 0.055, 0.9],
     );
     let (top, bottom) = status.split_once('|').unwrap_or((status, ""));
-    write_text(&mut out, size, 22.0, 23.0, 1.65, top, [1.0, 0.93, 0.76, 1.0]);
-    write_text(&mut out, size, 22.0, 47.0, 1.65, bottom, [1.0, 0.93, 0.76, 1.0]);
+    write_text(
+        &mut out,
+        size,
+        22.0,
+        23.0,
+        1.65,
+        top,
+        [1.0, 0.93, 0.76, 1.0],
+    );
+    write_text(
+        &mut out,
+        size,
+        22.0,
+        47.0,
+        1.65,
+        bottom,
+        [1.0, 0.93, 0.76, 1.0],
+    );
     out
 }
 
