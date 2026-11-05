@@ -218,6 +218,31 @@ impl World {
         }
     }
 
+    /// Opt-in material review fixture: 23 isolated 10x10x3 rock pads and
+    /// a continuous 3-hex-wide walkway. No worldgen or resource state.
+    pub fn rock_gallery() -> Self {
+        let mut world = Self::default();
+        for index in 0..23 {
+            for q in index * 12..index * 12 + 10 {
+                for r in 0..10 {
+                    for y in 0..3 {
+                        let cell = CellPos::new(q, r, y);
+                        let (section, local) = cell.chunk_and_local();
+                        world.chunks.entry(section).or_default().set(local, Block::Rock);
+                    }
+                }
+            }
+        }
+        for q in 0..(23 * 12 - 2) {
+            for r in 12..15 {
+                let cell = CellPos::new(q, r, 0);
+                let (section, local) = cell.chunk_and_local();
+                world.chunks.entry(section).or_default().set(local, Block::Soil);
+            }
+        }
+        world
+    }
+
     /// The original terrain source is global, even when no chunk is resident.
     /// This mode is unbounded for now, **not** the future approved torus.
     pub fn streamed(seed: u64) -> Self {
@@ -309,6 +334,16 @@ impl World {
     pub fn set_horizontal_radius(&mut self, radius: i32) {
         assert!((2..=5).contains(&radius), "render radius must be 2..=5");
         self.horizontal_radius = radius;
+    }
+
+    /// Material index from fixed gallery geometry; never inferred from geology.
+    /// Only the opt-in fixture's solid pads are assigned these indices.
+    pub fn gallery_rock_index(cell: CellPos) -> Option<u32> {
+        if cell.q < 0 || cell.r < 0 || cell.r >= 10 || cell.y < 0 || cell.y >= 3 {
+            return None;
+        }
+        let index = cell.q / 12;
+        (index < 23 && cell.q % 12 < 10).then_some(index as u32)
     }
 
     pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
