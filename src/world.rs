@@ -362,6 +362,7 @@ impl World {
         requested.sort_by_key(|(distance, height, pos)| (*distance, *height, pos.y, pos.q, pos.r));
         let wanted: HashSet<_> = requested.iter().map(|entry| entry.2).collect();
         if self.stream_center == Some(center)
+            && self.chunks.len() == wanted.len()
             && wanted.iter().all(|pos| self.chunks.contains_key(pos))
         {
             return StreamDelta::default();
@@ -406,12 +407,7 @@ impl World {
             added,
             removed,
             generation_cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
-            pending: wanted.len().saturating_sub(
-                self.chunks
-                    .keys()
-                    .filter(|pos| wanted.contains(pos))
-                    .count(),
-            ),
+            pending: wanted.symmetric_difference(&self.chunks.keys().copied().collect()).count(),
         }
     }
 
