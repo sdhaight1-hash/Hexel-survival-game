@@ -17,10 +17,10 @@ use benchmark_log::ConsoleLog;
 use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
 use frame_pacing::FramePacer;
 use hexel_survival_game::{
-    player::{MoveInput, Player},
-    world::{CellPos, World},
     hex_torus_candidate::Axial64,
-    torus_frame::{self, GlobalCell, CrossingCounts},
+    player::{MoveInput, Player},
+    torus_frame::{self, CrossingCounts, GlobalCell},
+    world::{CellPos, World},
 };
 use presentation::PresentationOptions;
 use render::Renderer;
@@ -591,9 +591,14 @@ impl ApplicationHandler for Game {
                     replacement.added.len()
                 ));
             }
-            let current = self.world.torus_cell(self.player.feet.x, self.player.feet.z).expect("torus position");
+            let current = self
+                .world
+                .torus_cell(self.player.feet.x, self.player.feet.z)
+                .expect("torus position");
             if let Some(before) = self.previous_torus {
-                if let Some(message) = torus_frame::crossing_report(before, current, &mut self.torus_crossings) {
+                if let Some(message) =
+                    torus_frame::crossing_report(before, current, &mut self.torus_crossings)
+                {
                     self.console_log.record(message);
                 }
             }
