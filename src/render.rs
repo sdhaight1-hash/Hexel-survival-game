@@ -999,7 +999,7 @@ impl Renderer {
                     if self.debug_checker { 1.0 } else { 0.0 },
                     self.texels_per_metre as f32 / materials_p0::REFERENCE_TEXELS_PER_METRE,
                     if self.v2_preview_enabled { 1.0 } else { 0.0 },
-                    0.0,
+                    if self.gallery_materials.is_some() { 1.0 } else { 0.0 },
                 ],
                 eye_position: [eye.x, eye.y, eye.z, 0.0],
                 surface: [
