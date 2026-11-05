@@ -128,7 +128,7 @@ mod tests {
     fn empty_neighbors_do_not_contribute_at_outer_boundary() {
         let world = World::rock_v5_gallery();
         let cell = CellPos::new(12, 0, 2); // granite, palette-enabled pad B
-        let corner = vertex_tint(&world, cell, Some(0), 3);
+        let corner = vertex_tint(&world, cell, Some(3), 3);
         let center = vertex_tint(&world, cell, None, 3);
         // An outside corner has no contributors beyond this rock pad.
         assert_eq!(corner, center);
