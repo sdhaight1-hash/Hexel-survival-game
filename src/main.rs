@@ -10,6 +10,7 @@ mod presentation;
 mod render;
 mod render_cpu_metrics;
 mod render_distance_benchmark;
+mod rock_gallery;
 mod stream_metrics;
 mod texture_codec;
 mod texture_pack;
@@ -87,12 +88,20 @@ impl Game {
         let (mut world, torus_position) = if let Some((q, r)) = presentation.torus_spawn {
             let (world, local) = World::torus(42, Axial64::new(q, r));
             (world, Some(local))
+        } else if presentation.rock_gallery {
+            (World::rock_gallery(), None)
         } else if streamed {
             (World::streamed(42), None)
         } else {
             (World::demo(42), None)
         };
         let mut player = Player::spawn(&world);
+        if presentation.rock_gallery {
+            let center = CellPos::new(5, 13, 0).center();
+            player.feet = glam::Vec3::new(center.x, 1.0, center.z);
+            player.yaw = std::f32::consts::FRAC_PI_2;
+            player.pitch = -0.10;
+        }
         if let Some(local) = torus_position {
             let x = local.x as f32;
             let z = local.y as f32;
@@ -355,6 +364,12 @@ impl ApplicationHandler for Game {
                 ));
                 self.console_log
                     .record("F1 menu | F2 console + Ctrl+C | F3 streamed frame metrics");
+                if self.presentation.rock_gallery {
+                    println!("ROCK GALLERY V4: 23 pads, each 10x10x3, gaps 2; walkway on r=12..14. Ordered west-to-east:");
+                    for (index, (_, rock)) in rock_gallery::ROCKS.iter().enumerate() {
+                        println!("{:02}  {}  q={}..{}", index + 1, rock, index * 12, index * 12 + 9);
+                    }
+                }
                 if self.world.is_streamed() {
                     println!(
                         "Hexel Survival STREAMED WORLD: {} resident sections; procedural source seed 42.",
@@ -376,7 +391,9 @@ impl ApplicationHandler for Game {
                 );
                 println!("Esc release/recapture mouse | Click window to recapture.");
                 println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
-                println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
+                if !self.presentation.rock_gallery {
+                    println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
+                }
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
                 println!("F10: toggle native-copper metallic highlights (F8).");
             }
