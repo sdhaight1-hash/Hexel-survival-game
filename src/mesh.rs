@@ -356,10 +356,14 @@ mod tests {
         assert_eq!(verts.len() % 3, 0);
         assert!(verts.iter().any(|v| v.palette_id != 0));
         assert!(verts.iter().all(|v| v.palette_id < 5));
-        assert!(verts.iter().any(|v| v.pattern_seed != 0));
-        assert!(verts.iter().any(|v| v.micro_mask < 0.5));
-        assert!(verts.iter().any(|v| v.micro_mask > 0.9));
-        assert!(verts.iter().all(|v| (0.0..=1.0).contains(&v.micro_mask)));
+        assert!(verts.iter().all(|v| {
+            let sum = v.family_weights.iter().sum::<f32>() + v.family_weight_4;
+            (sum - 1.0).abs() < 1e-5 || sum == 0.0
+        }));
+        assert!(verts.iter().any(|v| {
+            v.family_weights.iter().filter(|w| **w > 0.01).count()
+                + usize::from(v.family_weight_4 > 0.01) > 1
+        }));
         assert!(verts.iter().all(|v| v.position.iter().all(|x| x.is_finite())));
     }
 
