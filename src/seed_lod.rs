@@ -14,12 +14,7 @@ use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
 
 /// Square grids use aligned boundaries: no spatial holes between bands.
 /// Outer edge lies beyond the 1000m far plane for an anchor within 32m.
-pub const BANDS: [(i32, i32, i32); 4] = [
-    (2, 0, 64),
-    (4, 64, 192),
-    (8, 192, 448),
-    (16, 448, 1152),
-];
+pub const BANDS: [(i32, i32, i32); 4] = [(2, 0, 64), (4, 64, 192), (8, 192, 448), (16, 448, 1152)];
 const ANCHOR_STEP: i32 = 32;
 const UNDERLAY_EPSILON: f32 = 0.05;
 
@@ -186,8 +181,13 @@ pub fn build_band(
             points.push(Vec3::new(
                 x,
                 edge_height(
-                    source, key.frame, x as i32, z as i32,
-                    key.centre, outer, next_spacing,
+                    source,
+                    key.frame,
+                    x as i32,
+                    z as i32,
+                    key.centre,
+                    outer,
+                    next_spacing,
                 ),
                 z,
             ));
@@ -237,10 +237,12 @@ mod tests {
         for (i, &(spacing, inner, outer)) in BANDS.iter().enumerate() {
             let next_spacing = BANDS.get(i + 1).map(|band| band.0);
             let vertices = build_band(source, key, spacing, inner, outer, next_spacing);
-            let expected = ((2 * outer / spacing).pow(2)
-                - (2 * inner / spacing).pow(2)) as usize * 6;
+            let expected =
+                ((2 * outer / spacing).pow(2) - (2 * inner / spacing).pow(2)) as usize * 6;
             assert_eq!(vertices.len(), expected);
-            assert!(vertices.iter().all(|v| v.position.iter().all(|c| c.is_finite())));
+            assert!(vertices
+                .iter()
+                .all(|v| v.position.iter().all(|c| c.is_finite())));
         }
     }
 
