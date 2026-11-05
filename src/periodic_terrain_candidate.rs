@@ -6,7 +6,7 @@
 //! No biome, geology, water, persistence, height datum or topology approval.
 
 use crate::{
-    axial_geography_candidate::{CandidateCellId, CandidateChunkId, CandidateProjection},
+    axial_geography_candidate::{CandidateCellId, CandidateChunkId},
     hex_torus_candidate::Axial64,
     world::{Block, CHUNK_SIDE},
 };
@@ -144,31 +144,6 @@ impl PeriodicTerrainCandidate {
             ),
             v,
         )
-    }
-
-    fn periodic_noise(&self, x: u32, z: u32, grid_side: u32, domain: u64) -> f64 {
-        // Both selected grids divide 32,768 exactly. Interpolate across the
-        // last lattice square into cell zero instead of clamping the edge.
-        let span = crate::geography::ELEVATION_SAMPLES_PER_AXIS / grid_side;
-        let gx = x / span;
-        let gz = z / span;
-        let tx = f64::from(x % span) / f64::from(span);
-        let tz = f64::from(z % span) / f64::from(span);
-        let u = tx * tx * (3.0 - 2.0 * tx);
-        let v = tz * tz * (3.0 - 2.0 * tz);
-        let x1 = (gx + 1) % grid_side;
-        let z1 = (gz + 1) % grid_side;
-        let low = lerp(
-            self.lattice(gx, gz, domain),
-            self.lattice(x1, gz, domain),
-            u,
-        );
-        let high = lerp(
-            self.lattice(gx, z1, domain),
-            self.lattice(x1, z1, domain),
-            u,
-        );
-        lerp(low, high, v)
     }
 
     fn lattice(&self, q: u32, r: u32, domain: u64) -> f64 {
