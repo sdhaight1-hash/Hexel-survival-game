@@ -172,6 +172,7 @@ pub struct World {
     torus_frame: Option<TorusFrame>,
     stream_center: Option<ChunkPos>,
     horizontal_radius: i32,
+    rock_gallery: bool,
 }
 
 impl World {
@@ -215,6 +216,7 @@ impl World {
             torus_frame: None,
             stream_center: None,
             horizontal_radius: STREAM_HORIZONTAL_RADIUS,
+            rock_gallery: false,
         }
     }
 
@@ -222,6 +224,7 @@ impl World {
     /// a continuous 3-hex-wide walkway. No worldgen or resource state.
     pub fn rock_gallery() -> Self {
         let mut world = Self::default();
+        world.rock_gallery = true;
         for index in 0..23 {
             for q in index * 12..index * 12 + 10 {
                 for r in 0..10 {
@@ -268,6 +271,7 @@ impl World {
                 torus_frame: Some(frame),
                 stream_center: None,
                 horizontal_radius: STREAM_HORIZONTAL_RADIUS,
+                rock_gallery: false,
             },
             position,
         )
@@ -338,7 +342,8 @@ impl World {
 
     /// Material index from fixed gallery geometry; never inferred from geology.
     /// Only the opt-in fixture's solid pads are assigned these indices.
-    pub fn gallery_rock_index(cell: CellPos) -> Option<u32> {
+    pub fn gallery_rock_index(&self, cell: CellPos) -> Option<u32> {
+        if !self.rock_gallery { return None; }
         if cell.q < 0 || cell.r < 0 || cell.r >= 10 || cell.y < 0 || cell.y >= 3 {
             return None;
         }
