@@ -32,6 +32,15 @@ pub struct ColumnProfile {
     pub deep: Block,
 }
 
+/// Seed-derived local terrain diagnostics. Material slots are
+/// Grass, Rock, Shale, Gravel (surface only).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TerrainSurvey {
+    pub min_height: i32,
+    pub max_height: i32,
+    pub materials: [u32; 4],
+}
+
 impl ColumnProfile {
     pub fn sample(self, y: i64) -> Block {
         if y > i64::from(self.top) {
@@ -153,6 +162,38 @@ impl PeriodicTerrainCandidate {
         } else {
             Block::Shale
         }
+    }
+
+    /// Coarse diagnostic sampling, independent of resident sections/LOD.
+    /// A fixed seed and torus-equivalent centre produce identical statistics.
+    pub fn survey_region(&self, center: Axial64, radius: i64, step: i64) -> TerrainSurvey {
+        assert!(radius > 0 && step > 0 && radius <= 16_384);
+        let mut result = TerrainSurvey {
+            min_height: i32::MAX,
+            max_height: i32::MIN,
+            materials: [0; 4],
+        };
+        let mut dr = -radius;
+        while dr <= radius {
+            let mut dq = -radius;
+            while dq <= radius {
+                let pos = Axial64::new(center.q + dq, center.r + dr);
+                let column = self.column_profile(pos);
+                result.min_height = result.min_height.min(column.top);
+                result.max_height = result.max_height.max(column.top);
+                let slot = match column.cover {
+                    Block::Grass => 0,
+                    Block::Rock => 1,
+                    Block::Shale => 2,
+                    Block::Gravel => 3,
+                    Block::Air | Block::Soil => unreachable!("surface must be solid"),
+                };
+                result.materials[slot] += 1;
+                dq += step;
+            }
+            dr += step;
+        }
+        result
     }
 
     pub fn column_profile(&self, pos: Axial64) -> ColumnProfile {
@@ -286,6 +327,19 @@ mod tests {
             p.q + east * PERIOD_Q + north * R_PERIOD_Q_OFFSET,
             p.r + north * PERIOD_R,
         )
+    }
+
+    #[test]
+    fn terrain_survey_is_deterministic_and_torus_equivalent() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let at = Axial64::new(432_776, 1_182_375);
+        let baseline = source.survey_region(at, 512, 64);
+        assert!(baseline.max_height >= baseline.min_height);
+        assert_eq!(baseline.materials.iter().sum::<u32>(), 17 * 17);
+        assert_eq!(
+            baseline,
+            source.survey_region(Axial64::new(at.q + PERIOD_Q, at.r), 512, 64)
+        );
     }
 
     #[test]
