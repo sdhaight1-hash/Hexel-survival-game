@@ -33,6 +33,7 @@ struct CameraUniform {
     eye_position: [f32; 4],
     surface: [f32; 4],
     lod_near: [f32; 4],
+    lod_covered: [[f32; 4]; 128],
 }
 
 #[repr(C)]
@@ -85,6 +86,8 @@ pub struct Renderer {
     pipeline: wgpu::RenderPipeline,
     lod_pipeline: wgpu::RenderPipeline,
     lod_near: [f32; 4],
+    lod_covered: [[f32; 4]; 128],
+    sun_started: Instant,
     crosshair_pipeline: wgpu::RenderPipeline,
     menu_pipeline: wgpu::RenderPipeline,
     menu_buffer: Option<wgpu::Buffer>,
@@ -216,6 +219,7 @@ impl Renderer {
                 eye_position: [0.0, 0.0, 0.0, 0.0],
                 surface: [0.0, 0.0, 0.0, 1.0],
                 lod_near: [0.0, 0.0, 0.0, 0.0],
+                lod_covered: [[0.0; 4]; 128],
             }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
@@ -695,6 +699,8 @@ impl Renderer {
             pipeline,
             lod_pipeline,
             lod_near: [0.0, 0.0, world.horizontal_radius() as f32, 0.0],
+            lod_covered: [[0.0; 4]; 128],
+            sun_started: Instant::now(),
             crosshair_pipeline,
             menu_pipeline,
             menu_buffer: None,
@@ -855,11 +861,16 @@ impl Renderer {
         };
         let pos = hexel_survival_game::world::CellPos::at_world_xz(feet.x, feet.z, 0);
         let (chunk, _) = pos.chunk_and_local();
+        let completed = world.completed_surface_columns();
+        self.lod_covered = [[0.0; 4]; 128];
+        for (slot, (q, r)) in completed.iter().take(128).enumerate() {
+            self.lod_covered[slot] = [*q as f32, *r as f32, 0.0, 0.0];
+        }
         self.lod_near = [
             chunk.q as f32,
             chunk.r as f32,
             world.horizontal_radius() as f32,
-            0.0,
+            completed.len().min(128) as f32,
         ];
         let desired = seed_lod::Key::at(feet, frame);
         if self.seed_lod_key == Some(desired) {
@@ -1089,9 +1100,15 @@ impl Renderer {
                     if self.debug_checker { 1.0 } else { 0.0 },
                     self.texels_per_metre as f32 / materials_p0::REFERENCE_TEXELS_PER_METRE,
                     if self.v2_preview_enabled { 1.0 } else { 0.0 },
-                    0.0,
+                    if self.seed_lod_worker.is_some() { 1.0 } else { 0.0 },
                 ],
-                eye_position: [eye.x, eye.y, eye.z, 0.0],
+                eye_position: [
+                    eye.x,
+                    eye.y,
+                    eye.z,
+                    (self.sun_started.elapsed().as_secs_f32() / 180.0)
+                        * std::f32::consts::TAU,
+                ],
                 surface: [
                     conditions.wetness,
                     conditions.moss,
@@ -1099,6 +1116,7 @@ impl Renderer {
                     if self.metallic_glints { 1.0 } else { 0.0 },
                 ],
                 lod_near: self.lod_near,
+                lod_covered: self.lod_covered,
             }),
         );
         let acquire_start = Instant::now();
