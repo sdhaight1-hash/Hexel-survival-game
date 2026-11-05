@@ -125,13 +125,15 @@ fn shade(v: VertexOut) -> vec4<f32> {
 
 
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
-    return shade(v);
+    return shaded;
 }
 
 // Distant terrain never draws inside the live full-resolution streaming
 // footprint. Pixel-accurate axial rounding avoids the square-grid overlay
 // piling up against nearby hex-prism cliffs.
 @fragment fn fs_lod(v: VertexOut) -> @location(0) vec4<f32> {
+    // Evaluate implicit texture derivatives before the divergent discard.
+    let shaded = shade(v);
     let rf = v.world_position.z / 0.8660254;
     let qf = v.world_position.x - rf * 0.5;
     let yf = -qf - rf;
