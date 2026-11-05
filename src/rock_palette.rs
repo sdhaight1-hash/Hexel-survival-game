@@ -135,6 +135,24 @@ mod tests {
     }
 
     #[test]
+    fn adjacent_hexes_share_identical_corner_color() {
+        let world = World::rock_v5_gallery();
+        // Along side 0, the same geometric corner belongs to neighboring
+        // hexel's corner 4. This catches bright/dark cracks at pad seams.
+        let a = vertex_tint(&world, CellPos::new(13, 2, 2), Some(0), 3);
+        let b = vertex_tint(&world, CellPos::new(13, 3, 2), Some(4), 3);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn vertically_adjacent_sides_share_identical_boundary_color() {
+        let world = World::rock_v5_gallery();
+        let bottom_top = vertex_tint(&world, CellPos::new(13, 2, 0), Some(3), 1);
+        let upper_bottom = vertex_tint(&world, CellPos::new(13, 2, 1), Some(3), 1);
+        assert_eq!(bottom_top, upper_bottom);
+    }
+
+    #[test]
     fn base_control_and_walkway_are_neutral() {
         let world = World::rock_v5_gallery();
         assert_eq!(vertex_tint(&world, CellPos::new(0, 0, 2), None, 3), [1.0; 3]);
