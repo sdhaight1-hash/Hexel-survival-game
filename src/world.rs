@@ -249,8 +249,8 @@ impl World {
                 torus_frame: Some(frame),
                 stream_center: None,
                 horizontal_radius: STREAM_HORIZONTAL_RADIUS,
-            surface_following: false,
-            surface_bounds: HashMap::new(),
+                surface_following: false,
+                surface_bounds: HashMap::new(),
             },
             position,
         )
@@ -346,7 +346,10 @@ impl World {
         }
         // A section below the lowest surface covers exposed soil/rock cliff
         // sides. It is not necessary to materialize the entire deep crust.
-        let result = (min_y.div_euclid(CHUNK_SIDE) - 1, max_y.div_euclid(CHUNK_SIDE));
+        let result = (
+            min_y.div_euclid(CHUNK_SIDE) - 1,
+            max_y.div_euclid(CHUNK_SIDE),
+        );
         self.surface_bounds.insert((q, r), result);
         result
     }
@@ -400,11 +403,7 @@ impl World {
                 if self.surface_following && self.periodic.is_some() {
                     let (bottom, top) = self.surface_section_bounds(q, r);
                     for y in bottom..=top {
-                        requested.push((
-                            hex_distance,
-                            (y - center.y).abs(),
-                            ChunkPos { q, r, y },
-                        ));
+                        requested.push((hex_distance, (y - center.y).abs(), ChunkPos { q, r, y }));
                     }
                 } else {
                     for dy in -STREAM_VERTICAL_RADIUS..=STREAM_VERTICAL_RADIUS {
