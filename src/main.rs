@@ -375,7 +375,7 @@ impl ApplicationHandler for Game {
                     println!("V5 WORLDSPACE MATERIAL GALLERY: 12 pads (10x10x3), four variants per rock; no PNG pack needed.");
                     println!("Pads 01-04 granite, 05-08 shale, 09-12 basalt.");
                     println!("Each group: base / +regional palette / +worldspace structure / +sparse accents.");
-                    println!("F5 palette view: normal / IDs / blend | F6 checker | F7 density | F2 log | F3 metrics.");
+                    println!("F4 bump normals ON/OFF | F5 palette view: normal / IDs / blend | F6 checker | F7 density | F2 log | F3 metrics.");
                 }
                 if self.presentation.rock_gallery {
                     println!("ROCK GALLERY V4: 23 pads, each 10x10x3, gaps 2; walkway on r=12..14. Ordered west-to-east:");
@@ -462,6 +462,18 @@ impl ApplicationHandler for Game {
                         }
                         if key == KeyCode::F2 {
                             self.toggle_console();
+                            return;
+                        }
+                        // F4 is otherwise the existing chunk-culling action.
+                        // Override it only inside this non-streamed V5 gallery.
+                        if key == KeyCode::F4 && self.presentation.rock_v5 {
+                            if let Some(on) = self.renderer.as_mut()
+                                .and_then(|renderer| renderer.toggle_rock_bump()) {
+                                self.console_log.record(format!(
+                                    "F4 V5.6 bump normals: {}",
+                                    if on { "ON" } else { "OFF (flat normals)" }
+                                ));
+                            }
                             return;
                         }
                         if key == KeyCode::F5 && self.presentation.rock_v5 {
