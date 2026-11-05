@@ -4,9 +4,9 @@
 use crate::materials_p0::{self, Material};
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
-use std::collections::HashSet;
 use hexel_survival_game::material_contract::HexFace;
 use hexel_survival_game::world::{Block, CellPos, ChunkPos, World, CHUNK_SIDE, HEX_RADIUS};
+use std::collections::HashSet;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -103,7 +103,6 @@ pub fn torus_guides(frame: hexel_survival_game::torus_frame::TorusFrame) -> Vec<
     out
 }
 
-
 //// Temporary vertical magenta crosses mark the perimeter of *resident* horizontal
 //// section columns, not the extent of the procedural world or visible geometry.
 pub fn resident_boundary_markers(
@@ -111,12 +110,14 @@ pub fn resident_boundary_markers(
     origin: Option<(i32, i32)>,
     eye_y: f32,
 ) -> Vec<Vertex> {
-    let columns: HashSet<(i32, i32)> =
-        world.chunk_positions().map(|pos| (pos.q, pos.r)).collect();
+    let columns: HashSet<(i32, i32)> = world.chunk_positions().map(|pos| (pos.q, pos.r)).collect();
     let neighbors = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)];
     let mut out = Vec::new();
     for &(q, r) in &columns {
-        if neighbors.iter().all(|&(dq, dr)| columns.contains(&(q + dq, r + dr))) {
+        if neighbors
+            .iter()
+            .all(|&(dq, dr)| columns.contains(&(q + dq, r + dr)))
+        {
             continue;
         }
         let cell_q = i64::from(q) * i64::from(CHUNK_SIDE) + i64::from(CHUNK_SIDE / 2);
@@ -145,7 +146,9 @@ pub fn resident_boundary_markers(
                 Vec3::new(x, y1, z - 1.0),
             ],
         ] {
-            for v in [corners[0], corners[1], corners[2], corners[0], corners[2], corners[3]] {
+            for v in [
+                corners[0], corners[1], corners[2], corners[0], corners[2], corners[3],
+            ] {
                 out.push(Vertex {
                     position: v.to_array(),
                     color: tint,
