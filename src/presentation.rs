@@ -140,7 +140,7 @@ impl PresentationOptions {
             options.torus_spawn = match (torus_q, torus_r) {
                 (None, None) => Some((432_776, 1_182_375)),
                 (Some(q), Some(r))
-                    if q.abs() < 9_000_000_000_000_i64 && r.abs() < 9_000_000_000_000_i64 =>
+                    if q.unsigned_abs() < 9_000_000_000_000_u64 && r.unsigned_abs() < 9_000_000_000_000_u64 =>
                 {
                     Some((q, r))
                 }
