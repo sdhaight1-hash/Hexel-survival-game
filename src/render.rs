@@ -4,7 +4,7 @@
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
     materials_p0, materials_v2,
-    mesh::{build_chunk_mesh_relative, torus_guides, Vertex},
+    mesh::{build_chunk_mesh_relative, resident_boundary_markers, torus_guides, Vertex},
     presentation::PresentationOptions,
     texture_pack::TexturePack,
 };
@@ -100,6 +100,9 @@ pub struct Renderer {
     surface_preset: SurfacePreset,
     metallic_glints: bool,
     terrain_meshes: HashMap<ChunkPos, TerrainGpuMesh>,
+    boundary_markers_enabled: bool,
+    boundary_marker_buffer: Option<wgpu::Buffer>,
+    boundary_marker_vertices: u32,
     torus_guide_buffer: Option<wgpu::Buffer>,
     torus_guide_vertices: u32,
     torus_hud_buffer: Option<wgpu::Buffer>,
@@ -665,6 +668,9 @@ impl Renderer {
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
             terrain_meshes,
+            boundary_markers_enabled: false,
+            boundary_marker_buffer: None,
+            boundary_marker_vertices: 0,
             torus_guide_buffer,
             torus_guide_vertices,
             torus_hud_buffer: None,
@@ -756,6 +762,30 @@ impl Renderer {
                     contents: bytemuck::cast_slice(&guides),
                     usage: wgpu::BufferUsages::VERTEX,
                 })
+        });
+    }
+
+    /// F12: optional marker crosses at the perimeter of resident section columns.
+    pub fn toggle_boundary_markers(&mut self, world: &World, eye_y: f32) -> bool {
+        self.boundary_markers_enabled = !self.boundary_markers_enabled;
+        self.refresh_boundary_markers(world, eye_y);
+        self.boundary_markers_enabled
+    }
+
+    pub fn refresh_boundary_markers(&mut self, world: &World, eye_y: f32) {
+        if !self.boundary_markers_enabled {
+            self.boundary_marker_buffer = None;
+            self.boundary_marker_vertices = 0;
+            return;
+        }
+        let vertices = resident_boundary_markers(world, self.render_origin, eye_y);
+        self.boundary_marker_vertices = vertices.len() as u32;
+        self.boundary_marker_buffer = (!vertices.is_empty()).then(|| {
+            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("F12 resident boundary diagnostic markers"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            })
         });
     }
 
@@ -998,6 +1028,10 @@ impl Renderer {
             for mesh in self.terrain_meshes.values() {
                 pass.set_vertex_buffer(0, mesh.buffer.slice(..));
                 pass.draw(0..mesh.vertices, 0..1);
+            }
+            if let Some(buffer) = &self.boundary_marker_buffer {
+                pass.set_vertex_buffer(0, buffer.slice(..));
+                pass.draw(0..self.boundary_marker_vertices, 0..1);
             }
             if let Some(buffer) = &self.torus_guide_buffer {
                 pass.set_vertex_buffer(0, buffer.slice(..));
