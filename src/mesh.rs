@@ -4,6 +4,7 @@
 use crate::materials_p0::{self, Material};
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
+use std::collections::HashSet;
 use hexel_survival_game::material_contract::HexFace;
 use hexel_survival_game::world::{Block, CellPos, ChunkPos, World, CHUNK_SIDE, HEX_RADIUS};
 
@@ -98,6 +99,61 @@ pub fn torus_guides(frame: hexel_survival_game::torus_frame::TorusFrame) -> Vec<
             ],
             [0.13, 1.0, 0.15],
         );
+    }
+    out
+}
+
+
+//// Temporary vertical magenta crosses mark the perimeter of *resident* horizontal
+//// section columns, not the extent of the procedural world or visible geometry.
+pub fn resident_boundary_markers(
+    world: &World,
+    origin: Option<(i32, i32)>,
+    eye_y: f32,
+) -> Vec<Vertex> {
+    let columns: HashSet<(i32, i32)> =
+        world.chunk_positions().map(|pos| (pos.q, pos.r)).collect();
+    let neighbors = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)];
+    let mut out = Vec::new();
+    for &(q, r) in &columns {
+        if neighbors.iter().all(|&(dq, dr)| columns.contains(&(q + dq, r + dr))) {
+            continue;
+        }
+        let cell_q = i64::from(q) * i64::from(CHUNK_SIDE) + i64::from(CHUNK_SIDE / 2);
+        let cell_r = i64::from(r) * i64::from(CHUNK_SIDE) + i64::from(CHUNK_SIDE / 2);
+        let (dq, dr) = if let Some((oq, or)) = origin {
+            (cell_q - i64::from(oq), cell_r - i64::from(or))
+        } else {
+            (cell_q, cell_r)
+        };
+        let x = dq as f32 + dr as f32 * 0.5;
+        let z = dr as f32 * hexel_survival_game::world::HEX_ROW_SPACING;
+        let y0 = eye_y - 20.0;
+        let y1 = eye_y + 35.0;
+        let tint = [1.0, 0.05, 0.8];
+        for corners in [
+            [
+                Vec3::new(x - 1.0, y0, z),
+                Vec3::new(x + 1.0, y0, z),
+                Vec3::new(x + 1.0, y1, z),
+                Vec3::new(x - 1.0, y1, z),
+            ],
+            [
+                Vec3::new(x, y0, z - 1.0),
+                Vec3::new(x, y0, z + 1.0),
+                Vec3::new(x, y1, z + 1.0),
+                Vec3::new(x, y1, z - 1.0),
+            ],
+        ] {
+            for v in [corners[0], corners[1], corners[2], corners[0], corners[2], corners[3]] {
+                out.push(Vertex {
+                    position: v.to_array(),
+                    color: tint,
+                    uv: [0.0, 0.0],
+                    material: materials_p0::Material::Checker as u32,
+                });
+            }
+        }
     }
     out
 }
