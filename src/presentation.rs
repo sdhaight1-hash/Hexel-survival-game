@@ -12,6 +12,8 @@ pub struct PresentationOptions {
     pub torus_spawn: Option<(i64, i64)>,
     /// Opt-in, reproducible R2/R3/R4 full-resolution distance benchmark.
     pub render_benchmark: bool,
+    /// Opt-in visual-only coarse distant surface underlay.
+    pub distant_terrain: bool,
 }
 
 impl Default for PresentationOptions {
@@ -24,6 +26,7 @@ impl Default for PresentationOptions {
             spawn_cell: None,
             torus_spawn: None,
             render_benchmark: false,
+            distant_terrain: false,
         }
     }
 }
@@ -42,6 +45,7 @@ impl PresentationOptions {
             match arg.as_str() {
                 "--streamed-world" => streamed = true,
                 "--render-benchmark" => options.render_benchmark = true,
+                "--distant-terrain" => options.distant_terrain = true,
                 "--torus-test-ne" => {
                     streamed = true;
                     torus_mode = true;
@@ -155,6 +159,9 @@ impl PresentationOptions {
         } else if torus_q.is_some() || torus_r.is_some() {
             return Err("Torus spawn coordinates require --torus-test-ne".into());
         }
+        if options.distant_terrain && !torus_mode {
+            return Err("--distant-terrain requires --torus-test-ne".into());
+        }
         if options.render_benchmark && !torus_mode {
             return Err("--render-benchmark requires --torus-test-ne".into());
         }
@@ -235,6 +242,17 @@ mod tests {
         ] {
             assert!(PresentationOptions::parse(args.into_iter().map(str::to_owned)).is_err());
         }
+    }
+
+    #[test]
+    fn distant_terrain_is_opt_in_and_requires_periodic_world() {
+        assert!(PresentationOptions::parse(["--distant-terrain".to_string()]).is_err());
+        let (_, options) = PresentationOptions::parse(
+            ["--torus-test-ne", "--distant-terrain"]
+                .into_iter().map(str::to_owned)
+        ).unwrap();
+        assert!(options.distant_terrain);
+        assert!(!PresentationOptions::default().distant_terrain);
     }
 
     #[test]

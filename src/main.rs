@@ -2,6 +2,7 @@
 
 mod benchmark_log;
 mod debug_menu;
+mod distant_terrain;
 mod frame_pacing;
 mod materials_p0;
 mod materials_v2;
@@ -538,6 +539,7 @@ impl ApplicationHandler for Game {
                             self.torus_crossings.north, self.torus_crossings.south
                         )
                     });
+                    renderer.refresh_distant_terrain(&self.world, self.player.feet);
                     match renderer.draw(&self.player, menu, console, torus_hud.as_deref()) {
                         Ok(timings) => {
                             self.frame_pacer.record_draw(Instant::now());
@@ -621,6 +623,7 @@ impl ApplicationHandler for Game {
                 let replacement = self.world.stream_around(self.player.feet);
                 if let Some(renderer) = self.renderer.as_mut() {
                     renderer.rebuild_torus_world(&self.world);
+                    renderer.invalidate_distant_terrain();
                     renderer.refresh_boundary_markers(&self.world, self.player.eye_position().y);
                 }
                 self.console_log.record(format!(
