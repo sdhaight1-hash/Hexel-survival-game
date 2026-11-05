@@ -9,6 +9,7 @@ struct Camera {
     lod_near: vec4<f32>,
     // Complete surface columns only; incomplete near sections retain LOD.
     lod_covered: array<vec4<f32>, 128>,
+    sky: vec4<f32>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var material_tiles: texture_2d_array<f32>;
