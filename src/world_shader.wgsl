@@ -7,6 +7,8 @@ struct Camera {
     surface: vec4<f32>,
     // near chunk Q, R, horizontal radius; used only by distant LOD pass
     lod_near: vec4<f32>,
+    // Complete surface columns only; incomplete near sections retain LOD.
+    lod_covered: array<vec4<f32>, 128>,
 }
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var material_tiles: texture_2d_array<f32>;
@@ -61,6 +63,21 @@ fn shade(v: VertexOut) -> vec4<f32> {
     let scale = select(1.0, camera.options.y, checker);
     let albedo = textureSample(material_tiles, tile_sampler, v.uv * scale, i32(layer));
     var color = albedo.rgb;
+    // High-contrast original diagnostic pixel material set, opt-in LOD only.
+    // This deliberately does not replace the authored production texture pack.
+    if camera.options.w > 0.5 && !checker {
+        let pixel = floor(v.uv * 12.0);
+        let fleck = (hash21(pixel) - 0.5) * 0.18;
+        if v.material >= 7u && v.material <= 10u {
+            color = vec3<f32>(0.46, 0.48, 0.52) + fleck;
+        } else if v.material == 0u {
+            color = vec3<f32>(0.47, 0.29, 0.17) + fleck;
+        } else if v.material >= 4u && v.material <= 6u {
+            color = vec3<f32>(0.44, 0.31, 0.17) + fleck;
+        } else {
+            color = vec3<f32>(0.24, 0.64, 0.20) + fleck;
+        }
+    }
 
     // Derivatives are calculated unconditionally for uniformity in WGSL.
     let dx = dpdx(v.world_position);
@@ -120,7 +137,14 @@ fn shade(v: VertexOut) -> vec4<f32> {
             color += exposed * (metal_sheen + sparkle) * vec3<f32>(1.0, 0.69, 0.41);
         }
     }
-    return vec4<f32>(clamp(color * v.color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
+    let phase = camera.eye_position.w;
+    let sun_direction = normalize(vec3<f32>(cos(phase) * 0.75, sin(phase), 0.35));
+    let daylight = max(sun_direction.y, 0.0);
+    let sun_factor = max(dot(normal, sun_direction), 0.0);
+    let ambient = 0.34 + 0.18 * daylight;
+    let direct = 0.70 * daylight * sun_factor;
+    let lit = ambient + direct;
+    return vec4<f32>(clamp(color * v.color * lit, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }
 
 
@@ -154,7 +178,17 @@ fn shade(v: VertexOut) -> vec4<f32> {
     let orr = cr - camera.lod_near.y;
     let dist = max(abs(oq), max(abs(orr), abs(oq + orr)));
     if dist <= camera.lod_near.z {
-        discard;
+        // Do NOT mask an entire requested R2/R5 radius. Only complete
+        // full-resolution resident columns may replace the distant surface.
+        for (var i: i32 = 0; i < 128; i = i + 1) {
+            if f32(i) >= camera.lod_near.w {
+                break;
+            }
+            let column = camera.lod_covered[i].xy;
+            if cq == column.x && cr == column.y {
+                discard;
+            }
+        }
     }
     return shaded;
 }
