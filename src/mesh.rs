@@ -57,6 +57,51 @@ fn cap_uv(position: Vec3) -> [f32; 2] {
 
 /// Meshes visible faces of a section. Neighbor checks query the world, so
 /// future adjacent chunks can hide the shared faces correctly.
+/// Temporary red east/west and green north/south seam guides, placed using
+/// the current integer global frame (never a fixed northeast-world origin).
+pub fn torus_guides(frame: hexel_survival_game::torus_frame::TorusFrame) -> Vec<Vertex> {
+    let (east, north) = hexel_survival_game::torus_frame::nearest_seams(frame);
+    let mut out = Vec::new();
+    let marker = materials_p0::Material::Checker as u32;
+    let quad = |out: &mut Vec<Vertex>, p: [Vec3; 4], tint: [f32; 3]| {
+        for v in [p[0], p[1], p[2], p[0], p[2], p[3]] {
+            out.push(Vertex {
+                position: v.to_array(),
+                color: tint,
+                uv: [v.x * 0.06, v.y * 0.06],
+                material: marker,
+            });
+        }
+    };
+    let y0 = 175.0;
+    let y1 = 285.0;
+    if east.abs() < 140.0 {
+        quad(
+            &mut out,
+            [
+                Vec3::new(east, y0, -130.0),
+                Vec3::new(east, y0, 130.0),
+                Vec3::new(east, y1, 130.0),
+                Vec3::new(east, y1, -130.0),
+            ],
+            [1.0, 0.12, 0.08],
+        );
+    }
+    if north.abs() < 140.0 {
+        quad(
+            &mut out,
+            [
+                Vec3::new(-130.0, y0, north),
+                Vec3::new(130.0, y0, north),
+                Vec3::new(130.0, y1, north),
+                Vec3::new(-130.0, y1, north),
+            ],
+            [0.13, 1.0, 0.15],
+        );
+    }
+    out
+}
+
 pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
     build_chunk_mesh_relative(world, chunk, None)
 }
