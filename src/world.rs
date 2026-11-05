@@ -342,6 +342,8 @@ impl World {
 
     /// Material index from fixed gallery geometry; never inferred from geology.
     /// Only the opt-in fixture's solid pads are assigned these indices.
+    pub fn is_rock_gallery(&self) -> bool { self.rock_gallery }
+
     pub fn gallery_rock_index(&self, cell: CellPos) -> Option<u32> {
         if !self.rock_gallery { return None; }
         if cell.q < 0 || cell.r < 0 || cell.r >= 10 || cell.y < 0 || cell.y >= 3 {
