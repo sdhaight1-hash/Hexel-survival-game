@@ -4,6 +4,10 @@
 //! hex-lattice seam translations have NOT been chosen or implemented.
 
 use crate::generated_terrain::PrototypeTerrain;
+use crate::periodic_terrain_candidate::PeriodicTerrainCandidate;
+use crate::axial_geography_candidate::CandidateCellId;
+use crate::hex_torus_candidate::Axial64;
+use crate::torus_frame::{FrameShift, GlobalCell, TorusFrame, local_cell_from_metres};
 use glam::Vec3;
 use std::{
     collections::{HashMap, HashSet},
@@ -164,6 +168,8 @@ pub const STREAM_VERTICAL_RADIUS: i32 = 2;
 pub struct World {
     chunks: HashMap<ChunkPos, Chunk>,
     terrain: Option<PrototypeTerrain>,
+    periodic: Option<PeriodicTerrainCandidate>,
+    torus_frame: Option<TorusFrame>,
     stream_center: Option<ChunkPos>,
 }
 
@@ -204,6 +210,8 @@ impl World {
         Self {
             chunks,
             terrain: None,
+            periodic: None,
+            torus_frame: None,
             stream_center: None,
         }
     }
@@ -214,12 +222,71 @@ impl World {
         Self {
             chunks: HashMap::new(),
             terrain: Some(PrototypeTerrain::new(seed)),
+            periodic: None,
+            torus_frame: None,
             stream_center: None,
         }
     }
 
+    /// Runtime periodic surface with integer global origin and bounded local frame.
+    /// Resident CPU/GPU sections are local caches, not saved-world identities.
+    pub fn torus(seed: u64, spawn: Axial64) -> (Self, glam::DVec2) {
+        let (frame, position) = TorusFrame::at_spawn(spawn);
+        (
+            Self {
+                chunks: HashMap::new(),
+                terrain: None,
+                periodic: Some(PeriodicTerrainCandidate::new(seed)),
+                torus_frame: Some(frame),
+                stream_center: None,
+            },
+            position,
+        )
+    }
+
+    pub fn torus_frame(&self) -> Option<TorusFrame> {
+        self.torus_frame
+    }
+
+    pub fn torus_cell(&self, x: f32, z: f32) -> Option<GlobalCell> {
+        let cell = local_cell_from_metres(x, z);
+        self.torus_frame.map(|frame| frame.cell(cell))
+    }
+
+    /// Change the whole local coordinate frame and invalidate resident sections.
+    /// Caller MUST rebuild CPU sections and ALL GPU meshes before drawing again.
+    pub fn rebase_torus(&mut self, feet: &mut Vec3) -> Option<FrameShift> {
+        let frame = self.torus_frame.as_mut()?;
+        let shift = frame.rebase_if_needed(&mut feet.x, &mut feet.z)?;
+        self.chunks.clear();
+        self.stream_center = None;
+        Some(shift)
+    }
+
+    fn periodic_sample(&self, source: PeriodicTerrainCandidate, cell: CellPos) -> Block {
+        let global = self.torus_frame.expect("torus frame").cell(cell);
+        source.sample(CandidateCellId::new(global.canonical.q, global.canonical.r, i64::from(cell.y)))
+    }
+
+    fn periodic_chunk(&self, source: PeriodicTerrainCandidate, section: ChunkPos) -> Chunk {
+        let mut chunk = Chunk::default();
+        for y in 0..CHUNK_SIDE {
+            for r in 0..CHUNK_SIDE {
+                for q in 0..CHUNK_SIDE {
+                    let cell = CellPos::new(
+                        section.q * CHUNK_SIDE + q,
+                        section.r * CHUNK_SIDE + r,
+                        section.y * CHUNK_SIDE + y,
+                    );
+                    chunk.set([q as usize, r as usize, y as usize], self.periodic_sample(source, cell));
+                }
+            }
+        }
+        chunk
+    }
+
     pub fn is_streamed(&self) -> bool {
-        self.terrain.is_some()
+        self.terrain.is_some() || self.periodic.is_some()
     }
 
     pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
@@ -241,9 +308,9 @@ impl World {
         player_feet: Vec3,
         max_new_chunks: usize,
     ) -> StreamDelta {
-        let Some(source) = self.terrain else {
+        if !self.is_streamed() {
             return StreamDelta::default();
-        };
+        }
         let player_cell =
             CellPos::at_world_xz(player_feet.x, player_feet.z, player_feet.y.floor() as i32);
         let (center, _) = player_cell.chunk_and_local();
@@ -296,7 +363,12 @@ impl World {
         }
         let mut added = Vec::with_capacity(count);
         for pos in missing.into_iter().take(count) {
-            self.chunks.insert(pos, source.generate_chunk(pos));
+            let chunk = if let Some(source) = self.terrain {
+                source.generate_chunk(pos)
+            } else {
+                self.periodic_chunk(self.periodic.expect("periodic terrain"), pos)
+            };
+            self.chunks.insert(pos, chunk);
             added.push(pos);
         }
         self.stream_center = Some(center);
@@ -315,10 +387,13 @@ impl World {
 
     pub fn get(&self, pos: CellPos) -> Block {
         let (chunk, local) = pos.chunk_and_local();
-        self.chunks.get(&chunk).map_or_else(
-            || self.terrain.map_or(Block::Air, |source| source.sample(pos)),
-            |chunk| chunk.get(local),
-        )
+        if let Some(resident) = self.chunks.get(&chunk) {
+            return resident.get(local);
+        }
+        if let Some(source) = self.periodic {
+            return self.periodic_sample(source, pos);
+        }
+        self.terrain.map_or(Block::Air, |source| source.sample(pos))
     }
 
     pub fn chunk(&self, pos: ChunkPos) -> Option<&Chunk> {
@@ -340,6 +415,11 @@ impl World {
 
     /// Highest solid top at this horizontal sample in the first vertical section.
     pub fn support_top(&self, x: f32, z: f32) -> Option<f32> {
+        if let Some(source) = self.periodic {
+            let cell = local_cell_from_metres(x, z);
+            let global = self.torus_frame.expect("torus frame").cell(cell).canonical;
+            return Some((source.surface_y(global) + 1) as f32 * HEXEL_HEIGHT);
+        }
         if let Some(source) = self.terrain {
             let cell = CellPos::at_world_xz(x, z, 0);
             return Some((source.surface_y(cell.q, cell.r) + 1) as f32 * HEXEL_HEIGHT);
@@ -444,6 +524,33 @@ mod tests {
         assert_eq!(world.get(CellPos::new(9, 10, 3)), Block::Grass);
         assert_eq!(world.get(CellPos::new(12, 10, 3)), Block::Rock);
         assert_eq!(world.get(CellPos::new(14, 10, 3)), Block::Rock);
+    }
+
+    #[test]
+    fn global_torus_runtime_survives_rebasing_with_same_periodic_terrain() {
+        let spawn = Axial64::new(1_023_984, 1_182_384);
+        let (mut world, local) = World::torus(42, spawn);
+        let mut feet = Vec3::new(local.x as f32, 0.0, local.y as f32);
+        feet.y = world.support_top(feet.x, feet.z).unwrap();
+        world.stream_around(feet);
+        assert_eq!(world.chunk_count(), 95);
+        let original = world.torus_cell(feet.x, feet.z).unwrap();
+        let sample = world.get(CellPos::at_world_xz(feet.x, feet.z, feet.y.floor() as i32));
+        // Travel 1088m east and 928m north in local metre coordinates.
+        feet.x += 1088.0;
+        feet.z += 928.0;
+        let before = world.torus_cell(feet.x, feet.z).unwrap();
+        assert!(world.rebase_torus(&mut feet).is_some());
+        let after = world.torus_cell(feet.x, feet.z).unwrap();
+        assert_eq!(before.raw, after.raw);
+        assert_eq!(before.canonical, after.canonical);
+        assert!(feet.x.abs() < 32.0 && feet.z.abs() < 32.0);
+        assert_eq!(world.chunk_count(), 0);
+        assert_eq!(world.stream_around(feet).added.len(), 95);
+        assert_eq!(world.chunk_count(), 95);
+        assert_eq!(world.torus_cell(feet.x, feet.z).unwrap(), after);
+        assert_eq!(original.canonical, spawn.candidate_wrap());
+        assert!(sample.is_solid() || sample == Block::Air);
     }
 
     #[test]
