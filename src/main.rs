@@ -94,7 +94,9 @@ impl Game {
             (World::demo(42), None)
         };
         // Opt-in mountain-ready vertical chunk streaming before bootstrap.
-        world.set_surface_following(presentation.distant_terrain && presentation.torus_spawn.is_some());
+        world.set_surface_following(
+            presentation.distant_terrain && presentation.torus_spawn.is_some(),
+        );
         let mut player = Player::spawn(&world);
         if let Some(local) = torus_position {
             let x = local.x as f32;
