@@ -121,6 +121,30 @@ mod tests {
     use super::*;
 
     #[test]
+    fn micro_pattern_seed_is_stable_across_gallery_stages() {
+        let world = World::rock_v5_gallery();
+        let a = CellPos::new(12, 2, 1);
+        let b = CellPos::new(24, 2, 1);
+        let c = CellPos::new(36, 2, 1);
+        assert_eq!(pattern_seed(&world, a), pattern_seed(&world, b));
+        assert_eq!(pattern_seed(&world, b), pattern_seed(&world, c));
+    }
+
+    #[test]
+    fn micro_pattern_fades_only_at_a_solid_contact() {
+        let world = World::rock_v5_gallery();
+        let a = CellPos::new(14, 2, 2);
+        let b = CellPos::new(14, 3, 2);
+        let joined = (a.center() + b.center()) * 0.5;
+        assert!(tint_and_pattern_weight_at(&world, a, joined).1 < 0.01);
+        assert!(tint_and_pattern_weight_at(&world, b, joined).1 < 0.01);
+        assert_eq!(tint_and_pattern_weight_at(&world, a, a.center()).1, 1.0);
+        let exterior = CellPos::new(12, 0, 2);
+        let edge = exterior.center() + Vec3::new(0.0, 0.0, -0.5);
+        assert_eq!(tint_and_pattern_weight_at(&world, exterior, edge).1, 1.0);
+    }
+
+    #[test]
     fn five_palettes_are_deterministic() {
         let mut ids = std::collections::HashSet::new();
         for q in 12..22 {
