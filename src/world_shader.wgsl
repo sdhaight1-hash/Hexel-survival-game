@@ -67,26 +67,55 @@ fn shade(v: VertexOut) -> vec4<f32> {
     let scale = select(1.0, camera.options.y, checker);
     let albedo = textureSample(material_tiles, tile_sampler, v.uv * scale, i32(layer));
     var color = albedo.rgb;
-    // High-contrast original diagnostic pixel material set, opt-in LOD only.
-    // This deliberately does not replace the authored production texture pack.
+    // Diagnostic palette based on the six approved temporary ground swatches:
+    // lush grass, dry grass, sparse grass, bare dirt, stony dirt, dark shale.
+    // Underlying block identity stays authoritative; color variation is
+    // deterministic at two physical scales and matches across near/far LOD.
     if camera.options.w > 0.5 && !checker {
-        // Separate broad geology patches from fine pixel noise; neither
-        // requires copying Minecraft art or changing saved block IDs.
-        let pixel = floor(v.uv * 12.0);
-        let fleck = (hash21(pixel) - 0.5) * 0.15;
-        let region_patch = patch_noise(v.world_position.xz * 0.028) - 0.5;
+        let pixel = floor(v.uv * 32.0);
+        let grain = hash21(pixel + vec2<f32>(7.0, 19.0)) - 0.5;
+        let speck = hash21(pixel + vec2<f32>(51.0, 12.0));
+        let region = patch_noise(v.world_position.xz * 0.013);
+        let patch_field = patch_noise(v.world_position.xz * 0.095 + vec2<f32>(17.0, 23.0));
+        let soil_tone = vec3<f32>(0.43, 0.26, 0.16)
+            + vec3<f32>(grain * 0.15 + (patch_field - 0.5) * 0.11);
+        let stone_speck = smoothstep(0.91, 0.96, speck);
+        let soil_color = mix(soil_tone, vec3<f32>(0.54, 0.50, 0.45), stone_speck * 0.47);
+        // A broad moisture field changes grass tone in connected regions.
+        // Green coverage is never implied for Block::Soil / bare earth.
+        let grass_green = mix(
+            vec3<f32>(0.51, 0.49, 0.19),
+            vec3<f32>(0.23, 0.56, 0.12),
+            smoothstep(0.24, 0.76, region)
+        );
+        let grass_color = grass_green + vec3<f32>(grain * 0.20 + (patch_field - 0.5) * 0.08);
+        let tuft = hash21(pixel + floor(v.world_position.xz * 0.45) * 17.0);
         if v.material == 7u || v.material == 9u {
-            color = vec3<f32>(0.49, 0.51, 0.54) + fleck + region_patch * 0.12;
+            color = vec3<f32>(0.49, 0.51, 0.54)
+                + vec3<f32>(grain * 0.18 + (region - 0.5) * 0.09);
         } else if v.material == 8u || v.material == 10u {
-            color = vec3<f32>(0.30, 0.35, 0.41) + fleck * 0.85 + region_patch * 0.10;
+            // Dark blue-gray slabby shale with occasional brighter fracture.
+            let fracture = smoothstep(0.68, 0.89, patch_field);
+            color = vec3<f32>(0.19, 0.22, 0.29)
+                + vec3<f32>(grain * 0.12 + fracture * 0.15);
+        } else if v.material == 0u {
+            // Completely exposed dirt: no automatic green surface.
+            color = soil_color;
         } else if v.material == 1u {
-            color = vec3<f32>(0.66, 0.59, 0.39) + fleck + region_patch * 0.18;
-        } else if v.material == 0u || v.material >= 4u && v.material <= 6u {
-            color = vec3<f32>(0.47, 0.30, 0.17) + fleck + region_patch * 0.11;
-        } else if v.material == 2u {
-            color = vec3<f32>(0.42, 0.51, 0.20) + fleck + region_patch * 0.19;
+            // Stony/sparse surface: tan soil, gravel and rare green flecks.
+            let pebble = smoothstep(0.57, 0.77, patch_field);
+            color = mix(soil_color, vec3<f32>(0.57, 0.53, 0.46), pebble * 0.68);
+            color = mix(color, grass_color, select(0.0, 0.13, tuft > 0.86));
+        } else if v.material == 2u || v.material == 5u {
+            // Sparse grass on mostly visible dirt.
+            color = mix(soil_color, grass_color, select(0.0, 0.47, tuft > 0.53));
+        } else if v.material == 3u {
+            color = mix(soil_color, grass_color, select(0.0, 0.96, tuft > 0.08));
+        } else if v.material == 4u || v.material == 6u {
+            // Side faces stay soil-forward instead of painting cliffs green.
+            color = mix(soil_color, grass_color, select(0.0, 0.20, tuft > 0.81));
         } else {
-            color = vec3<f32>(0.26, 0.59, 0.20) + fleck + region_patch * 0.17;
+            color = soil_color;
         }
     }
 
