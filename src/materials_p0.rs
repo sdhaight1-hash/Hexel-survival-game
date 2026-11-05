@@ -71,6 +71,20 @@ pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
     }
     match block {
         Block::Grass => soil_face(CoverDensity::Full, is_top, is_side),
+        Block::GrassDry => {
+            if is_top {
+                Material::DiagnosticDryGrass
+            } else {
+                Material::SoilSideSparse
+            }
+        }
+        Block::GrassSparse => {
+            if is_top {
+                Material::DiagnosticSparseGrass
+            } else {
+                Material::SoilSideSparse
+            }
+        }
         Block::Soil => Material::SoilBare,
         Block::Rock => Material::Granite,
         Block::Shale => Material::Shale,
