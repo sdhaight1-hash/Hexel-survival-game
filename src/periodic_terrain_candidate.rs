@@ -22,6 +22,30 @@ pub struct PeriodicTerrainCandidate {
     seed: u64,
 }
 
+/// Deterministic source-of-truth for one vertical hex column. Allows a
+/// resident 16x16x16 section to generate its cells without resampling the
+/// same height for each of its sixteen vertical blocks.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ColumnProfile {
+    pub top: i32,
+    pub cover: Block,
+    pub deep: Block,
+}
+
+impl ColumnProfile {
+    pub fn sample(self, y: i64) -> Block {
+        if y > i64::from(self.top) {
+            Block::Air
+        } else if y == i64::from(self.top) {
+            self.cover
+        } else if y >= i64::from(self.top - 3) {
+            Block::Soil
+        } else {
+            self.deep
+        }
+    }
+}
+
 impl PeriodicTerrainCandidate {
     pub const fn new(seed: u64) -> Self {
         Self { seed }
@@ -92,7 +116,10 @@ impl PeriodicTerrainCandidate {
     /// Distinct rock hosts and gravel deposits make terrain transitions
     /// visible without adding permanent art assets.
     pub fn surface_cover(&self, pos: Axial64) -> Block {
-        let top = self.surface_y(pos);
+        self.cover_at_height(pos, self.surface_y(pos))
+    }
+
+    fn cover_at_height(&self, pos: Axial64, top: i32) -> Block {
         let mut steepest = 0;
         for (dq, dr) in [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)] {
             let neighbor = self.surface_y(Axial64::new(pos.q + dq, pos.r + dr));
@@ -120,23 +147,21 @@ impl PeriodicTerrainCandidate {
         }
     }
 
-    /// Unloaded cells are derived from the same periodic surface, not air.
-    /// This matches the prototype's *simple* material layering only.
-    pub fn sample(&self, pos: CandidateCellId) -> Block {
-        let top = self.surface_y(Axial64::new(pos.q, pos.r));
-        if pos.y > i64::from(top) {
-            Block::Air
-        } else if pos.y == i64::from(top) {
-            self.surface_cover(Axial64::new(pos.q, pos.r))
-        } else if pos.y >= i64::from(top - 3) {
-            Block::Soil
+    pub fn column_profile(&self, pos: Axial64) -> ColumnProfile {
+        let top = self.surface_y(pos);
+        let cover = self.cover_at_height(pos, top);
+        let deep = if self.geology_at(pos) <= 0.52 {
+            Block::Rock
         } else {
-            if self.geology_at(Axial64::new(pos.q, pos.r)) <= 0.52 {
-                Block::Rock
-            } else {
-                Block::Shale
-            }
-        }
+            Block::Shale
+        };
+        ColumnProfile { top, cover, deep }
+    }
+
+    /// Unloaded neighbors, collision and mesh visibility use the same
+    /// column rules as resident section generation.
+    pub fn sample(&self, pos: CandidateCellId) -> Block {
+        self.column_profile(Axial64::new(pos.q, pos.r)).sample(pos.y)
     }
 
     /// A test-only 16×16 surface slice. No 16³ allocation, GPU upload,
