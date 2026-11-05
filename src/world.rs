@@ -613,7 +613,18 @@ mod tests {
     }
 
     #[test]
-    fn coordinates_round_trip_across_hex_centres() {
+    fn cubic_projection_has_unit_spacing_and_orthogonal_axes() {
+        let origin = CellPos::new(0, 0, 0).center();
+        let east = CellPos::new(1, 0, 0).center();
+        let north = CellPos::new(0, 1, 0).center();
+        assert_eq!(east - origin, Vec3::X);
+        assert_eq!(north - origin, Vec3::Z);
+        assert_eq!(CellPos::new(0, 0, 1).center() - origin, Vec3::Y);
+        assert_eq!(CellPos::new(0, 0, 0).neighbors().len(), 6);
+    }
+
+    #[test]
+    fn coordinates_round_trip_across_cube_centres() {
         for q in -20..=20 {
             for r in -20..=20 {
                 let pos = CellPos::new(q, r, 3);
