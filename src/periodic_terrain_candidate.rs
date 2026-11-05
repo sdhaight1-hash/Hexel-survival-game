@@ -65,6 +65,22 @@ impl PeriodicTerrainCandidate {
             .round() as i32
     }
 
+    /// Shared near/far geological identity: exposed rock on steep faces and
+    /// high ridges, grassy soil on sheltered slopes. No new block IDs.
+    pub fn surface_cover(&self, pos: Axial64) -> Block {
+        let top = self.surface_y(pos);
+        if top >= 270 {
+            return Block::Rock;
+        }
+        for (dq, dr) in [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)] {
+            let neighbor = self.surface_y(Axial64::new(pos.q + dq, pos.r + dr));
+            if (top - neighbor).abs() >= 3 {
+                return Block::Rock;
+            }
+        }
+        Block::Grass
+    }
+
     /// Unloaded cells are derived from the same periodic surface, not air.
     /// This matches the prototype's *simple* material layering only.
     pub fn sample(&self, pos: CandidateCellId) -> Block {
@@ -72,7 +88,7 @@ impl PeriodicTerrainCandidate {
         if pos.y > i64::from(top) {
             Block::Air
         } else if pos.y == i64::from(top) {
-            Block::Grass
+            self.surface_cover(Axial64::new(pos.q, pos.r))
         } else if pos.y >= i64::from(top - 3) {
             Block::Soil
         } else {
@@ -185,6 +201,17 @@ mod tests {
             p.q + east * PERIOD_Q + north * R_PERIOD_Q_OFFSET,
             p.r + north * PERIOD_R,
         )
+    }
+
+    #[test]
+    fn surface_cover_follows_authoritative_top() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let p = Axial64::new(432_776, 1_182_375);
+        let y = source.surface_y(p);
+        assert_eq!(
+            source.sample(CandidateCellId::new(p.q, p.r, y as i64)),
+            source.surface_cover(p)
+        );
     }
 
     #[test]
