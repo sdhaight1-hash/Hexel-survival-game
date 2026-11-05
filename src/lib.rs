@@ -14,6 +14,7 @@ pub mod periodic_terrain_candidate;
 pub mod player;
 pub mod space_colonization;
 pub mod surface_layers;
+pub mod torus_frame;
 pub mod world;
 pub mod worldgen_foundation;
 
