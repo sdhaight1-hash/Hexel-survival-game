@@ -365,6 +365,22 @@ impl World {
         self.horizontal_radius = radius;
     }
 
+    /// Only fully resident surface columns may occlude seed-derived far LOD.
+    /// A requested but incomplete column must never punch a hole in the LOD.
+    pub fn completed_surface_columns(&self) -> Vec<(i32, i32)> {
+        if !self.surface_following {
+            return Vec::new();
+        }
+        let mut columns = Vec::new();
+        for (&(q, r), &(low, high)) in &self.surface_bounds {
+            if (low..=high).all(|y| self.chunks.contains_key(&ChunkPos { q, r, y })) {
+                columns.push((q, r));
+            }
+        }
+        columns.sort_unstable();
+        columns
+    }
+
     pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
         self.chunks.keys().copied()
     }
@@ -552,6 +568,22 @@ fn demo_surface(seed: u32, q: i32, r: i32) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn distant_mask_only_owns_completed_resident_columns() {
+        let (mut world, location) = World::torus(42, Axial64::new(432_776, 1_182_375));
+        world.set_surface_following(true);
+        let x = location.x as f32;
+        let z = location.y as f32;
+        let y = world.support_top(x, z).expect("surface");
+        let feet = Vec3::new(x, y, z);
+        world.stream_around_budgeted(feet, 1);
+        // With a one-section budget, a surface column is not yet complete.
+        assert!(world.completed_surface_columns().is_empty());
+        world.stream_around(feet);
+        let completed = world.completed_surface_columns();
+        assert_eq!(completed.len(), 19); // Hex radius 2: 1 + 3R(R+1)
+    }
 
     #[test]
     fn mountain_surface_residency_includes_high_and_low_columns() {
