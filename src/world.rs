@@ -407,7 +407,9 @@ impl World {
             added,
             removed,
             generation_cpu_ms: started.elapsed().as_secs_f64() * 1000.0,
-            pending: wanted.symmetric_difference(&self.chunks.keys().copied().collect()).count(),
+            pending: wanted
+                .symmetric_difference(&self.chunks.keys().copied().collect())
+                .count(),
         }
     }
 
@@ -590,20 +592,26 @@ mod tests {
         for _ in 0..310 {
             let d = world.stream_around_budgeted(at, 1);
             max_pending = max_pending.max(d.pending);
-            if d.pending == 0 { break; }
+            if d.pending == 0 {
+                break;
+            }
         }
         assert!(max_pending >= 200);
         assert_eq!(world.chunk_count(), 305);
         world.set_horizontal_radius(2);
         for _ in 0..310 {
             let d = world.stream_around_budgeted(at, 1);
-            if d.pending == 0 { break; }
+            if d.pending == 0 {
+                break;
+            }
         }
         // Obsolete resident sections are removed on each tick even when
         // there are no missing sections, until the exact target is reached.
         for _ in 0..305 {
             world.stream_around_budgeted(at, 1);
-            if world.chunk_count() == 95 { break; }
+            if world.chunk_count() == 95 {
+                break;
+            }
         }
         assert_eq!(world.chunk_count(), 95);
     }
