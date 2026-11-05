@@ -1,7 +1,7 @@
 //! Mesh hexagonal-prism caps and sides with per-face physically scaled material UVs.
 //! This derived geometry does not own world/material resource state.
 
-use crate::{materials_p0, rock_palette};
+use crate::materials_p0;
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
 use hexel_survival_game::material_contract::HexFace;
@@ -37,13 +37,11 @@ fn triangle(
     points: [(Vec3, [f32; 2]); 3],
     material: u32,
     color: [f32; 3],
-    palette_tints: Option<[[f32; 3]; 3]>,
 ) {
-    for (vertex_index, (position, uv)) in points.into_iter().enumerate() {
-        let tint = palette_tints.map_or([1.0; 3], |values| values[vertex_index]);
+    for (position, uv) in points {
         vertices.push(Vertex {
             position: position.to_array(),
-            color: [color[0] * tint[0], color[1] * tint[1], color[2] * tint[2]],
+            color,
             uv,
             material,
         });
@@ -170,11 +168,6 @@ pub fn build_chunk_mesh_relative(
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
                             world.gallery_rock_index(cell).map(|i| i * 3).unwrap_or_else(|| if world.is_rock_gallery() { 69 } else { materials_p0::for_face(block, cell, HexFace::Top) as u32 }),
                             [1.0, 1.0, 1.0],
-                            world.is_rock_v5().then(|| [
-                                rock_palette::vertex_tint(world, cell, None, cell.y + 1),
-                                rock_palette::vertex_tint(world, cell, Some(i), cell.y + 1),
-                                rock_palette::vertex_tint(world, cell, Some(j), cell.y + 1),
-                            ]),
                         );
                     }
                 }
@@ -192,11 +185,6 @@ pub fn build_chunk_mesh_relative(
                             [(cap, uv(cap)), (a, uv(a)), (b, uv(b))],
                             world.gallery_rock_index(cell).map(|i| i * 3 + 2).unwrap_or_else(|| if world.is_rock_gallery() { 69 } else { materials_p0::for_face(block, cell, HexFace::Bottom) as u32 }),
                             [0.77, 0.77, 0.77],
-                            world.is_rock_v5().then(|| [
-                                rock_palette::vertex_tint(world, cell, None, cell.y),
-                                rock_palette::vertex_tint(world, cell, Some(j), cell.y),
-                                rock_palette::vertex_tint(world, cell, Some(i), cell.y),
-                            ]),
                         );
                     }
                 }
@@ -230,22 +218,12 @@ pub fn build_chunk_mesh_relative(
                         [(a, [u0, bottom_v]), (b, [u1, bottom_v]), (c, [u1, top_v])],
                         material,
                         tint,
-                        world.is_rock_v5().then(|| [
-                            rock_palette::vertex_tint(world, cell, Some(side), cell.y),
-                            rock_palette::vertex_tint(world, cell, Some(j), cell.y),
-                            rock_palette::vertex_tint(world, cell, Some(j), cell.y + 1),
-                        ]),
                     );
                     triangle(
                         &mut vertices,
                         [(a, [u0, bottom_v]), (c, [u1, top_v]), (d, [u0, top_v])],
                         material,
                         tint,
-                        world.is_rock_v5().then(|| [
-                            rock_palette::vertex_tint(world, cell, Some(side), cell.y),
-                            rock_palette::vertex_tint(world, cell, Some(j), cell.y + 1),
-                            rock_palette::vertex_tint(world, cell, Some(side), cell.y + 1),
-                        ]),
                     );
                 }
             }
@@ -257,7 +235,6 @@ pub fn build_chunk_mesh_relative(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::materials_p0::Material;
 
     #[test]
     fn generated_hex_faces_have_valid_materials_and_uvs() {
