@@ -52,13 +52,93 @@ fn patch_noise(p: vec2<f32>) -> f32 {
     return mix(low, high, t.y);
 }
 
+// V5 proof of concept. All macro features use a shared 3D position,
+// not per-face UVs, so a band or fracture traverses adjacent hexel surfaces.
+// Intentionally low-frequency and low contrast, without extra texture reads.
+fn v5_hash(p: vec3<f32>) -> f32 {
+    return fract(sin(dot(p, vec3<f32>(127.1, 311.7, 74.7))) * 43758.5453);
+}
+fn v5_noise(p: vec3<f32>) -> f32 {
+    let cell = floor(p);
+    let t0 = fract(p);
+    let t = t0 * t0 * (vec3<f32>(3.0) - 2.0 * t0);
+    let x00 = mix(v5_hash(cell), v5_hash(cell + vec3<f32>(1.0,0.0,0.0)), t.x);
+    let x10 = mix(v5_hash(cell + vec3<f32>(0.0,1.0,0.0)), v5_hash(cell + vec3<f32>(1.0,1.0,0.0)), t.x);
+    let x01 = mix(v5_hash(cell + vec3<f32>(0.0,0.0,1.0)), v5_hash(cell + vec3<f32>(1.0,0.0,1.0)), t.x);
+    let x11 = mix(v5_hash(cell + vec3<f32>(0.0,1.0,1.0)), v5_hash(cell + vec3<f32>(1.0,1.0,1.0)), t.x);
+    return mix(mix(x00,x10,t.y), mix(x01,x11,t.y), t.z);
+}
+
+fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
+    let pad = material / 3u;
+    let rock = pad / 4u;
+    let stage = pad % 4u;
+
+    // Each column repeats the same local pattern across comparison stages.
+    let p = position - vec3<f32>(12.0 * f32(stage), 0.0, 0.0);
+    let fine = v5_noise(p * 4.0);
+    let grain = clamp((fine - 0.5) * 0.15, -0.075, 0.075);
+    var dark = vec3<f32>(0.35, 0.32, 0.32);
+    var light = vec3<f32>(0.57, 0.52, 0.48);
+    if rock == 1u {
+        dark = vec3<f32>(0.23, 0.26, 0.29);
+        light = vec3<f32>(0.38, 0.40, 0.41);
+    } else if rock == 2u {
+        dark = vec3<f32>(0.16, 0.18, 0.20);
+        light = vec3<f32>(0.30, 0.32, 0.34);
+    }
+    let tone = clamp(0.5 + grain, 0.0, 1.0);
+    var color = mix(dark, light, tone);
+
+    if stage >= 1u {
+        // Ten-metre-scale gentle palette field, never random cell tint.
+        let regional = (v5_noise(p * 0.11 + vec3<f32>(11.0,2.0,4.0)) - 0.5) * 0.26;
+        color *= 1.0 + regional;
+        color += vec3<f32>(regional * 0.025, -regional * 0.015, -regional * 0.035);
+    }
+    if stage >= 2u {
+        var structural = 0.0;
+        if rock == 0u {
+            // Granite: quiet, irregular interlocking mineral aggregates.
+            structural = smoothstep(0.63, 0.78, v5_noise(p * 1.45 + vec3<f32>(1.0,3.0,5.0))) * 0.075;
+        } else if rock == 1u {
+            // Shale: tilted, slightly warped bedding through full 3D volume.
+            let phase = (p.y + p.x * 0.14 + p.z * 0.09) * 6.0
+                + (v5_noise(p * 0.31) - 0.5) * 1.8;
+            structural = smoothstep(0.85, 0.98, sin(phase)) * 0.075;
+        } else {
+            // Basalt: rare cooling-fracture tracers, not wall-covering grids.
+            let a = abs(sin(p.x * 0.79 + p.y * 0.24 + v5_noise(p * 0.33)));
+            let b = abs(sin(p.z * 0.64 - p.y * 0.32));
+            structural = (1.0 - smoothstep(0.02, 0.09, min(a,b))) * 0.065;
+        }
+        color *= 1.0 - structural;
+    }
+    if stage >= 3u {
+        // One locally coherent sparse accent mask in 3D, not per-hexel RNG.
+        let accent = smoothstep(0.83, 0.92, v5_noise(p * 0.95 + vec3<f32>(23.0,11.0,5.0)));
+        if rock == 0u {
+            color = mix(color, vec3<f32>(0.58,0.55,0.52), accent * 0.32);
+        } else if rock == 1u {
+            color = mix(color, vec3<f32>(0.47,0.46,0.43), accent * 0.22);
+        } else {
+            color = mix(color, vec3<f32>(0.38,0.39,0.38), accent * 0.18);
+        }
+    }
+    return color;
+}
+
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
     // Hexel UVs are in metres, with 1m repeats for gallery candidates.
     let checker = camera.options.x > 0.5;
-    let layer = select(v.material, 11u, checker);
+    let v5 = camera.options.w > 1.5;
+    let layer = select(select(v.material, 11u, checker), 0u, v5);
     let scale = select(1.0, camera.options.y, checker);
     let albedo = textureSample(material_tiles, tile_sampler, v.uv * scale, i32(layer));
     var color = albedo.rgb;
+    if v5 && !checker {
+        color = select(v5_color(v.material, v.world_position), vec3<f32>(0.48), v.material == 69u);
+    }
     // In V4 gallery mode, the UV checker is procedural: layer 11 is a rock,
     // not the legacy checker image. Magenta/green reveals UV discontinuities.
     if (checker && camera.options.w > 0.5) {
