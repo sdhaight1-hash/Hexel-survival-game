@@ -415,7 +415,10 @@ mod tests {
     fn exact_near_hex_band_matches_shared_column_height_and_material() {
         let source = PeriodicTerrainCandidate::new(42);
         let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
-        let key = Key { centre: (0, 0), frame };
+        let key = Key {
+            centre: (0, 0),
+            frame,
+        };
         let vertices = build_hex_near_band(source, key, 8);
         assert!(!vertices.is_empty());
         let global = frame.cell(CellPos::new(0, 0, 0)).canonical;
@@ -434,13 +437,15 @@ mod tests {
     fn exact_near_hex_band_follows_moving_anchor() {
         let source = PeriodicTerrainCandidate::new(42);
         let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
-        let key = Key { centre: (96, -64), frame };
+        let key = Key {
+            centre: (96, -64),
+            frame,
+        };
         let vertices = build_hex_near_band(source, key, 8);
         assert!(!vertices.is_empty());
-        assert!(vertices.iter().any(|v| {
-            (v.position[0] - 96.0).abs() < 4.0
-                && (v.position[2] + 64.0).abs() < 4.0
-        }));
+        assert!(vertices
+            .iter()
+            .any(|v| { (v.position[0] - 96.0).abs() < 4.0 && (v.position[2] + 64.0).abs() < 4.0 }));
     }
 
     #[test]
