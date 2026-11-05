@@ -123,10 +123,22 @@ pub fn crossing_report(
     let de = after.period.east - before.period.east;
     let dn = after.period.north - before.period.north;
     let mut directions = Vec::new();
-    if de > 0 { counts.east += de as u64; directions.push("EAST"); }
-    if de < 0 { counts.west += (-de) as u64; directions.push("WEST"); }
-    if dn > 0 { counts.north += dn as u64; directions.push("NORTH"); }
-    if dn < 0 { counts.south += (-dn) as u64; directions.push("SOUTH"); }
+    if de > 0 {
+        counts.east += de as u64;
+        directions.push("EAST");
+    }
+    if de < 0 {
+        counts.west += (-de) as u64;
+        directions.push("WEST");
+    }
+    if dn > 0 {
+        counts.north += dn as u64;
+        directions.push("NORTH");
+    }
+    if dn < 0 {
+        counts.south += (-dn) as u64;
+        directions.push("SOUTH");
+    }
     Some(format!(
         "TORUS WRAP {} | RAW ({},{}) -> ({},{}) | CANONICAL ({},{}) -> ({},{}) | PERIOD ({},{}) -> ({},{}) | COUNTS E={} W={} N={} S={} TOTAL={} | periodic terrain, NO teleport",
         directions.join("+"),
@@ -189,12 +201,19 @@ mod tests {
 
     #[test]
     fn crossing_log_counts_both_axes_and_reverses() {
-        let frame = TorusFrame::new(Axial64::new(PERIOD_Q + R_PERIOD_Q_OFFSET - 32, PERIOD_R - 32));
+        let frame = TorusFrame::new(Axial64::new(
+            PERIOD_Q + R_PERIOD_Q_OFFSET - 32,
+            PERIOD_R - 32,
+        ));
         let a = frame.axial(31, 31);
         let b = frame.axial(32, 32);
         let mut counts = CrossingCounts::default();
-        assert!(crossing_report(a, b, &mut counts).unwrap().contains("EAST+NORTH"));
-        assert!(crossing_report(b, a, &mut counts).unwrap().contains("WEST+SOUTH"));
+        assert!(crossing_report(a, b, &mut counts)
+            .unwrap()
+            .contains("EAST+NORTH"));
+        assert!(crossing_report(b, a, &mut counts)
+            .unwrap()
+            .contains("WEST+SOUTH"));
         assert_eq!(counts.total(), 4);
         assert_eq!(nearest_seams(frame), (48.0, (32.0 * HEX_ROW_METRES) as f32));
     }
