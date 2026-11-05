@@ -67,7 +67,8 @@ impl Worker {
                     }
                     let bands = std::array::from_fn(|i| {
                         let (spacing, inner, outer) = BANDS[i];
-                        build_band(source, key, spacing, inner, outer)
+                        let next_spacing = BANDS.get(i + 1).map(|band| band.0);
+                        build_band(source, key, spacing, inner, outer, next_spacing)
                     });
                     if result_tx.send(ResultMesh { key, bands }).is_err() {
                         break;
@@ -116,6 +117,43 @@ fn height(source: PeriodicTerrainCandidate, frame: TorusFrame, x: f32, z: f32) -
     (source.surface_y(global) + 1) as f32 - UNDERLAY_EPSILON
 }
 
+/// Fine-band outer edges must lie on the neighboring coarse-band edge.
+/// Otherwise an intermediate fine vertex creates a visible T-junction crack.
+fn edge_height(
+    source: PeriodicTerrainCandidate,
+    frame: TorusFrame,
+    x: i32,
+    z: i32,
+    centre: (i32, i32),
+    outer: i32,
+    next_spacing: Option<i32>,
+) -> f32 {
+    let Some(coarse) = next_spacing else {
+        return height(source, frame, x as f32, z as f32);
+    };
+    let on_x = (x - centre.0).abs() == outer;
+    let on_z = (z - centre.1).abs() == outer;
+    if !on_x && !on_z {
+        return height(source, frame, x as f32, z as f32);
+    }
+    let along = if on_x { z } else { x };
+    let low = along.div_euclid(coarse) * coarse;
+    let high = low + coarse;
+    let t = (along - low) as f32 / coarse as f32;
+    let (a, b) = if on_x {
+        (
+            height(source, frame, x as f32, low as f32),
+            height(source, frame, x as f32, high as f32),
+        )
+    } else {
+        (
+            height(source, frame, low as f32, z as f32),
+            height(source, frame, high as f32, z as f32),
+        )
+    };
+    a + (b - a) * t
+}
+
 fn vertex(position: Vec3) -> Vertex {
     Vertex {
         position: position.to_array(),
@@ -135,6 +173,7 @@ pub fn build_band(
     spacing: i32,
     inner: i32,
     outer: i32,
+    next_spacing: Option<i32>,
 ) -> Vec<Vertex> {
     assert!(spacing > 0 && inner % spacing == 0 && outer % spacing == 0);
     let side = (2 * outer / spacing) as usize;
@@ -144,7 +183,14 @@ pub fn build_band(
         for q in 0..width {
             let x = (key.centre.0 - outer + q as i32 * spacing) as f32;
             let z = (key.centre.1 - outer + r as i32 * spacing) as f32;
-            points.push(Vec3::new(x, height(source, key.frame, x, z), z));
+            points.push(Vec3::new(
+                x,
+                edge_height(
+                    source, key.frame, x as i32, z as i32,
+                    key.centre, outer, next_spacing,
+                ),
+                z,
+            ));
         }
     }
 
@@ -188,13 +234,25 @@ mod tests {
             centre: (0, 0),
             frame: TorusFrame::new(Axial64::new(432_776, 1_182_375)),
         };
-        for (spacing, inner, outer) in BANDS {
-            let vertices = build_band(source, key, spacing, inner, outer);
+        for (i, &(spacing, inner, outer)) in BANDS.iter().enumerate() {
+            let next_spacing = BANDS.get(i + 1).map(|band| band.0);
+            let vertices = build_band(source, key, spacing, inner, outer, next_spacing);
             let expected = ((2 * outer / spacing).pow(2)
                 - (2 * inner / spacing).pow(2)) as usize * 6;
             assert_eq!(vertices.len(), expected);
             assert!(vertices.iter().all(|v| v.position.iter().all(|c| c.is_finite())));
         }
+    }
+
+    #[test]
+    fn fine_outer_boundary_matches_coarse_height_interpolation() {
+        let source = PeriodicTerrainCandidate::new(123);
+        let frame = TorusFrame::new(Axial64::new(432_776, 1_182_375));
+        let centre = (0, 0);
+        let actual = edge_height(source, frame, 64, 3, centre, 64, Some(4));
+        let a = height(source, frame, 64.0, 0.0);
+        let b = height(source, frame, 64.0, 4.0);
+        assert!((actual - (a * 0.25 + b * 0.75)).abs() < 0.0001);
     }
 
     #[test]
