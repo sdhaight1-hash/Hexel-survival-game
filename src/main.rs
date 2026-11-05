@@ -804,6 +804,19 @@ mod shader_tests {
     }
 
     #[test]
+    fn near_shadow_shader_parses_and_validates() {
+        let source = include_str!("shadow_shader.wgsl");
+        let module =
+            naga::front::wgsl::parse_str(source).expect("shadow shader must parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("shadow shader must pass Naga semantic validation");
+    }
+
+    #[test]
     fn sky_shader_parses_and_validates() {
         let source = include_str!("sky_shader.wgsl");
         let module = naga::front::wgsl::parse_str(source).expect("sky shader must parse as WGSL");
