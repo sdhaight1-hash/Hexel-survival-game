@@ -161,7 +161,8 @@ impl PeriodicTerrainCandidate {
     /// Unloaded neighbors, collision and mesh visibility use the same
     /// column rules as resident section generation.
     pub fn sample(&self, pos: CandidateCellId) -> Block {
-        self.column_profile(Axial64::new(pos.q, pos.r)).sample(pos.y)
+        self.column_profile(Axial64::new(pos.q, pos.r))
+            .sample(pos.y)
     }
 
     /// A test-only 16×16 surface slice. No 16³ allocation, GPU upload,
