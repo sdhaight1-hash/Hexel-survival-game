@@ -256,6 +256,7 @@ impl World {
             torus_frame: None,
             stream_center: None,
             horizontal_radius: STREAM_HORIZONTAL_RADIUS,
+            rock_gallery: false,
         }
     }
 
