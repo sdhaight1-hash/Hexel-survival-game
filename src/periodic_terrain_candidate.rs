@@ -36,8 +36,7 @@ impl PeriodicTerrainCandidate {
             / crate::hex_torus_candidate::PERIOD_Q as f64
             * axis)
             .rem_euclid(axis);
-        let z = (canonical.r as f64 / crate::hex_torus_candidate::PERIOD_R as f64
-            * axis)
+        let z = (canonical.r as f64 / crate::hex_torus_candidate::PERIOD_R as f64 * axis)
             .rem_euclid(axis);
 
         // Broad plains are maintained by a regional relief mask rather than
@@ -123,8 +122,7 @@ impl PeriodicTerrainCandidate {
     }
 
     fn periodic_noise_at(&self, x: f64, z: f64, grid_side: u32, domain: u64) -> f64 {
-        let span = f64::from(crate::geography::ELEVATION_SAMPLES_PER_AXIS)
-            / f64::from(grid_side);
+        let span = f64::from(crate::geography::ELEVATION_SAMPLES_PER_AXIS) / f64::from(grid_side);
         let gx = (x / span).floor() as u32 % grid_side;
         let gz = (z / span).floor() as u32 % grid_side;
         let tx = (x / span).fract();
@@ -134,8 +132,16 @@ impl PeriodicTerrainCandidate {
         let x1 = (gx + 1) % grid_side;
         let z1 = (gz + 1) % grid_side;
         lerp(
-            lerp(self.lattice(gx, gz, domain), self.lattice(x1, gz, domain), u),
-            lerp(self.lattice(gx, z1, domain), self.lattice(x1, z1, domain), u),
+            lerp(
+                self.lattice(gx, gz, domain),
+                self.lattice(x1, gz, domain),
+                u,
+            ),
+            lerp(
+                self.lattice(gx, z1, domain),
+                self.lattice(x1, z1, domain),
+                u,
+            ),
             v,
         )
     }
