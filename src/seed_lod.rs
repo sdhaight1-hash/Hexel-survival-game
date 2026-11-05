@@ -166,32 +166,36 @@ fn vertex(position: Vec3, material: Material, tint: [f32; 3]) -> Vertex {
     }
 }
 
-fn emit_triangle(out: &mut Vec<Vertex>, a: Vec3, b: Vec3, c: Vec3) {
-    let rise = (a.y - b.y)
-        .abs()
-        .max((a.y - c.y).abs())
-        .max((b.y - c.y).abs());
-    let run = (a.x - b.x)
-        .abs()
-        .max((a.z - b.z).abs())
-        .max((a.x - c.x).abs().max((a.z - c.z).abs()))
-        .max(1.0);
-    let rocky = (a.y + b.y + c.y) / 3.0 >= 271.0 || rise / run > 0.55;
-    let material = if rocky {
-        Material::Granite
-    } else {
-        Material::SoilTopFull
-    };
-    let tint = if rocky {
-        [0.90, 0.89, 0.86]
-    } else {
-        [0.88, 0.94, 0.84]
+fn emit_triangle(out: &mut Vec<Vertex>, a: Vec3, b: Vec3, c: Vec3, material: Material) {
+    let tint = match material {
+        Material::Granite | Material::Shale => [0.92, 0.91, 0.90],
+        Material::SoilTopVerySparse => [0.98, 0.94, 0.83],
+        _ => [0.93, 0.98, 0.89],
     };
     out.extend([
         vertex(a, material, tint),
         vertex(b, material, tint),
         vertex(c, material, tint),
     ]);
+}
+
+/// All visible distant materials must be derived from the same global cell
+/// block identity as nearby hexels; no independent LOD slope thresholds.
+fn surface_material(
+    source: PeriodicTerrainCandidate,
+    frame: TorusFrame,
+    x: f32,
+    z: f32,
+) -> Material {
+    use hexel_survival_game::world::Block;
+    let cell = frame.cell(local_cell_from_metres(x, z)).canonical;
+    match source.surface_cover(cell) {
+        Block::Grass => Material::SoilTopFull,
+        Block::Gravel => Material::SoilTopVerySparse,
+        Block::Shale => Material::Shale,
+        Block::Rock => Material::Granite,
+        Block::Air | Block::Soil => Material::SoilBare,
+    }
 }
 
 pub fn build_band(
@@ -239,27 +243,49 @@ pub fn build_band(
             let b = points[r * width + q + 1];
             let c = points[(r + 1) * width + q];
             let d = points[(r + 1) * width + q + 1];
-            // A coarse diagonal can completely erase a ridge or valley
-            // whose peak falls between the corners. Compare against the
-            // exact deterministic surface at this square's centre.
-            // Refinement changes only internal triangles: shared grid edges
-            // remain identical, including between adjacent LOD cells.
+            let material = surface_material(
+                source,
+                key.frame,
+                (a.x + d.x) * 0.5,
+                (a.z + d.z) * 0.5,
+            );
+            // Test the centre and four interior quarter points. The largest
+            // deviation from bilinear corner interpolation owns refinement,
+            // preserving narrow peaks/valleys a centre-only sample misses.
+            // Interior fan geometry never introduces shared-edge T-junctions.
+            let mut best_error = 1.5_f32;
+            let mut apex = None;
             if spacing >= 2 {
-                let mx = (a.x + d.x) * 0.5;
-                let mz = (a.z + d.z) * 0.5;
-                let actual = height(source, key.frame, mx, mz);
-                let flat = (a.y + b.y + c.y + d.y) * 0.25;
-                if (actual - flat).abs() > 1.5 {
-                    let m = Vec3::new(mx, actual, mz);
-                    emit_triangle(&mut out, a, c, m);
-                    emit_triangle(&mut out, c, d, m);
-                    emit_triangle(&mut out, d, b, m);
-                    emit_triangle(&mut out, b, a, m);
-                    continue;
+                for (u, v) in [
+                    (0.5_f32, 0.5_f32),
+                    (0.25, 0.25),
+                    (0.75, 0.25),
+                    (0.25, 0.75),
+                    (0.75, 0.75),
+                ] {
+                    let x = a.x + (d.x - a.x) * u;
+                    let z = a.z + (d.z - a.z) * v;
+                    let exact = height(source, key.frame, x, z);
+                    let bilinear = a.y * (1.0 - u) * (1.0 - v)
+                        + b.y * u * (1.0 - v)
+                        + c.y * (1.0 - u) * v
+                        + d.y * u * v;
+                    let error = (exact - bilinear).abs();
+                    if error > best_error {
+                        best_error = error;
+                        apex = Some(Vec3::new(x, exact, z));
+                    }
                 }
             }
-            emit_triangle(&mut out, a, c, b);
-            emit_triangle(&mut out, b, c, d);
+            if let Some(m) = apex {
+                emit_triangle(&mut out, a, c, m, material);
+                emit_triangle(&mut out, c, d, m, material);
+                emit_triangle(&mut out, d, b, m, material);
+                emit_triangle(&mut out, b, a, m, material);
+            } else {
+                emit_triangle(&mut out, a, c, b, material);
+                emit_triangle(&mut out, b, c, d, material);
+            }
         }
     }
     out
