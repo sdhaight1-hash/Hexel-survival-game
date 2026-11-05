@@ -147,22 +147,38 @@ impl PeriodicTerrainCandidate {
         }
     }
 
-    pub fn column_profile(&self, pos: Axial64) -> ColumnProfile {
-        let top = self.surface_y(pos);
-        let cover = self.cover_at_height(pos, top);
-        let deep = if self.geology_at(pos) <= 0.52 {
+    fn deep_block(&self, pos: Axial64) -> Block {
+        if self.geology_at(pos) <= 0.52 {
             Block::Rock
         } else {
             Block::Shale
-        };
-        ColumnProfile { top, cover, deep }
+        }
+    }
+
+    pub fn column_profile(&self, pos: Axial64) -> ColumnProfile {
+        let top = self.surface_y(pos);
+        ColumnProfile {
+            top,
+            cover: self.cover_at_height(pos, top),
+            deep: self.deep_block(pos),
+        }
     }
 
     /// Unloaded neighbors, collision and mesh visibility use the same
-    /// column rules as resident section generation.
+    /// column rules as resident section generation, but do not compute
+    /// expensive neighboring slopes for air or deep underground rock.
     pub fn sample(&self, pos: CandidateCellId) -> Block {
-        self.column_profile(Axial64::new(pos.q, pos.r))
-            .sample(pos.y)
+        let horizontal = Axial64::new(pos.q, pos.r);
+        let top = self.surface_y(horizontal);
+        if pos.y > i64::from(top) {
+            Block::Air
+        } else if pos.y == i64::from(top) {
+            self.cover_at_height(horizontal, top)
+        } else if pos.y >= i64::from(top - 3) {
+            Block::Soil
+        } else {
+            self.deep_block(horizontal)
+        }
     }
 
     /// A test-only 16×16 surface slice. No 16³ allocation, GPU upload,
@@ -270,6 +286,32 @@ mod tests {
             p.q + east * PERIOD_Q + north * R_PERIOD_Q_OFFSET,
             p.r + north * PERIOD_R,
         )
+    }
+
+    #[test]
+    fn cached_column_profile_matches_unloaded_sampling_including_torus_seams() {
+        let source = PeriodicTerrainCandidate::new(42);
+        for cell in [
+            Axial64::new(432_776, 1_182_375),
+            Axial64::new(0, 0),
+            Axial64::new(PERIOD_Q - 1, 0),
+            Axial64::new(R_PERIOD_Q_OFFSET, PERIOD_R - 1),
+        ] {
+            let profile = source.column_profile(cell);
+            for offset in [-30, -4, -3, -1, 0, 1, 20] {
+                let y = i64::from(profile.top + offset);
+                assert_eq!(
+                    profile.sample(y),
+                    source.sample(CandidateCellId::new(cell.q, cell.r, y))
+                );
+            }
+            for image in [
+                Axial64::new(cell.q + PERIOD_Q, cell.r),
+                Axial64::new(cell.q + R_PERIOD_Q_OFFSET, cell.r + PERIOD_R),
+            ] {
+                assert_eq!(source.column_profile(image), profile);
+            }
+        }
     }
 
     #[test]
