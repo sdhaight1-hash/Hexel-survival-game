@@ -3,6 +3,7 @@
 
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
+    distant_terrain,
     materials_p0, materials_v2,
     mesh::{build_chunk_mesh_relative, resident_boundary_markers, torus_guides, Vertex},
     presentation::PresentationOptions,
@@ -100,6 +101,10 @@ pub struct Renderer {
     surface_preset: SurfacePreset,
     metallic_glints: bool,
     terrain_meshes: HashMap<ChunkPos, TerrainGpuMesh>,
+    distant_terrain_enabled: bool,
+    distant_terrain_anchor: Option<(i32, i32)>,
+    distant_terrain_buffer: Option<wgpu::Buffer>,
+    distant_terrain_vertices: u32,
     boundary_markers_enabled: bool,
     boundary_marker_buffer: Option<wgpu::Buffer>,
     boundary_marker_vertices: u32,
@@ -668,6 +673,10 @@ impl Renderer {
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
             terrain_meshes,
+            distant_terrain_enabled: presentation.distant_terrain,
+            distant_terrain_anchor: None,
+            distant_terrain_buffer: None,
+            distant_terrain_vertices: 0,
             boundary_markers_enabled: false,
             boundary_marker_buffer: None,
             boundary_marker_vertices: 0,
@@ -787,6 +796,32 @@ impl Renderer {
                 usage: wgpu::BufferUsages::VERTEX,
             })
         });
+    }
+
+    /// Called before drawing; generate coarse world-source geometry only on a
+    /// new 16m anchor. Never update collision or authoritative chunk data.
+    pub fn refresh_distant_terrain(&mut self, world: &World, feet: Vec3) {
+        if !self.distant_terrain_enabled {
+            return;
+        }
+        let anchor = distant_terrain::anchor(feet);
+        if self.distant_terrain_anchor == Some(anchor) {
+            return;
+        }
+        let vertices = distant_terrain::build(world, anchor);
+        self.distant_terrain_vertices = vertices.len() as u32;
+        self.distant_terrain_buffer = Some(
+            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Experimental visual-only distant terrain underlay"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            })
+        );
+        self.distant_terrain_anchor = Some(anchor);
+    }
+
+    pub fn invalidate_distant_terrain(&mut self) {
+        self.distant_terrain_anchor = None;
     }
 
     pub fn presentation_report(&self) -> &str {
@@ -1025,6 +1060,10 @@ impl Renderer {
                 &self.material_bind_group
             };
             pass.set_bind_group(1, material_group, &[]);
+            if let Some(buffer) = &self.distant_terrain_buffer {
+                pass.set_vertex_buffer(0, buffer.slice(..));
+                pass.draw(0..self.distant_terrain_vertices, 0..1);
+            }
             for mesh in self.terrain_meshes.values() {
                 pass.set_vertex_buffer(0, mesh.buffer.slice(..));
                 pass.draw(0..mesh.vertices, 0..1);
