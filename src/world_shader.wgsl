@@ -205,5 +205,12 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
             color += exposed * (metal_sheen + sparkle) * vec3<f32>(1.0, 0.69, 0.41);
         }
     }
+    // F5 test view: exaggerated palette tint (not actual material albedo).
+    // Gray = neutral, colored patches = deterministic palette influence.
+    // The underlying vertex interpolation is unchanged.
+    if v5 && camera.options.w > 2.5 && !checker {
+        let exaggerated = clamp((v.color - vec3<f32>(1.0)) * 4.0 + vec3<f32>(0.5), vec3<f32>(0.0), vec3<f32>(1.0));
+        return vec4<f32>(exaggerated, 1.0);
+    }
     return vec4<f32>(clamp(color * v.color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }
