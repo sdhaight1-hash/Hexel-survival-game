@@ -374,7 +374,7 @@ impl ApplicationHandler for Game {
                     println!("V5 WORLDSPACE MATERIAL GALLERY: 12 pads (10x10x3), four variants per rock; no PNG pack needed.");
                     println!("Pads 01-04 granite, 05-08 shale, 09-12 basalt.");
                     println!("Each group: base / +regional palette / +worldspace structure / +sparse accents.");
-                    println!("F5 palette diagnostic ON/OFF | F6 checker | F7 density | F2 log | F3 metrics.");
+                    println!("F5 palette view: normal / IDs / blend | F6 checker | F7 density | F2 log | F3 metrics.");
                 }
                 if self.presentation.rock_gallery {
                     println!("ROCK GALLERY V4: 23 pads, each 10x10x3, gaps 2; walkway on r=12..14. Ordered west-to-east:");
@@ -464,12 +464,9 @@ impl ApplicationHandler for Game {
                             return;
                         }
                         if key == KeyCode::F5 && self.presentation.rock_v5 {
-                            if let Some(enabled) = self.renderer.as_mut()
-                                .and_then(|renderer| renderer.toggle_rock_palette_diagnostic()) {
-                                self.console_log.record(format!(
-                                    "F5 V5 palette diagnostic: {} (exaggerated colors, not final art)",
-                                    if enabled { "ON" } else { "OFF" }
-                                ));
+                            if let Some(mode) = self.renderer.as_mut()
+                                .and_then(|renderer| renderer.cycle_rock_palette_diagnostic()) {
+                                self.console_log.record(format!("F5 palette view: {mode}"));
                             }
                             return;
                         }
