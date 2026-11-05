@@ -340,6 +340,17 @@ mod tests {
     use crate::materials_p0::Material;
 
     #[test]
+    fn v55_gallery_mesh_has_palette_ids_and_more_boundary_vertices() {
+        let v55 = World::rock_v5_gallery();
+        let verts = build_chunk_mesh(&v55, ChunkPos::default());
+        assert!(!verts.is_empty());
+        assert_eq!(verts.len() % 3, 0);
+        assert!(verts.iter().any(|v| v.palette_id != 0));
+        assert!(verts.iter().all(|v| v.palette_id < 5));
+        assert!(verts.iter().all(|v| v.position.iter().all(|x| x.is_finite())));
+    }
+
+    #[test]
     fn generated_hex_faces_have_valid_materials_and_uvs() {
         let world = World::demo(42);
         let vertices = build_chunk_mesh(&world, ChunkPos::default());
