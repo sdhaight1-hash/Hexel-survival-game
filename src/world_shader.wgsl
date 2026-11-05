@@ -87,7 +87,6 @@ fn v5_noise(p: vec3<f32>) -> f32 {
 // keeps the parent palette tint and 14cm solid-contact blending.
 struct RockMicro {
     pigment: vec3<f32>,
-    height: f32,
 }
 fn v56_micro(material: u32, seed: u32, position: vec3<f32>) -> RockMicro {
     let rock = (material / 3u) / 4u;
@@ -112,91 +111,148 @@ fn v56_micro(material: u32, seed: u32, position: vec3<f32>) -> RockMicro {
     var t1 = vec3<f32>(1.021, 0.992, 0.975);
     var t2 = vec3<f32>(0.989, 1.014, 1.025);
     var t3 = vec3<f32>(1.028, 1.018, 0.993);
-    var height_strength = 0.024;
     if rock == 1u {
         t0 = vec3<f32>(0.973, 0.979, 0.989);
         t1 = vec3<f32>(1.016, 1.008, 0.989);
         t2 = vec3<f32>(0.984, 1.002, 1.016);
         t3 = vec3<f32>(1.027, 1.020, 1.011);
-        height_strength = 0.014;
     } else if rock == 2u {
         t0 = vec3<f32>(0.972, 0.982, 0.986);
         t1 = vec3<f32>(1.008, 1.004, 0.992);
         t2 = vec3<f32>(0.992, 1.008, 1.014);
         t3 = vec3<f32>(1.025, 1.017, 1.011);
-        height_strength = 0.018;
     }
     var result: RockMicro;
     result.pigment = mix(mix(t0, t1, a), mix(t2, t3, a), b);
-    result.height = ((coarse - 0.5) * 0.85 + (small - 0.5) * 0.30)
-        * height_strength;
     return result;
+}
+
+// V5.7: Grayscale identity first. These three *different* 3D structures
+// replace the old universal soft-mottled base. No normal perturbation.
+// This is procedural prototype art, not a claimed baked texture asset.
+// All samples use coherent gallery-local metres, independent of hexels.
+fn v57_granite(p: vec3<f32>) -> f32 {
+    // Interlocking coarse mineral grains. A 3D cellular partition
+    // defines hard-ish grain domains; secondary within-grain speckle
+    // reads as feldspar/quartz/mica instead of broad cloudy noise.
+    let cell_pos = p * 5.8;
+    let cell_base = floor(cell_pos);
+    let local = fract(cell_pos);
+    var nearest = 9.0;
+    var next_nearest = 9.0;
+    var mineral_id = 0.5;
+    for (var z = -1; z <= 1; z = z + 1) {
+        for (var y = -1; y <= 1; y = y + 1) {
+            for (var x = -1; x <= 1; x = x + 1) {
+                let offset = vec3<f32>(f32(x), f32(y), f32(z));
+                let candidate = cell_base + offset;
+                let jitter = vec3<f32>(
+                    v5_hash(candidate + vec3<f32>(11.0, 2.0, 5.0)),
+                    v5_hash(candidate + vec3<f32>(3.0, 7.0, 13.0)),
+                    v5_hash(candidate + vec3<f32>(19.0, 17.0, 2.0))
+                );
+                let displacement = offset + 0.16 + jitter * 0.68 - local;
+                let distance2 = dot(displacement, displacement);
+                if distance2 < nearest {
+                    next_nearest = nearest;
+                    nearest = distance2;
+                    mineral_id = v5_hash(candidate + vec3<f32>(29.0, 4.0, 8.0));
+                } else if distance2 < next_nearest {
+                    next_nearest = distance2;
+                }
+            }
+        }
+    }
+    let boundary = 1.0 - smoothstep(0.0, 0.13, next_nearest - nearest);
+    let feldspar = smoothstep(0.35, 0.66, mineral_id);
+    let mica = 1.0 - smoothstep(0.10, 0.22, mineral_id);
+    let micro = v5_noise(p * 15.0 + vec3<f32>(2.0, 17.0, 4.0));
+    let grain = 0.45 + 0.33 * feldspar - 0.28 * mica
+        + (micro - 0.5) * 0.20 - boundary * 0.075;
+    return clamp(grain, 0.0, 1.0);
+}
+fn v57_shale(p: vec3<f32>) -> f32 {
+    // Laminated and interrupted sediment planes, with short secondary
+    // cleavage. Unlike granite, the dominant feature is *direction*.
+    let warp = v5_noise(p * 0.62 + vec3<f32>(7.0, 3.0, 12.0)) - 0.5;
+    let bedding_coord = p.y + p.x * 0.15 - p.z * 0.075 + warp * 0.11;
+    let major = cos(bedding_coord * 21.0);
+    let minor = cos(bedding_coord * 56.0 + warp * 3.0);
+    let disruption = v5_noise(p * 1.2 + vec3<f32>(14.0, 2.0, 4.0));
+    let strata = smoothstep(-0.22, 0.38, major);
+    let fine_lamination = smoothstep(0.42, 0.92, minor) * (0.35 + disruption * 0.65);
+    let cleavage = smoothstep(0.57, 0.79,
+        v5_noise(p * vec3<f32>(1.9, 7.0, 2.1) + vec3<f32>(3.0, 8.0, 6.0)));
+    return clamp(0.31 + strata * 0.38 + fine_lamination * 0.14
+        - cleavage * 0.14 + (disruption - 0.5) * 0.06, 0.0, 1.0);
+}
+fn v57_basalt(p: vec3<f32>) -> f32 {
+    // Dense fine groundmass and genuinely dark sparse round-ish vesicles,
+    // not shale stripes or granite's contrasting grain domains.
+    let ground = v5_noise(p * 13.0 + vec3<f32>(7.0, 4.0, 2.0));
+    let vesicle_point = p * 4.2;
+    let base = floor(vesicle_point);
+    let local = fract(vesicle_point);
+    var pore = 0.0;
+    for (var z = -1; z <= 1; z = z + 1) {
+        for (var y = -1; y <= 1; y = y + 1) {
+            for (var x = -1; x <= 1; x = x + 1) {
+                let offset = vec3<f32>(f32(x), f32(y), f32(z));
+                let source = base + offset;
+                let present = v5_hash(source + vec3<f32>(17.0, 9.0, 4.0));
+                if present > 0.87 {
+                    let jitter = vec3<f32>(
+                        v5_hash(source + vec3<f32>(2.0, 3.0, 10.0)),
+                        v5_hash(source + vec3<f32>(13.0, 5.0, 6.0)),
+                        v5_hash(source + vec3<f32>(8.0, 19.0, 7.0))
+                    );
+                    let relative = offset + 0.22 + jitter * 0.56 - local;
+                    let d = length(relative);
+                    let radius = 0.20 + 0.13 * v5_hash(source + vec3<f32>(3.0, 11.0, 18.0));
+                    pore = max(pore, 1.0 - smoothstep(radius - 0.035, radius + 0.045, d));
+                }
+            }
+        }
+    }
+    let mottling = v5_noise(p * 2.2 + vec3<f32>(2.0, 6.0, 9.0));
+    return clamp(0.49 + (ground - 0.5) * 0.18
+        + (mottling - 0.5) * 0.11 - pore * 0.44, 0.0, 1.0);
 }
 
 fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
     let pad = material / 3u;
     let rock = pad / 4u;
     let stage = pad % 4u;
-
-    // Each column repeats the same local pattern across comparison stages.
+    // Same local coordinates on A/B/C/D pads: meaningful visual comparison.
     let p = position - vec3<f32>(12.0 * f32(stage), 0.0, 0.0);
-    // The base stays quiet: two grain scales, with room for flat material.
-    // Shared 3D positions make the grain continuous across exposed hex faces.
-    let fine = v5_noise(p * 4.3 + vec3<f32>(8.0, 2.0, 3.0));
-    let mid = v5_noise(p * 1.6 + vec3<f32>(2.0, 9.0, 5.0));
-    var dark = vec3<f32>(0.35, 0.32, 0.32);
-    var light = vec3<f32>(0.57, 0.52, 0.48);
+    var gray = v57_granite(p);
+    var dark = 0.31;
+    var light = 0.64;
     if rock == 1u {
-        dark = vec3<f32>(0.23, 0.26, 0.29);
-        light = vec3<f32>(0.38, 0.40, 0.41);
+        gray = v57_shale(p);
+        dark = 0.25;
+        light = 0.56;
     } else if rock == 2u {
-        dark = vec3<f32>(0.16, 0.18, 0.20);
-        light = vec3<f32>(0.30, 0.32, 0.34);
+        gray = v57_basalt(p);
+        dark = 0.17;
+        light = 0.39;
     }
-    // V5.4: modest increase in inherent rock read, not broad contrast.
-    let grain_strength = select(0.41, 0.28, rock == 2u);
-    let tone = clamp(0.50 + (fine - 0.5) * grain_strength
-        + (mid - 0.5) * 0.25, 0.0, 1.0);
-    var color = mix(dark, light, tone);
-
-    if stage >= 1u {
-        // V5.5 color is supplied by the mesher per hexel and blended only
-        // within narrow solid-rock contact strips. Do not apply the old
-        // broad world-space palette field here (fragment exit multiplies
-        // by the interpolated vertex tint once).
-    }
+    var value = mix(dark, light, gray);
     if stage >= 2u {
+        // Original V5.3 structures remain separate from rock identity.
         if rock == 0u {
-            // Granite: small, irregularly grouped feldspar and mica minerals.
-            // No dark polygon outlines and no repeating rectangular 'stones'.
             let mineral = v5_noise(p * 2.0 + vec3<f32>(3.7, 8.2, 1.5));
             let feldspar = smoothstep(0.59, 0.79, mineral);
-            let mica = smoothstep(0.73, 0.88,
-                v5_noise(p * 3.7 + vec3<f32>(14.0, 2.0, 9.0)));
-            color = mix(color, vec3<f32>(0.56, 0.47, 0.43), feldspar * 0.26);
-            color *= 1.0 - 0.11 * mica;
+            value += feldspar * 0.022;
         } else if rock == 1u {
-            // Shale: warped bedding in a coherent 3D geological volume.
-            // Interrupted bands are less regular than V5.2 sine stripes.
-            let warp = v5_noise(p * 0.44 + vec3<f32>(4.0, 6.0, 3.0));
-            let phase = 3.8 * (p.y + 0.12 * p.x + 0.07 * p.z)
-                + 1.8 * (warp - 0.5);
-            let bedding = smoothstep(0.65, 0.94, cos(phase));
-            let continuity = smoothstep(0.32, 0.62,
-                v5_noise(p * 0.83 + vec3<f32>(9.0, 2.0, 1.0)));
-            color *= 1.0 - 0.14 * bedding * continuity;
+            let bedding = cos(3.8 * (p.y + 0.12 * p.x + 0.07 * p.z));
+            value *= 1.0 - 0.065 * smoothstep(0.65, 0.94, bedding);
         } else {
-            // Basalt: nearly quiet volcanic groundmass with occasional
-            // irregular pores and thin disrupted dark fractures.
             let porous = v5_noise(p * 2.4 + vec3<f32>(7.0, 4.0, 11.0));
-            let pores = smoothstep(0.70, 0.87, porous);
-            let fracture_field = v5_noise(p * 0.74 + vec3<f32>(2.0, 7.0, 13.0));
-            let crack = 1.0 - smoothstep(0.015, 0.06,
-                abs(fracture_field - 0.39));
-            let fracture_mask = smoothstep(0.56, 0.76, mid);
-            color *= 1.0 - 0.09 * pores - 0.10 * crack * fracture_mask;
+            value *= 1.0 - 0.05 * smoothstep(0.70, 0.87, porous);
         }
     }
+    var color = vec3<f32>(value);
     if stage >= 3u {
         // V5.4: rare, rock-specific *disruptions* in a shared geological
         // coordinate volume. These overlays are not repeated per hex face.
@@ -215,7 +271,7 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
                 v5_noise(p * 0.65 + vec3<f32>(4.0, 18.0, 6.0)));
             let quartz_line = 1.0 - smoothstep(0.040, 0.105,
                 abs(joint_distance - 0.085));
-            color = mix(color, vec3<f32>(0.65, 0.63, 0.61),
+            color = mix(color, vec3<f32>(0.64),
                 quartz_line * quartz_gate * 0.25);
         } else if rock == 1u {
             // Shale: a rare displaced bedding/slip zone running through
@@ -243,7 +299,7 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
             color *= 1.0 - 0.24 * cooling_crack;
             let oxidation = (1.0 - smoothstep(0.06, 0.24, cool_plane))
                 * cool_gate * 0.14;
-            color = mix(color, vec3<f32>(0.34, 0.28, 0.24), oxidation);
+            color = mix(color, vec3<f32>(0.29), oxidation);
         }
     }
     return color;
@@ -268,49 +324,25 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
         color = select(vec3<f32>(0.10, 0.65, 0.24), vec3<f32>(0.83, 0.12, 0.58), alternating);
     }
 
-    // V5.6 internal pattern is hexel-owned, unlike the V5.4 world-space
-    // fault/bedding overlays. Attenuate pigment and height at solid joins,
-    // where the V5.5 mesh already interpolates neighboring palette colors.
-    var micro_pigment = vec3<f32>(1.0);
-    var micro_height = 0.0;
+    // V5.7 retains the V5.6 related-tone per-hexel pigment and the
+    // V5.5 edge fade. No bump height, derivatives or normal perturbation.
     if v5 && !checker && v.material != 69u {
         let pad = v.material / 3u;
         let p = v.world_position - vec3<f32>(12.0 * f32(pad % 4u), 0.0, 0.0);
         let micro = v56_micro(v.material, v.pattern_seed, p);
-        let coverage = clamp(v.micro_mask, 0.0, 1.0);
-        micro_pigment = mix(vec3<f32>(1.0), micro.pigment, coverage);
-        micro_height = micro.height * coverage * coverage;
+        color *= mix(vec3<f32>(1.0), micro.pigment,
+            clamp(v.micro_mask, 0.0, 1.0));
     }
-
-    // Screen-space height gradients use the SAME field as the pigment.
-    // Compute derivatives unconditionally to keep WGSL derivative uniformity.
     let dx = dpdx(v.world_position);
     let dy = dpdy(v.world_position);
-    let height_dx = dpdx(micro_height);
-    let height_dy = dpdy(micro_height);
     let view_dir = normalize(camera.eye_position.xyz - v.world_position);
     var normal = normalize(cross(dx, dy));
     if dot(normal, view_dir) < 0.0 {
         normal = -normal;
     }
-    var rock_normal = normal;
-    // camera.surface.z is reused only in the opt-in V5 rock gallery;
-    // it retains its frost-preview semantics in existing P0/V2 modes.
-    if v5 && camera.surface.z > 0.5 && !checker && v.material != 69u {
-        let r1 = cross(dy, normal);
-        let r2 = cross(normal, dx);
-        let determinant = dot(dx, r1);
-        let stable_det = select(-max(abs(determinant), 1e-6),
-            max(abs(determinant), 1e-6), determinant >= 0.0);
-        let gradient = (r1 * height_dx + r2 * height_dy) / stable_det;
-        rock_normal = normalize(normal - gradient);
-    }
-    // Flat and bumped modes have IDENTICAL colors and key lighting;
-    // only the normal perturbation changes when F4 is toggled.
     if v5 && !checker && v.material != 69u {
-        color *= micro_pigment;
         let sun = normalize(vec3<f32>(0.39, 0.78, 0.48));
-        let diffuse = max(dot(rock_normal, sun), 0.0);
+        let diffuse = max(dot(normal, sun), 0.0);
         color *= 0.72 + 0.28 * diffuse;
     }
 
