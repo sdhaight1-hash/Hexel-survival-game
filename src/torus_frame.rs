@@ -5,7 +5,7 @@
 //! use the same frame when runtime rebasing is enabled. No saved-world schema.
 
 use crate::hex_torus_candidate::{Axial64, HEX_ROW_METRES, PERIOD_Q, PERIOD_R, R_PERIOD_Q_OFFSET};
-use crate::world::{CHUNK_SIDE, CellPos};
+use crate::world::{CellPos, CHUNK_SIDE};
 use glam::DVec2;
 
 pub const REBASE_DISTANCE_METRES: f32 = 512.0;
@@ -159,7 +159,9 @@ mod tests {
         let mut x = before.x as f32;
         let mut z = before.y as f32;
         let initial = frame.cell(local_cell_from_metres(x, z));
-        let shift = frame.rebase_if_needed(&mut x, &mut z).expect("large move must rebase");
+        let shift = frame
+            .rebase_if_needed(&mut x, &mut z)
+            .expect("large move must rebase");
         assert_eq!(shift.axial_q % i64::from(CHUNK_SIDE), 0);
         assert_eq!(shift.axial_r % i64::from(CHUNK_SIDE), 0);
         assert!(x.abs() < 32.0 && z.abs() < 32.0);
