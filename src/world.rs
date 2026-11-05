@@ -171,6 +171,7 @@ pub struct World {
     periodic: Option<PeriodicTerrainCandidate>,
     torus_frame: Option<TorusFrame>,
     stream_center: Option<ChunkPos>,
+    horizontal_radius: i32,
 }
 
 impl World {
@@ -213,6 +214,7 @@ impl World {
             periodic: None,
             torus_frame: None,
             stream_center: None,
+            horizontal_radius: STREAM_HORIZONTAL_RADIUS,
         }
     }
 
@@ -225,6 +227,7 @@ impl World {
             periodic: None,
             torus_frame: None,
             stream_center: None,
+            horizontal_radius: STREAM_HORIZONTAL_RADIUS,
         }
     }
 
@@ -239,6 +242,8 @@ impl World {
                 periodic: Some(PeriodicTerrainCandidate::new(seed)),
                 torus_frame: Some(frame),
                 stream_center: None,
+                horizontal_radius: STREAM_HORIZONTAL_RADIUS,
+            horizontal_radius: STREAM_HORIZONTAL_RADIUS,
             },
             position,
         )
@@ -296,6 +301,17 @@ impl World {
         self.terrain.is_some() || self.periodic.is_some()
     }
 
+    /// Full-resolution resident-window radius, NOT a LOD level.
+    pub fn horizontal_radius(&self) -> i32 {
+        self.horizontal_radius
+    }
+
+    /// Explicit diagnostic control; normal gameplay remains radius 2.
+    pub fn set_horizontal_radius(&mut self, radius: i32) {
+        assert!((2..=5).contains(&radius), "render radius must be 2..=5");
+        self.horizontal_radius = radius;
+    }
+
     pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
         self.chunks.keys().copied()
     }
@@ -323,10 +339,10 @@ impl World {
         let (center, _) = player_cell.chunk_and_local();
         let started = Instant::now();
         let mut requested = Vec::new();
-        for dq in -STREAM_HORIZONTAL_RADIUS..=STREAM_HORIZONTAL_RADIUS {
-            for dr in -STREAM_HORIZONTAL_RADIUS..=STREAM_HORIZONTAL_RADIUS {
+        for dq in -self.horizontal_radius..=self.horizontal_radius {
+            for dr in -self.horizontal_radius..=self.horizontal_radius {
                 let hex_distance = dq.abs().max(dr.abs()).max((dq + dr).abs());
-                if hex_distance > STREAM_HORIZONTAL_RADIUS {
+                if hex_distance > self.horizontal_radius {
                     continue;
                 }
                 for dy in -STREAM_VERTICAL_RADIUS..=STREAM_VERTICAL_RADIUS {
@@ -364,7 +380,15 @@ impl World {
             .collect();
         obsolete.sort_by_key(|pos| (pos.y, pos.r, pos.q));
         let count = missing.len().min(max_new_chunks);
-        let removed: Vec<_> = obsolete.into_iter().take(count).collect();
+        // Shrinking a window has no missing sections: evict obsolete
+        // sections within the same per-tick budget rather than retaining
+        // invisible old geometry forever.
+        let remove_count = if missing.is_empty() {
+            obsolete.len().min(max_new_chunks)
+        } else {
+            count
+        };
+        let removed: Vec<_> = obsolete.into_iter().take(remove_count).collect();
         for &pos in &removed {
             self.chunks.remove(&pos);
         }
@@ -558,6 +582,35 @@ mod tests {
         assert_eq!(world.torus_cell(feet.x, feet.z).unwrap(), after);
         assert_eq!(original.canonical, spawn.candidate_wrap());
         assert!(sample.is_solid() || sample == Block::Air);
+    }
+
+    #[test]
+    fn changing_render_radius_grows_and_shrinks_resident_set_without_stale_sections() {
+        let mut world = World::streamed(42);
+        let at = CellPos::new(7, 7, 220).center();
+        world.stream_around(at);
+        assert_eq!(world.chunk_count(), 95);
+        world.set_horizontal_radius(4);
+        let mut max_pending = 0;
+        for _ in 0..310 {
+            let d = world.stream_around_budgeted(at, 1);
+            max_pending = max_pending.max(d.pending);
+            if d.pending == 0 { break; }
+        }
+        assert!(max_pending >= 200);
+        assert_eq!(world.chunk_count(), 305);
+        world.set_horizontal_radius(2);
+        for _ in 0..310 {
+            let d = world.stream_around_budgeted(at, 1);
+            if d.pending == 0 { break; }
+        }
+        // Obsolete resident sections are removed on each tick even when
+        // there are no missing sections, until the exact target is reached.
+        for _ in 0..305 {
+            world.stream_around_budgeted(at, 1);
+            if world.chunk_count() == 95 { break; }
+        }
+        assert_eq!(world.chunk_count(), 95);
     }
 
     #[test]
