@@ -139,8 +139,10 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
 
     // Each column repeats the same local pattern across comparison stages.
     let p = position - vec3<f32>(12.0 * f32(stage), 0.0, 0.0);
-    let fine = v5_noise(p * 4.0);
-    let grain = clamp((fine - 0.5) * 0.15, -0.075, 0.075);
+    // The base stays quiet: two grain scales, with room for flat material.
+    // Shared 3D positions make the grain continuous across exposed hex faces.
+    let fine = v5_noise(p * 4.3 + vec3<f32>(8.0, 2.0, 3.0));
+    let mid = v5_noise(p * 1.6 + vec3<f32>(2.0, 9.0, 5.0));
     var dark = vec3<f32>(0.35, 0.32, 0.32);
     var light = vec3<f32>(0.57, 0.52, 0.48);
     if rock == 1u {
@@ -150,41 +152,57 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
         dark = vec3<f32>(0.16, 0.18, 0.20);
         light = vec3<f32>(0.30, 0.32, 0.34);
     }
-    let tone = clamp(0.5 + grain, 0.0, 1.0);
+    let grain_strength = select(0.36, 0.24, rock == 2u);
+    let tone = clamp(0.50 + (fine - 0.5) * grain_strength
+        + (mid - 0.5) * 0.22, 0.0, 1.0);
     var color = mix(dark, light, tone);
 
     if stage >= 1u {
-        // Five deterministic palette endpoints shared across all hex faces.
-        // Use a stable region grid, not a different palette for each cell.
+        // Same V5.2 five-palette field; do NOT randomize per hexel.
         color *= palette_region(p, rock);
     }
     if stage >= 2u {
-        var structural = 0.0;
         if rock == 0u {
-            // Granite: quiet, irregular interlocking mineral aggregates.
-            structural = smoothstep(0.63, 0.78, v5_noise(p * 1.45 + vec3<f32>(1.0,3.0,5.0))) * 0.075;
+            // Granite: small, irregularly grouped feldspar and mica minerals.
+            // No dark polygon outlines and no repeating rectangular 'stones'.
+            let mineral = v5_noise(p * 2.0 + vec3<f32>(3.7, 8.2, 1.5));
+            let feldspar = smoothstep(0.59, 0.79, mineral);
+            let mica = smoothstep(0.73, 0.88,
+                v5_noise(p * 3.7 + vec3<f32>(14.0, 2.0, 9.0)));
+            color = mix(color, vec3<f32>(0.56, 0.47, 0.43), feldspar * 0.26);
+            color *= 1.0 - 0.11 * mica;
         } else if rock == 1u {
-            // Shale: tilted, slightly warped bedding through full 3D volume.
-            let phase = (p.y + p.x * 0.14 + p.z * 0.09) * 6.0
-                + (v5_noise(p * 0.31) - 0.5) * 1.8;
-            structural = smoothstep(0.85, 0.98, sin(phase)) * 0.075;
+            // Shale: warped bedding in a coherent 3D geological volume.
+            // Interrupted bands are less regular than V5.2 sine stripes.
+            let warp = v5_noise(p * 0.44 + vec3<f32>(4.0, 6.0, 3.0));
+            let phase = 3.8 * (p.y + 0.12 * p.x + 0.07 * p.z)
+                + 1.8 * (warp - 0.5);
+            let bedding = smoothstep(0.65, 0.94, cos(phase));
+            let continuity = smoothstep(0.32, 0.62,
+                v5_noise(p * 0.83 + vec3<f32>(9.0, 2.0, 1.0)));
+            color *= 1.0 - 0.14 * bedding * continuity;
         } else {
-            // Basalt: rare cooling-fracture tracers, not wall-covering grids.
-            let a = abs(sin(p.x * 0.79 + p.y * 0.24 + v5_noise(p * 0.33)));
-            let b = abs(sin(p.z * 0.64 - p.y * 0.32));
-            structural = (1.0 - smoothstep(0.02, 0.09, min(a,b))) * 0.065;
+            // Basalt: nearly quiet volcanic groundmass with occasional
+            // irregular pores and thin disrupted dark fractures.
+            let porous = v5_noise(p * 2.4 + vec3<f32>(7.0, 4.0, 11.0));
+            let pores = smoothstep(0.70, 0.87, porous);
+            let fracture_field = v5_noise(p * 0.74 + vec3<f32>(2.0, 7.0, 13.0));
+            let crack = 1.0 - smoothstep(0.015, 0.06,
+                abs(fracture_field - 0.39));
+            let patch = smoothstep(0.56, 0.76, mid);
+            color *= 1.0 - 0.09 * pores - 0.10 * crack * patch;
         }
-        color *= 1.0 - structural;
     }
     if stage >= 3u {
-        // One locally coherent sparse accent mask in 3D, not per-hexel RNG.
-        let accent = smoothstep(0.83, 0.92, v5_noise(p * 0.95 + vec3<f32>(23.0,11.0,5.0)));
+        // Rare 3D accents. Stage D should remain less busy than the V4 art.
+        let accent = smoothstep(0.80, 0.91,
+            v5_noise(p * 0.98 + vec3<f32>(23.0, 11.0, 5.0)));
         if rock == 0u {
-            color = mix(color, vec3<f32>(0.58,0.55,0.52), accent * 0.32);
+            color = mix(color, vec3<f32>(0.62, 0.59, 0.56), accent * 0.38);
         } else if rock == 1u {
-            color = mix(color, vec3<f32>(0.47,0.46,0.43), accent * 0.22);
+            color = mix(color, vec3<f32>(0.45, 0.45, 0.42), accent * 0.28);
         } else {
-            color = mix(color, vec3<f32>(0.38,0.39,0.38), accent * 0.18);
+            color = mix(color, vec3<f32>(0.38, 0.40, 0.39), accent * 0.23);
         }
     }
     return color;
