@@ -243,12 +243,8 @@ pub fn build_band(
             let b = points[r * width + q + 1];
             let c = points[(r + 1) * width + q];
             let d = points[(r + 1) * width + q + 1];
-            let material = surface_material(
-                source,
-                key.frame,
-                (a.x + d.x) * 0.5,
-                (a.z + d.z) * 0.5,
-            );
+            let material =
+                surface_material(source, key.frame, (a.x + d.x) * 0.5, (a.z + d.z) * 0.5);
             // Test the centre and four interior quarter points. The largest
             // deviation from bilinear corner interpolation owns refinement,
             // preserving narrow peaks/valleys a centre-only sample misses.
