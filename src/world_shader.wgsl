@@ -16,8 +16,8 @@ struct VertexIn {
     @location(2) uv: vec2<f32>,
     @location(3) material: u32,
     @location(4) palette_id: u32,
-    @location(5) pattern_seed: u32,
-    @location(6) micro_mask: f32,
+    @location(5) family_weights: vec4<f32>,
+    @location(6) family_weight_4: f32,
 }
 struct VertexOut {
     @builtin(position) clip_position: vec4<f32>,
@@ -26,8 +26,8 @@ struct VertexOut {
     @location(2) @interpolate(flat) material: u32,
     @location(3) world_position: vec3<f32>,
     @location(4) @interpolate(flat) palette_id: u32,
-    @location(5) @interpolate(flat) pattern_seed: u32,
-    @location(6) micro_mask: f32,
+    @location(5) family_weights: vec4<f32>,
+    @location(6) family_weight_4: f32,
 }
 @vertex fn vs_main(v: VertexIn) -> VertexOut {
     var out: VertexOut;
@@ -36,8 +36,8 @@ struct VertexOut {
     out.uv = v.uv;
     out.material = v.material;
     out.palette_id = v.palette_id;
-    out.pattern_seed = v.pattern_seed;
-    out.micro_mask = v.micro_mask;
+    out.family_weights = v.family_weights;
+    out.family_weight_4 = v.family_weight_4;
     out.world_position = v.position;
     return out;
 }
@@ -81,38 +81,110 @@ fn v5_noise(p: vec3<f32>) -> f32 {
 // V5.5 per-hexel palette choices and edge blends come from CPU mesh colors.
 // Geological structures below remain world-space 3D fields.
 
-// V5.8: the four sibling colors within a hexel's assigned palette are
-// selected by the ROCK'S OWN geological masks. No independent color noise,
-// and no bump/height shading. v.color still owns the five per-rock palette
-// families and V5.5's narrow solid-to-solid boundary blending.
-fn v58_pigment(rock: u32, palette_id: u32, feature: vec2<f32>) -> vec3<f32> {
-    // These are relative color multipliers, not new absolute palettes.
-    // A deterministic family bias gently shifts each hexel's mineral tint.
-    let family = f32(palette_id) - 2.0;
-    let warm = family * 0.006;
-    var t0 = vec3<f32>(0.92, 0.97, 1.05); // darker/cool mineral
-    var t1 = vec3<f32>(1.07, 1.01, 0.94); // feldspar
-    var t2 = vec3<f32>(0.96, 1.02, 1.07); // quartz
-    var t3 = vec3<f32>(1.07, 1.04, 0.99); // light crystalline grain
-    if rock == 1u {
-        t0 = vec3<f32>(0.93, 0.96, 1.04); // dark lamina
-        t1 = vec3<f32>(1.05, 1.025, 0.985); // lighter lamina
-        t2 = vec3<f32>(0.98, 1.015, 1.04); // fine compressed layer
-        t3 = vec3<f32>(1.06, 1.035, 0.975); // exposed bedding
-    } else if rock == 2u {
-        t0 = vec3<f32>(0.91, 0.96, 1.02); // vesicle interior
-        t1 = vec3<f32>(0.985, 1.0, 1.01); // fine groundmass
-        t2 = vec3<f32>(1.035, 1.02, 0.975); // weathered grains
-        t3 = vec3<f32>(1.06, 1.04, 1.02); // raised lighter specks
+// V5.9: four actual authored colors in each of five rock-specific families.
+// The geological features, not a parent tint, select where colors appear.
+fn v59_family_color(rock: u32, family: u32, feature: vec2<f32>) -> vec3<f32> {
+    var t0 = vec3<f32>(0.25);
+    var t1 = vec3<f32>(0.40);
+    var t2 = vec3<f32>(0.50);
+    var t3 = vec3<f32>(0.45);
+    if rock == 0u {
+        if family == 0u {
+            t0 = vec3<f32>(0.2863, 0.2863, 0.2941);
+            t1 = vec3<f32>(0.5725, 0.4941, 0.4549);
+            t2 = vec3<f32>(0.7020, 0.6667, 0.6314);
+            t3 = vec3<f32>(0.5294, 0.4941, 0.4706);
+        }
+        else if family == 1u {
+            t0 = vec3<f32>(0.3333, 0.3137, 0.3059);
+            t1 = vec3<f32>(0.6745, 0.5294, 0.4745);
+            t2 = vec3<f32>(0.7647, 0.6667, 0.6039);
+            t3 = vec3<f32>(0.6196, 0.5725, 0.5216);
+        }
+        else if family == 2u {
+            t0 = vec3<f32>(0.2588, 0.3020, 0.3412);
+            t1 = vec3<f32>(0.5020, 0.5529, 0.6078);
+            t2 = vec3<f32>(0.6471, 0.6863, 0.7255);
+            t3 = vec3<f32>(0.4471, 0.4980, 0.5686);
+        }
+        else if family == 3u {
+            t0 = vec3<f32>(0.3961, 0.3686, 0.3255);
+            t1 = vec3<f32>(0.6902, 0.6118, 0.5176);
+            t2 = vec3<f32>(0.7725, 0.7216, 0.6353);
+            t3 = vec3<f32>(0.6078, 0.5608, 0.4824);
+        }
+        else if family == 4u {
+            t0 = vec3<f32>(0.2588, 0.2784, 0.2824);
+            t1 = vec3<f32>(0.4549, 0.4902, 0.5098);
+            t2 = vec3<f32>(0.6471, 0.6431, 0.6275);
+            t3 = vec3<f32>(0.5255, 0.5529, 0.5412);
+        }
+    } else if rock == 1u {
+        if family == 0u {
+            t0 = vec3<f32>(0.1882, 0.2039, 0.2314);
+            t1 = vec3<f32>(0.3882, 0.4431, 0.4824);
+            t2 = vec3<f32>(0.5333, 0.5882, 0.6314);
+            t3 = vec3<f32>(0.4510, 0.4941, 0.5333);
+        }
+        else if family == 1u {
+            t0 = vec3<f32>(0.2078, 0.2353, 0.2510);
+            t1 = vec3<f32>(0.4784, 0.5216, 0.5176);
+            t2 = vec3<f32>(0.6431, 0.6588, 0.6235);
+            t3 = vec3<f32>(0.5216, 0.5608, 0.5608);
+        }
+        else if family == 2u {
+            t0 = vec3<f32>(0.2235, 0.2235, 0.2157);
+            t1 = vec3<f32>(0.5333, 0.4784, 0.4471);
+            t2 = vec3<f32>(0.6902, 0.6275, 0.5961);
+            t3 = vec3<f32>(0.5765, 0.5216, 0.5020);
+        }
+        else if family == 3u {
+            t0 = vec3<f32>(0.1725, 0.1882, 0.1961);
+            t1 = vec3<f32>(0.3451, 0.3804, 0.4000);
+            t2 = vec3<f32>(0.5333, 0.5686, 0.5843);
+            t3 = vec3<f32>(0.4157, 0.4588, 0.4902);
+        }
+        else if family == 4u {
+            t0 = vec3<f32>(0.2549, 0.2627, 0.2431);
+            t1 = vec3<f32>(0.5765, 0.5451, 0.4706);
+            t2 = vec3<f32>(0.7176, 0.6863, 0.6157);
+            t3 = vec3<f32>(0.5765, 0.5569, 0.5098);
+        }
+    } else {
+        if family == 0u {
+            t0 = vec3<f32>(0.0941, 0.1216, 0.1490);
+            t1 = vec3<f32>(0.2196, 0.2471, 0.2863);
+            t2 = vec3<f32>(0.3176, 0.3647, 0.4000);
+            t3 = vec3<f32>(0.2588, 0.2980, 0.3451);
+        }
+        else if family == 1u {
+            t0 = vec3<f32>(0.1333, 0.1333, 0.1412);
+            t1 = vec3<f32>(0.2824, 0.2627, 0.2824);
+            t2 = vec3<f32>(0.3961, 0.3765, 0.4118);
+            t3 = vec3<f32>(0.3255, 0.3137, 0.3529);
+        }
+        else if family == 2u {
+            t0 = vec3<f32>(0.1412, 0.1373, 0.1255);
+            t1 = vec3<f32>(0.3373, 0.3176, 0.2863);
+            t2 = vec3<f32>(0.4235, 0.4039, 0.3647);
+            t3 = vec3<f32>(0.3451, 0.3294, 0.2863);
+        }
+        else if family == 3u {
+            t0 = vec3<f32>(0.0980, 0.1216, 0.1294);
+            t1 = vec3<f32>(0.2196, 0.2667, 0.2824);
+            t2 = vec3<f32>(0.3216, 0.3765, 0.4000);
+            t3 = vec3<f32>(0.2706, 0.3176, 0.3373);
+        }
+        else if family == 4u {
+            t0 = vec3<f32>(0.1490, 0.1333, 0.1294);
+            t1 = vec3<f32>(0.3294, 0.2824, 0.2549);
+            t2 = vec3<f32>(0.4510, 0.3765, 0.3216);
+            t3 = vec3<f32>(0.3608, 0.3255, 0.3137);
+        }
     }
-    let tint = vec3<f32>(warm, warm * 0.15, -warm);
-    // feature.x follows the main lithologic identity:
-    // granite mineral ID, shale bedding, basalt pore occupancy.
-    // feature.y follows subordinate grain / lamination structure.
-    let primary = smoothstep(0.18, 0.78, feature.x);
-    let secondary = smoothstep(0.30, 0.70, feature.y);
-    return mix(mix(t0, t1, primary), mix(t2, t3, primary), secondary)
-        + tint;
+    let major = smoothstep(0.22, 0.75, feature.x);
+    let minor = smoothstep(0.30, 0.70, feature.y);
+    return mix(mix(t0, t1, major), mix(t2, t3, major), minor);
 }
 
 struct V57Substrate {
@@ -332,14 +404,30 @@ fn v5_color(material: u32, position: vec3<f32>) -> V58RockColor {
         color = select(vec3<f32>(0.10, 0.65, 0.24), vec3<f32>(0.83, 0.12, 0.58), alternating);
     }
 
-    // V5.8 ties sibling tones directly to the already-evaluated rock
-    // structure: no extra procedural noise and no shader bump mapping.
-    // A stays an uncolored grayscale control; B/C/D use per-hexel palettes.
+    // B/C/D use the complete authored palette family. Family weights
+    // come from solid-neighbor contact strips, never a single RGB tint.
+    // A stays grayscale; the existing grayscale geology supplies a
+    // restrained structural lightness adjustment, not the color source.
     if v5 && !checker && v.material != 69u && (v.material / 3u) % 4u != 0u {
-        let pigment = v58_pigment((v.material / 3u) / 4u,
-            v.palette_id, rock_features);
-        color *= mix(vec3<f32>(1.0), pigment,
-            clamp(v.micro_mask, 0.0, 1.0));
+        let weights = array<f32, 5>(
+            v.family_weights.x, v.family_weights.y,
+            v.family_weights.z, v.family_weights.w, v.family_weight_4
+        );
+        let rock = (v.material / 3u) / 4u;
+        var pigment = vec3<f32>(0.0);
+        var weight_sum = 0.0;
+        for (var family = 0u; family < 5u; family = family + 1u) {
+            let w = max(weights[family], 0.0);
+            if w > 0.0001 {
+                pigment += w * v59_family_color(rock, family, rock_features);
+                weight_sum += w;
+            }
+        }
+        let neutral_level = select(select(0.47, 0.40, rock == 1u),
+                                   0.27, rock == 2u);
+        let structure = clamp(1.0 + (color.r - neutral_level) * 0.65,
+                              0.78, 1.23);
+        color = (pigment / max(weight_sum, 0.0001)) * structure;
     }
     let dx = dpdx(v.world_position);
     let dy = dpdy(v.world_position);
@@ -419,8 +507,20 @@ fn v5_color(material: u32, position: vec3<f32>) -> V58RockColor {
                 default: { return vec4<f32>(0.80, 0.21, 0.86, 1.0); }
             }
         }
-        return vec4<f32>(clamp((v.color - vec3<f32>(1.0)) * 2.4
-            + vec3<f32>(0.5), vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
+        let debug_colors = array<vec3<f32>, 5>(
+            vec3<f32>(0.93, 0.20, 0.22), vec3<f32>(0.19, 0.81, 0.27),
+            vec3<f32>(0.18, 0.46, 0.97), vec3<f32>(0.95, 0.80, 0.12),
+            vec3<f32>(0.80, 0.21, 0.86)
+        );
+        let weights = array<f32, 5>(
+            v.family_weights.x, v.family_weights.y,
+            v.family_weights.z, v.family_weights.w, v.family_weight_4
+        );
+        var diagnostic = vec3<f32>(0.0);
+        for (var i = 0u; i < 5u; i = i + 1u) {
+            diagnostic += max(0.0, weights[i]) * debug_colors[i];
+        }
+        return vec4<f32>(diagnostic, 1.0);
     }
     return vec4<f32>(clamp(color * v.color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }
