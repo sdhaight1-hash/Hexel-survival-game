@@ -257,6 +257,7 @@ pub fn build_chunk_mesh_relative(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::materials_p0::Material;
 
     #[test]
     fn generated_hex_faces_have_valid_materials_and_uvs() {
