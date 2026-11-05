@@ -20,7 +20,7 @@ const BASALT: [[f32; 3]; 5] = [
 ];
 const BLEND_WIDTH: f32 = 0.14; // metres, measured *inside* the exposed face
 
-fn palette_index(cell: CellPos, pad: u32) -> u32 {
+fn palette_hash(cell: CellPos, pad: u32) -> u32 {
     let rock = pad / 4;
     // All gallery stages for the same rock show the same palette pattern.
     let q = cell.q - (pad % 4) as i32 * 12;
@@ -31,7 +31,16 @@ fn palette_index(cell: CellPos, pad: u32) -> u32 {
     h ^= h >> 16;
     h = h.wrapping_mul(0x7feb352d);
     h ^= h >> 15;
-    h % 5
+    h
+}
+
+fn palette_index(cell: CellPos, pad: u32) -> u32 {
+    palette_hash(cell, pad) % 5
+}
+
+/// Stable local-cell pattern seed shared across gallery A/B/C/D stages.
+pub fn pattern_seed(world: &World, cell: CellPos) -> u32 {
+    world.gallery_rock_index(cell).map_or(0, |pad| palette_hash(cell, pad))
 }
 
 fn palette(cell: CellPos, pad: u32) -> [f32; 3] {
@@ -61,9 +70,9 @@ fn weight(distance: f32) -> f32 {
 /// to a shared border uses a neighbor's palette. Air, water, empty gaps and
 /// other pads are not palette contributors. Evaluating both sides of a join
 /// at distance zero yields the same weighted color.
-pub fn tint_at(world: &World, cell: CellPos, position: Vec3) -> [f32; 3] {
+pub fn tint_and_pattern_weight_at(world: &World, cell: CellPos, position: Vec3) -> ([f32; 3], f32) {
     let Some(pad) = world.gallery_rock_index(cell) else {
-        return [1.0; 3];
+        return ([1.0; 3], 1.0);
     };
     if pad % 4 == 0 {
         return [1.0; 3]; // A: untouched neutral base control
@@ -81,9 +90,12 @@ pub fn tint_at(world: &World, cell: CellPos, position: Vec3) -> [f32; 3] {
             + (position.z - center.z) * theta.sin();
         let w = weight((0.5 - along).max(0.0));
         if w == 0.0 { continue; }
-        let tint = palette(neighbor, pad);
-        for channel in 0..3 { total[channel] += tint[channel] * w; }
-        weight_sum += w;
+        strongest_contact = strongest_contact.max(w);
+        if !neutral_control {
+            let tint = palette(neighbor, pad);
+            for channel in 0..3 { total[channel] += tint[channel] * w; }
+            weight_sum += w;
+        }
     }
 
     for (y, distance) in [
@@ -99,7 +111,11 @@ pub fn tint_at(world: &World, cell: CellPos, position: Vec3) -> [f32; 3] {
         weight_sum += w;
     }
     for channel in &mut total { *channel /= weight_sum; }
-    total
+    (total, 1.0 - strongest_contact)
+}
+
+pub fn tint_at(world: &World, cell: CellPos, position: Vec3) -> [f32; 3] {
+    tint_and_pattern_weight_at(world, cell, position).0
 }
 
 #[cfg(test)]
