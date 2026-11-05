@@ -1100,14 +1100,17 @@ impl Renderer {
                     if self.debug_checker { 1.0 } else { 0.0 },
                     self.texels_per_metre as f32 / materials_p0::REFERENCE_TEXELS_PER_METRE,
                     if self.v2_preview_enabled { 1.0 } else { 0.0 },
-                    if self.seed_lod_worker.is_some() { 1.0 } else { 0.0 },
+                    if self.seed_lod_worker.is_some() {
+                        1.0
+                    } else {
+                        0.0
+                    },
                 ],
                 eye_position: [
                     eye.x,
                     eye.y,
                     eye.z,
-                    (self.sun_started.elapsed().as_secs_f32() / 180.0)
-                        * std::f32::consts::TAU,
+                    (self.sun_started.elapsed().as_secs_f32() / 180.0) * std::f32::consts::TAU,
                 ],
                 surface: [
                     conditions.wetness,
