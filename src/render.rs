@@ -32,6 +32,7 @@ struct CameraUniform {
     options: [f32; 4],
     eye_position: [f32; 4],
     surface: [f32; 4],
+    lod_near: [f32; 4],
 }
 
 #[repr(C)]
@@ -82,6 +83,8 @@ pub struct Renderer {
     config: wgpu::SurfaceConfiguration,
     presentation_report: String,
     pipeline: wgpu::RenderPipeline,
+    lod_pipeline: wgpu::RenderPipeline,
+    lod_near: [f32; 4],
     crosshair_pipeline: wgpu::RenderPipeline,
     menu_pipeline: wgpu::RenderPipeline,
     menu_buffer: Option<wgpu::Buffer>,
@@ -212,6 +215,7 @@ impl Renderer {
                 options: [0.0, 1.0, 0.0, 0.0],
                 eye_position: [0.0, 0.0, 0.0, 0.0],
                 surface: [0.0, 0.0, 0.0, 1.0],
+                lod_near: [0.0, 0.0, 0.0, 0.0],
             }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
@@ -494,6 +498,43 @@ impl Renderer {
             cache: None,
         });
 
+        let lod_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Seed terrain LOD with near-footprint mask"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: Some("vs_main"),
+                buffers: &[Vertex::layout()],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: Some("fs_lod"),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                cull_mode: None,
+                ..Default::default()
+            },
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth24Plus,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            multisample: wgpu::MultisampleState::default(),
+            multiview: None,
+            cache: None,
+        });
+
+
         let crosshair_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Crosshair shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("crosshair.wgsl").into()),
@@ -653,6 +694,8 @@ impl Renderer {
             config,
             presentation_report,
             pipeline,
+            lod_pipeline,
+            lod_near: [0.0, 0.0, world.horizontal_radius() as f32, 0.0],
             crosshair_pipeline,
             menu_pipeline,
             menu_buffer: None,
@@ -811,6 +854,9 @@ impl Renderer {
         let Some((_, frame)) = world.distant_surface_source() else {
             return;
         };
+        let pos = hexel_survival_game::world::CellPos::at_world_xz(feet.x, feet.z, 0);
+        let (chunk, _) = pos.chunk_and_local();
+        self.lod_near = [chunk.q as f32, chunk.r as f32, world.horizontal_radius() as f32, 0.0];
         let desired = seed_lod::Key::at(feet, frame);
         if self.seed_lod_key == Some(desired) {
             return;
@@ -1035,6 +1081,7 @@ impl Renderer {
                     conditions.frost,
                     if self.metallic_glints { 1.0 } else { 0.0 },
                 ],
+                lod_near: self.lod_near,
             }),
         );
         let acquire_start = Instant::now();
@@ -1086,10 +1133,14 @@ impl Renderer {
                 &self.material_bind_group
             };
             pass.set_bind_group(1, material_group, &[]);
+            if !self.seed_lod_buffers.is_empty() {
+                pass.set_pipeline(&self.lod_pipeline);
+            }
             for (buffer, vertices) in &self.seed_lod_buffers {
                 pass.set_vertex_buffer(0, buffer.slice(..));
                 pass.draw(0..*vertices, 0..1);
             }
+            pass.set_pipeline(&self.pipeline);
             for mesh in self.terrain_meshes.values() {
                 pass.set_vertex_buffer(0, mesh.buffer.slice(..));
                 pass.draw(0..mesh.vertices, 0..1);
