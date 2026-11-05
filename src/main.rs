@@ -379,6 +379,7 @@ impl ApplicationHandler for Game {
                 println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
                 println!("F10: toggle native-copper metallic highlights (F8).");
+                println!("F12: toggle magenta resident-section perimeter markers (diagnostic only).");
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");
@@ -432,6 +433,19 @@ impl ApplicationHandler for Game {
                         }
                         if key == KeyCode::F2 {
                             self.toggle_console();
+                            return;
+                        }
+                        if key == KeyCode::F12 {
+                            if let Some(renderer) = self.renderer.as_mut() {
+                                let enabled = renderer.toggle_boundary_markers(
+                                    &self.world,
+                                    self.player.eye_position().y,
+                                );
+                                self.console_log.record(format!(
+                                    "F12 RESIDENT BOUNDARY MARKERS: {} | magenta columns at resident perimeter (not procedural world edge)",
+                                    if enabled { "ON" } else { "OFF" }
+                                ));
+                            }
                             return;
                         }
                         if self.console_open
@@ -607,6 +621,7 @@ impl ApplicationHandler for Game {
                 let replacement = self.world.stream_around(self.player.feet);
                 if let Some(renderer) = self.renderer.as_mut() {
                     renderer.rebuild_torus_world(&self.world);
+                    renderer.refresh_boundary_markers(&self.world, self.player.eye_position().y);
                 }
                 self.console_log.record(format!(
                     "TORUS REBASE | axial shift ({},{}) local metres ({:.2},{:.2}) | new global origin {:?} | rebuilt {} resident sections",
@@ -652,6 +667,7 @@ impl ApplicationHandler for Game {
                 let mut mesh_upload_ms = 0.0;
                 if let Some(renderer) = self.renderer.as_mut() {
                     let result = renderer.sync_stream(&self.world, &delta);
+                    renderer.refresh_boundary_markers(&self.world, self.player.eye_position().y);
                     self.streamed_meshes += result.meshed_buffers;
                     self.streamed_uploaded_bytes += result.uploaded_bytes;
                     self.streamed_meshing_cpu_ms += result.cpu_ms;
