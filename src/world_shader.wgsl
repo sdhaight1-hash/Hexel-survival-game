@@ -66,16 +66,23 @@ fn shade(v: VertexOut) -> vec4<f32> {
     // High-contrast original diagnostic pixel material set, opt-in LOD only.
     // This deliberately does not replace the authored production texture pack.
     if camera.options.w > 0.5 && !checker {
+        // Separate broad geology patches from fine pixel noise; neither
+        // requires copying Minecraft art or changing saved block IDs.
         let pixel = floor(v.uv * 12.0);
-        let fleck = (hash21(pixel) - 0.5) * 0.18;
-        if v.material >= 7u && v.material <= 10u {
-            color = vec3<f32>(0.46, 0.48, 0.52) + fleck;
-        } else if v.material == 0u {
-            color = vec3<f32>(0.47, 0.29, 0.17) + fleck;
-        } else if v.material >= 4u && v.material <= 6u {
-            color = vec3<f32>(0.44, 0.31, 0.17) + fleck;
+        let fleck = (hash21(pixel) - 0.5) * 0.15;
+        let patch = patch_noise(v.world_position.xz * 0.028) - 0.5;
+        if v.material == 7u || v.material == 9u {
+            color = vec3<f32>(0.49, 0.51, 0.54) + fleck + patch * 0.12;
+        } else if v.material == 8u || v.material == 10u {
+            color = vec3<f32>(0.30, 0.35, 0.41) + fleck * 0.85 + patch * 0.10;
+        } else if v.material == 1u {
+            color = vec3<f32>(0.66, 0.59, 0.39) + fleck + patch * 0.18;
+        } else if v.material == 0u || v.material >= 4u && v.material <= 6u {
+            color = vec3<f32>(0.47, 0.30, 0.17) + fleck + patch * 0.11;
+        } else if v.material == 2u {
+            color = vec3<f32>(0.42, 0.51, 0.20) + fleck + patch * 0.19;
         } else {
-            color = vec3<f32>(0.24, 0.64, 0.20) + fleck;
+            color = vec3<f32>(0.26, 0.59, 0.20) + fleck + patch * 0.17;
         }
     }
 
