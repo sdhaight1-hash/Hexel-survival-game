@@ -125,7 +125,7 @@ fn shade(v: VertexOut) -> vec4<f32> {
 
 
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
-    return shaded;
+    return shade(v);
 }
 
 // Distant terrain never draws inside the live full-resolution streaming
@@ -156,5 +156,5 @@ fn shade(v: VertexOut) -> vec4<f32> {
     if dist <= camera.lod_near.z {
         discard;
     }
-    return shade(v);
+    return shaded;
 }
