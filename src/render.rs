@@ -654,9 +654,16 @@ impl Renderer {
             label: Some("Terrain day/night sky"),
             source: wgpu::ShaderSource::Wgsl(include_str!("sky_shader.wgsl").into()),
         });
+        // Sky WGSL uses only @group(0) camera; requiring the terrain
+        // material and shadow groups makes the fullscreen sky draw invalid.
+        let sky_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("Sky camera-only pipeline layout"),
+            bind_group_layouts: &[&camera_layout],
+            push_constant_ranges: &[],
+        });
         let sky_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Sky and visible diagnostic sun"),
-            layout: Some(&layout),
+            layout: Some(&sky_layout),
             vertex: wgpu::VertexState {
                 module: &sky_shader,
                 entry_point: Some("vs_main"),
