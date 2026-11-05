@@ -98,7 +98,7 @@ pub struct Renderer {
     v2_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
     gallery_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
     rock_v5: bool,
-    rock_palette_diagnostic: bool,
+    rock_palette_diagnostic: u32,
     v2_preview_enabled: bool,
     surface_preset: SurfacePreset,
     metallic_glints: bool,
@@ -728,7 +728,7 @@ impl Renderer {
             v2_materials,
             gallery_materials,
             rock_v5: presentation.rock_v5,
-            rock_palette_diagnostic: false,
+            rock_palette_diagnostic: 0,
             v2_preview_enabled: false,
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
@@ -879,10 +879,14 @@ impl Renderer {
 
     /// Show a high-contrast 16px-grid on every cap and prism side.
     /// F5: exaggerate the RGB palette interpolation for diagnosis, not art review.
-    pub fn toggle_rock_palette_diagnostic(&mut self) -> Option<bool> {
+    pub fn cycle_rock_palette_diagnostic(&mut self) -> Option<&'static str> {
         if !self.rock_v5 { return None; }
-        self.rock_palette_diagnostic = !self.rock_palette_diagnostic;
-        Some(self.rock_palette_diagnostic)
+        self.rock_palette_diagnostic = (self.rock_palette_diagnostic + 1) % 3;
+        Some(match self.rock_palette_diagnostic {
+            0 => "normal materials",
+            1 => "five discrete palette IDs",
+            _ => "smoothly blended palette weights",
+        })
     }
 
     pub fn toggle_checker(&mut self) -> bool {
@@ -1010,7 +1014,7 @@ impl Renderer {
                     if self.debug_checker { 1.0 } else { 0.0 },
                     self.texels_per_metre as f32 / materials_p0::REFERENCE_TEXELS_PER_METRE,
                     if self.v2_preview_enabled { 1.0 } else { 0.0 },
-                    if self.gallery_materials.is_some() { 1.0 } else if self.rock_v5 { if self.rock_palette_diagnostic { 3.0 } else { 2.0 } } else { 0.0 },
+                    if self.gallery_materials.is_some() { 1.0 } else if self.rock_v5 { 2.0 + self.rock_palette_diagnostic as f32 } else { 0.0 },
                 ],
                 eye_position: [eye.x, eye.y, eye.z, 0.0],
                 surface: [
