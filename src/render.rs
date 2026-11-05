@@ -1135,8 +1135,7 @@ impl Renderer {
             },
         ) * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
         let conditions = self.surface_preset.conditions();
-        let phase = (self.sun_started.elapsed().as_secs_f32() / 180.0)
-            * std::f32::consts::TAU
+        let phase = (self.sun_started.elapsed().as_secs_f32() / 180.0) * std::f32::consts::TAU
             + std::f32::consts::FRAC_PI_3;
         let sun_dir = Vec3::new(phase.cos() * 0.75, phase.sin(), 0.35).normalize();
         let sunlight = ((sun_dir.y + 0.08) / 0.42).clamp(0.0, 1.0);
@@ -1157,12 +1156,7 @@ impl Renderer {
                         0.0
                     },
                 ],
-                eye_position: [
-                    eye.x,
-                    eye.y,
-                    eye.z,
-                    phase,
-                ],
+                eye_position: [eye.x, eye.y, eye.z, phase],
                 surface: [
                     conditions.wetness,
                     conditions.moss,
