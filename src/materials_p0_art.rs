@@ -289,12 +289,7 @@ fn diagnostic_tile(bytes: &[u8]) -> Result<Vec<u8>, String> {
         let sx = (x / 16) as usize;
         let sy = (y / 16) as usize;
         let i = (sy * 16 + sx) * 4;
-        [
-            image.rgba[i],
-            image.rgba[i + 1],
-            image.rgba[i + 2],
-            255,
-        ]
+        [image.rgba[i], image.rgba[i + 1], image.rgba[i + 2], 255]
     }))
 }
 
