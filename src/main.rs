@@ -11,6 +11,7 @@ mod render;
 mod render_cpu_metrics;
 mod render_distance_benchmark;
 mod rock_gallery;
+mod rock_palette;
 mod stream_metrics;
 mod texture_codec;
 mod texture_pack;
