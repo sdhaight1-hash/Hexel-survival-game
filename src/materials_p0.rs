@@ -33,9 +33,15 @@ pub enum Material {
     GraniteCopper = 9,
     ShaleCopper = 10,
     Checker = 11,
+    DiagnosticLushGrass = 12,
+    DiagnosticDryGrass = 13,
+    DiagnosticSparseGrass = 14,
+    DiagnosticBareDirt = 15,
+    DiagnosticStonyDirt = 16,
+    DiagnosticDarkShale = 17,
 }
 
-pub const LAYER_COUNT: usize = 12;
+pub const LAYER_COUNT: usize = 18;
 
 pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
     let is_top = face == HexFace::Top;
