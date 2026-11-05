@@ -132,7 +132,6 @@ impl PeriodicTerrainCandidate {
                 Block::Shale
             }
         }
-        }
     }
 
     /// A test-only 16×16 surface slice. No 16³ allocation, GPU upload,
