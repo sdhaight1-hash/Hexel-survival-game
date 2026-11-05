@@ -74,7 +74,7 @@ pub fn for_face(block: Block, cell: CellPos, face: HexFace) -> Material {
             } else {
                 Material::SoilBare
             }
-        },
+        }
         Block::Air => unreachable!("Only solid blocks have faces"),
     }
 }
