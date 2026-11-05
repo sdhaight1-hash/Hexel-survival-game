@@ -172,6 +172,8 @@ pub struct World {
     torus_frame: Option<TorusFrame>,
     stream_center: Option<ChunkPos>,
     horizontal_radius: i32,
+    surface_following: bool,
+    surface_bounds: HashMap<(i32, i32), (i32, i32)>,
 }
 
 impl World {
@@ -215,6 +217,8 @@ impl World {
             torus_frame: None,
             stream_center: None,
             horizontal_radius: STREAM_HORIZONTAL_RADIUS,
+            surface_following: false,
+            surface_bounds: HashMap::new(),
         }
     }
 
@@ -228,6 +232,8 @@ impl World {
             torus_frame: None,
             stream_center: None,
             horizontal_radius: STREAM_HORIZONTAL_RADIUS,
+            surface_following: false,
+            surface_bounds: HashMap::new(),
         }
     }
 
@@ -243,6 +249,8 @@ impl World {
                 torus_frame: Some(frame),
                 stream_center: None,
                 horizontal_radius: STREAM_HORIZONTAL_RADIUS,
+                surface_following: false,
+                surface_bounds: HashMap::new(),
             },
             position,
         )
@@ -270,6 +278,7 @@ impl World {
         let frame = self.torus_frame.as_mut()?;
         let shift = frame.rebase_if_needed(&mut feet.x, &mut feet.z)?;
         self.chunks.clear();
+        self.surface_bounds.clear();
         self.stream_center = None;
         Some(shift)
     }
@@ -305,6 +314,44 @@ impl World {
 
     pub fn is_streamed(&self) -> bool {
         self.terrain.is_some() || self.periodic.is_some()
+    }
+
+    /// LOD-mode resident columns follow actual procedural heights, including
+    /// tall ridges above/below the player's section. Default stream behaviour
+    /// remains unchanged without this explicit opt-in.
+    pub fn set_surface_following(&mut self, enabled: bool) {
+        if self.surface_following != enabled {
+            self.surface_following = enabled;
+            self.surface_bounds.clear();
+            self.stream_center = None;
+        }
+    }
+
+    fn surface_section_bounds(&mut self, q: i32, r: i32) -> (i32, i32) {
+        if let Some(&cached) = self.surface_bounds.get(&(q, r)) {
+            return cached;
+        }
+        let source = self.periodic.expect("torus source");
+        let frame = self.torus_frame.expect("torus frame");
+        let mut min_y = i32::MAX;
+        let mut max_y = i32::MIN;
+        for dr in 0..CHUNK_SIDE {
+            for dq in 0..CHUNK_SIDE {
+                let local = CellPos::new(q * CHUNK_SIDE + dq, r * CHUNK_SIDE + dr, 0);
+                let global = frame.cell(local).canonical;
+                let top = source.surface_y(global);
+                min_y = min_y.min(top);
+                max_y = max_y.max(top);
+            }
+        }
+        // A section below the lowest surface covers exposed soil/rock cliff
+        // sides. It is not necessary to materialize the entire deep crust.
+        let result = (
+            min_y.div_euclid(CHUNK_SIDE) - 1,
+            max_y.div_euclid(CHUNK_SIDE),
+        );
+        self.surface_bounds.insert((q, r), result);
+        result
     }
 
     /// Full-resolution resident-window radius, NOT a LOD level.
@@ -351,18 +398,34 @@ impl World {
                 if hex_distance > self.horizontal_radius {
                     continue;
                 }
-                for dy in -STREAM_VERTICAL_RADIUS..=STREAM_VERTICAL_RADIUS {
-                    requested.push((
-                        hex_distance,
-                        dy.abs(),
-                        ChunkPos {
-                            q: center.q + dq,
-                            r: center.r + dr,
-                            y: center.y + dy,
-                        },
-                    ));
+                let q = center.q + dq;
+                let r = center.r + dr;
+                if self.surface_following && self.periodic.is_some() {
+                    let (bottom, top) = self.surface_section_bounds(q, r);
+                    for y in bottom..=top {
+                        requested.push((hex_distance, (y - center.y).abs(), ChunkPos { q, r, y }));
+                    }
+                } else {
+                    for dy in -STREAM_VERTICAL_RADIUS..=STREAM_VERTICAL_RADIUS {
+                        requested.push((
+                            hex_distance,
+                            dy.abs(),
+                            ChunkPos {
+                                q,
+                                r,
+                                y: center.y + dy,
+                            },
+                        ));
+                    }
                 }
             }
+        }
+        if self.surface_following {
+            self.surface_bounds.retain(|&(q, r), _| {
+                let dq = q - center.q;
+                let dr = r - center.r;
+                dq.abs().max(dr.abs()).max((dq + dr).abs()) <= self.horizontal_radius
+            });
         }
         // Center-first, deterministic generation order. No randomized
         // per-chunk geology or dependence on iteration order of HashMap.
@@ -489,6 +552,28 @@ fn demo_surface(seed: u32, q: i32, r: i32) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mountain_surface_residency_includes_high_and_low_columns() {
+        let (mut world, _) = World::torus(42, Axial64::new(432_776, 1_182_375));
+        world.set_surface_following(true);
+        let q = 0;
+        let r = 0;
+        let (bottom, top) = world.surface_section_bounds(q, r);
+        assert!(top >= bottom);
+        let source = world.periodic.expect("torus terrain");
+        let frame = world.torus_frame.expect("torus frame");
+        for dr in 0..CHUNK_SIDE {
+            for dq in 0..CHUNK_SIDE {
+                let local = CellPos::new(dq, dr, 0);
+                let global = frame.cell(local).canonical;
+                let section = source.surface_y(global).div_euclid(CHUNK_SIDE);
+                assert!((bottom..=top).contains(&section));
+            }
+        }
+        world.set_surface_following(false);
+        assert!(world.surface_bounds.is_empty());
+    }
 
     #[test]
     fn chunk_holds_exactly_4096_cells() {
