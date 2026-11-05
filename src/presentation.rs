@@ -249,8 +249,10 @@ mod tests {
         assert!(PresentationOptions::parse(["--distant-terrain".to_string()]).is_err());
         let (_, options) = PresentationOptions::parse(
             ["--torus-test-ne", "--distant-terrain"]
-                .into_iter().map(str::to_owned)
-        ).unwrap();
+                .into_iter()
+                .map(str::to_owned),
+        )
+        .unwrap();
         assert!(options.distant_terrain);
         assert!(!PresentationOptions::default().distant_terrain);
     }
