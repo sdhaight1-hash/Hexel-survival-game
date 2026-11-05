@@ -105,7 +105,9 @@ pub fn vertex_tint(
         return cell_palette(cell, pad);
     }
     for channel in &mut sum {
-        *channel /= count as f32;
+        // Restore enough variation to inspect after corner averaging.
+        // Final colors still remain in the quiet-rock range.
+        *channel = 1.0 + (*channel / count as f32 - 1.0) * 1.8;
     }
     sum
 }
