@@ -3,7 +3,7 @@
 
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
-    materials_p0, materials_v2,
+    materials_p0, materials_v2, rock_gallery,
     mesh::{build_chunk_mesh_relative, torus_guides, Vertex},
     presentation::PresentationOptions,
     texture_pack::TexturePack,
@@ -96,6 +96,7 @@ pub struct Renderer {
     material_bind_group: wgpu::BindGroup,
     _material_texture: wgpu::Texture,
     v2_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
+    gallery_materials: Option<(wgpu::Texture, wgpu::BindGroup)>,
     v2_preview_enabled: bool,
     surface_preset: SurfacePreset,
     metallic_glints: bool,
@@ -442,6 +443,68 @@ impl Renderer {
                 None
             }
         };
+        // Explicit V4 review mode: independent 69-layer RGBA array. Never
+        // modify P0 or v2 production candidates, and fail if an asset is missing.
+        let gallery_materials = if presentation.rock_gallery {
+            let layers = rock_gallery::load_layers()?;
+            let texture = device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("V4 rock gallery 69 RGBA layers"),
+                size: wgpu::Extent3d {
+                    width: rock_gallery::SIZE,
+                    height: rock_gallery::SIZE,
+                    depth_or_array_layers: rock_gallery::LAYERS,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                view_formats: &[],
+            });
+            for (index, pixels) in layers.iter().enumerate() {
+                queue.write_texture(
+                    wgpu::TexelCopyTextureInfo {
+                        texture: &texture,
+                        mip_level: 0,
+                        origin: wgpu::Origin3d { x: 0, y: 0, z: index as u32 },
+                        aspect: wgpu::TextureAspect::All,
+                    },
+                    pixels,
+                    wgpu::TexelCopyBufferLayout {
+                        offset: 0,
+                        bytes_per_row: Some(rock_gallery::SIZE * 4),
+                        rows_per_image: Some(rock_gallery::SIZE),
+                    },
+                    wgpu::Extent3d {
+                        width: rock_gallery::SIZE,
+                        height: rock_gallery::SIZE,
+                        depth_or_array_layers: 1,
+                    },
+                );
+            }
+            let view = texture.create_view(&wgpu::TextureViewDescriptor {
+                dimension: Some(wgpu::TextureViewDimension::D2Array),
+                ..Default::default()
+            });
+            let group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("V4 rock gallery material bind group"),
+                layout: &material_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&material_sampler),
+                    },
+                ],
+            });
+            println!("V4 rock gallery: loaded {} independent top/side/bottom textures", layers.len());
+            Some((texture, group))
+        } else {
+            None
+        };
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("World shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("world_shader.wgsl").into()),
@@ -661,6 +724,7 @@ impl Renderer {
             material_bind_group,
             _material_texture: material_texture,
             v2_materials,
+            gallery_materials,
             v2_preview_enabled: false,
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
@@ -986,7 +1050,9 @@ impl Renderer {
             });
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            let material_group = if self.v2_preview_enabled {
+            let material_group = if let Some((_, group)) = &self.gallery_materials {
+                group
+            } else if self.v2_preview_enabled {
                 self.v2_materials
                     .as_ref()
                     .map(|(_, group)| group)
