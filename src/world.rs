@@ -173,6 +173,7 @@ pub struct World {
     stream_center: Option<ChunkPos>,
     horizontal_radius: i32,
     rock_gallery: bool,
+    rock_v5: bool,
 }
 
 impl World {
@@ -217,6 +218,7 @@ impl World {
             stream_center: None,
             horizontal_radius: STREAM_HORIZONTAL_RADIUS,
             rock_gallery: false,
+            rock_v5: false,
         }
     }
 
@@ -246,6 +248,33 @@ impl World {
         world
     }
 
+    /// Material-only experiment. Four 10x10x3 pads per rock:
+    /// base, palette, structure, and accent. No resource simulation or PNGs.
+    pub fn rock_v5_gallery() -> Self {
+        let mut world = Self::default();
+        world.rock_gallery = true;
+        world.rock_v5 = true;
+        for index in 0..12 {
+            for q in index * 12..index * 12 + 10 {
+                for r in 0..10 {
+                    for y in 0..3 {
+                        let cell = CellPos::new(q, r, y);
+                        let (section, local) = cell.chunk_and_local();
+                        world.chunks.entry(section).or_default().set(local, Block::Rock);
+                    }
+                }
+            }
+        }
+        for q in 0..(12 * 12 - 2) {
+            for r in 12..15 {
+                let cell = CellPos::new(q, r, 0);
+                let (section, local) = cell.chunk_and_local();
+                world.chunks.entry(section).or_default().set(local, Block::Soil);
+            }
+        }
+        world
+    }
+
     /// The original terrain source is global, even when no chunk is resident.
     /// This mode is unbounded for now, **not** the future approved torus.
     pub fn streamed(seed: u64) -> Self {
@@ -257,6 +286,7 @@ impl World {
             stream_center: None,
             horizontal_radius: STREAM_HORIZONTAL_RADIUS,
             rock_gallery: false,
+            rock_v5: false,
         }
     }
 
@@ -273,6 +303,7 @@ impl World {
                 stream_center: None,
                 horizontal_radius: STREAM_HORIZONTAL_RADIUS,
                 rock_gallery: false,
+                rock_v5: false,
             },
             position,
         )
@@ -345,13 +376,15 @@ impl World {
     /// Only the opt-in fixture's solid pads are assigned these indices.
     pub fn is_rock_gallery(&self) -> bool { self.rock_gallery }
 
+    pub fn is_rock_v5(&self) -> bool { self.rock_v5 }
+
     pub fn gallery_rock_index(&self, cell: CellPos) -> Option<u32> {
         if !self.rock_gallery { return None; }
         if cell.q < 0 || cell.r < 0 || cell.r >= 10 || cell.y < 0 || cell.y >= 3 {
             return None;
         }
         let index = cell.q / 12;
-        (index < 23 && cell.q % 12 < 10).then_some(index as u32)
+        (index < if self.rock_v5 { 12 } else { 23 } && cell.q % 12 < 10).then_some(index as u32)
     }
 
     pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
