@@ -26,17 +26,18 @@ increase to BC7 storage: 0.375 MiB for six additional layers.
 
 The authoritative torus-periodic source first computes height/geology and
 slope. On soil-capable ground it then samples broad moisture, connected
-ground-cover patches and small variation. Some exposed top blocks are
-**actual bare Soil**, some Grass, some Gravel; top Grass is no longer
-mandatory. This is a reproducible procedural preview, not a soil
-moisture/vegetation simulation.
+ground-cover patches and small variation. Exposed top blocks can be **bare Soil**, Gravel, rich Grass, dry
+GrassDry or thin GrassSparse. These are explicit seed-owned preview
+block states, not per-frame random color assignments. This is a
+reproducible procedural preview, not a climate/vegetation simulation.
 
 Nearby resident world sections and seed-derived distant LOD share the
-exact same surface identity and coordinates. In opt-in distant-terrain
-mode the fragment shader selects actual atlas layers for lush/dry grass
-using a world-anchored periodic-looking visual field, and reads the
-bare-soil, gravel, sparse grass and shale texture swatches. This
-appearance variation does not create a new persisted block identity.
+exact same surface identity and canonical torus coordinates. In opt-in
+distant-terrain mode the fragment shader samples the corresponding
+actual atlas layers for lush, dry and sparse grass, bare soil, gravel
+and shale. No camera-relative color-region logic is required.
+These new block identities are experimental, with no migration policy
+for persisted saved worlds.
 
 ## Native validation
 
