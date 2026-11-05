@@ -72,68 +72,8 @@ fn v5_noise(p: vec3<f32>) -> f32 {
     return mix(mix(x00,x10,t.y), mix(x01,x11,t.y), t.z);
 }
 
-// V5.2: Five rock-specific palette anchors in a stable 2D metre grid.
-// The exact same field is sampled by all faces, eliminating per-cell tint jumps.
-// The gallery offsets stage columns to make B/C/D comparable.
-fn palette_id(grid: vec2<i32>, rock: u32) -> u32 {
-    let q = bitcast<u32>(grid.x);
-    let r = bitcast<u32>(grid.y);
-    var h = q * 0x9e3779b9u ^ r * 0x85ebca6bu ^ rock * 0xc2b2ae35u ^ 42u;
-    h = (h ^ (h >> 16u)) * 0x7feb352du;
-    h = (h ^ (h >> 15u)) * 0x846ca68bu;
-    return (h ^ (h >> 16u)) % 5u;
-}
-fn palette_rgb(rock: u32, id: u32) -> vec3<f32> {
-    if rock == 0u {
-        switch (id) {
-            case 0u: { return vec3<f32>(1.02, 1.00, 0.99); }
-            case 1u: { return vec3<f32>(1.20, 0.92, 0.86); }
-            case 2u: { return vec3<f32>(0.88, 0.99, 1.17); }
-            case 3u: { return vec3<f32>(1.20, 1.08, 0.88); }
-            default: { return vec3<f32>(0.85, 0.90, 1.03); }
-        }
-    }
-    if rock == 1u {
-        switch (id) {
-            case 0u: { return vec3<f32>(1.00, 1.00, 1.00); }
-            case 1u: { return vec3<f32>(1.17, 1.03, 0.90); }
-            case 2u: { return vec3<f32>(0.87, 1.01, 1.18); }
-            case 3u: { return vec3<f32>(0.82, 0.91, 0.91); }
-            default: { return vec3<f32>(1.15, 1.13, 0.96); }
-        }
-    }
-    switch (id) {
-        case 0u: { return vec3<f32>(1.00, 1.00, 1.00); }
-        case 1u: { return vec3<f32>(1.18, 1.06, 0.97); }
-        case 2u: { return vec3<f32>(0.88, 0.97, 1.17); }
-        case 3u: { return vec3<f32>(1.18, 1.17, 1.09); }
-        default: { return vec3<f32>(0.82, 0.90, 0.94); }
-    }
-}
-// Regions are roughly 5 metres wide. Corners have discrete IDs, but the
-// surface interpolates their color multipliers with cubic smoothstep.
-fn palette_region(p: vec3<f32>, rock: u32) -> vec3<f32> {
-    let uv = p.xz / 5.0;
-    let origin = floor(uv);
-    let fraction = fract(uv);
-    let t = fraction * fraction * (vec2<f32>(3.0) - 2.0 * fraction);
-    let grid = vec2<i32>(origin);
-    let c00 = palette_rgb(rock, palette_id(grid, rock));
-    let c10 = palette_rgb(rock, palette_id(grid + vec2<i32>(1, 0), rock));
-    let c01 = palette_rgb(rock, palette_id(grid + vec2<i32>(0, 1), rock));
-    let c11 = palette_rgb(rock, palette_id(grid + vec2<i32>(1, 1), rock));
-    return mix(mix(c00, c10, t.x), mix(c01, c11, t.x), t.y);
-}
-fn palette_id_debug(p: vec3<f32>, rock: u32) -> vec3<f32> {
-    let id = palette_id(vec2<i32>(floor(p.xz / 5.0 + vec2<f32>(0.5))), rock);
-    switch (id) {
-        case 0u: { return vec3<f32>(0.93, 0.20, 0.22); }
-        case 1u: { return vec3<f32>(0.19, 0.81, 0.27); }
-        case 2u: { return vec3<f32>(0.18, 0.46, 0.97); }
-        case 3u: { return vec3<f32>(0.95, 0.80, 0.12); }
-        default: { return vec3<f32>(0.80, 0.21, 0.86); }
-    }
-}
+// V5.5 per-hexel palette choices and edge blends come from CPU mesh colors.
+// Geological structures below remain world-space 3D fields.
 
 fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
     let pad = material / 3u;
