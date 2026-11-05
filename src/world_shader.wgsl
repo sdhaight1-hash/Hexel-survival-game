@@ -225,14 +225,16 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
     let stage = pad % 4u;
     // Same local coordinates on A/B/C/D pads: meaningful visual comparison.
     let p = position - vec3<f32>(12.0 * f32(stage), 0.0, 0.0);
-    var gray = v57_granite(p);
+    var gray = 0.5;
     var dark = 0.31;
     var light = 0.64;
-    if rock == 1u {
+    if rock == 0u {
+        gray = v57_granite(p);
+    } else if rock == 1u {
         gray = v57_shale(p);
         dark = 0.25;
         light = 0.56;
-    } else if rock == 2u {
+    } else {
         gray = v57_basalt(p);
         dark = 0.17;
         light = 0.39;
