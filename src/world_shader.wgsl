@@ -81,57 +81,56 @@ fn v5_noise(p: vec3<f32>) -> f32 {
 // V5.5 per-hexel palette choices and edge blends come from CPU mesh colors.
 // Geological structures below remain world-space 3D fields.
 
-// V5.6: four close tones per assigned palette family, composed from two
-// related 3D signals. The same signals also create shallow relief.
-// The per-hexel seed changes the internal pattern while the V5.5 mesh
-// keeps the parent palette tint and 14cm solid-contact blending.
-struct RockMicro {
-    pigment: vec3<f32>,
+// V5.8: the four sibling colors within a hexel's assigned palette are
+// selected by the ROCK'S OWN geological masks. No independent color noise,
+// and no bump/height shading. v.color still owns the five per-rock palette
+// families and V5.5's narrow solid-to-solid boundary blending.
+fn v58_pigment(rock: u32, palette_id: u32, feature: vec2<f32>) -> vec3<f32> {
+    // These are relative color multipliers, not new absolute palettes.
+    // A deterministic family bias gently shifts each hexel's mineral tint.
+    let family = f32(palette_id) - 2.0;
+    let warm = family * 0.006;
+    var t0 = vec3<f32>(0.92, 0.97, 1.05); // darker/cool mineral
+    var t1 = vec3<f32>(1.07, 1.01, 0.94); // feldspar
+    var t2 = vec3<f32>(0.96, 1.02, 1.07); // quartz
+    var t3 = vec3<f32>(1.07, 1.04, 0.99); // light crystalline grain
+    if rock == 1u {
+        t0 = vec3<f32>(0.93, 0.96, 1.04); // dark lamina
+        t1 = vec3<f32>(1.05, 1.025, 0.985); // lighter lamina
+        t2 = vec3<f32>(0.98, 1.015, 1.04); // fine compressed layer
+        t3 = vec3<f32>(1.06, 1.035, 0.975); // exposed bedding
+    } else if rock == 2u {
+        t0 = vec3<f32>(0.91, 0.96, 1.02); // vesicle interior
+        t1 = vec3<f32>(0.985, 1.0, 1.01); // fine groundmass
+        t2 = vec3<f32>(1.035, 1.02, 0.975); // weathered grains
+        t3 = vec3<f32>(1.06, 1.04, 1.02); // raised lighter specks
+    }
+    let tint = vec3<f32>(warm, warm * 0.15, -warm);
+    // feature.x follows the main lithologic identity:
+    // granite mineral ID, shale bedding, basalt pore occupancy.
+    // feature.y follows subordinate grain / lamination structure.
+    let primary = smoothstep(0.18, 0.78, feature.x);
+    let secondary = smoothstep(0.30, 0.70, feature.y);
+    return mix(mix(t0, t1, primary), mix(t2, t3, primary), secondary)
+        + tint;
 }
-fn v56_micro(material: u32, seed: u32, position: vec3<f32>) -> RockMicro {
-    let rock = (material / 3u) / 4u;
-    let offset = vec3<f32>(
-        f32(seed & 1023u),
-        f32((seed >> 10u) & 1023u),
-        f32((seed >> 20u) & 1023u)
-    ) * 0.037;
-    var basis = position * 2.25 + offset;
-    if rock == 1u {
-        // Shale: compressed lamination, not isotropic granite speckles.
-        basis = position * vec3<f32>(2.4, 5.0, 2.3) + offset;
-    } else if rock == 2u {
-        // Basalt: dense volcanic groundmass with restrained breakup.
-        basis = position * 3.0 + offset;
-    }
-    let coarse = v5_noise(basis);
-    let small = v5_noise(basis * 2.1 + vec3<f32>(4.0, 7.0, 2.0));
-    let a = smoothstep(0.22, 0.78, coarse);
-    let b = smoothstep(0.28, 0.72, small);
-    var t0 = vec3<f32>(0.976, 0.981, 0.987);
-    var t1 = vec3<f32>(1.021, 0.992, 0.975);
-    var t2 = vec3<f32>(0.989, 1.014, 1.025);
-    var t3 = vec3<f32>(1.028, 1.018, 0.993);
-    if rock == 1u {
-        t0 = vec3<f32>(0.973, 0.979, 0.989);
-        t1 = vec3<f32>(1.016, 1.008, 0.989);
-        t2 = vec3<f32>(0.984, 1.002, 1.016);
-        t3 = vec3<f32>(1.027, 1.020, 1.011);
-    } else if rock == 2u {
-        t0 = vec3<f32>(0.972, 0.982, 0.986);
-        t1 = vec3<f32>(1.008, 1.004, 0.992);
-        t2 = vec3<f32>(0.992, 1.008, 1.014);
-        t3 = vec3<f32>(1.025, 1.017, 1.011);
-    }
-    var result: RockMicro;
-    result.pigment = mix(mix(t0, t1, a), mix(t2, t3, a), b);
-    return result;
+
+struct V57Substrate {
+    gray: f32,
+    main_feature: f32,
+    fine_feature: f32,
+}
+
+struct V58RockColor {
+    albedo: vec3<f32>,
+    features: vec2<f32>,
 }
 
 // V5.7: Grayscale identity first. These three *different* 3D structures
 // replace the old universal soft-mottled base. No normal perturbation.
 // This is procedural prototype art, not a claimed baked texture asset.
 // All samples use coherent gallery-local metres, independent of hexels.
-fn v57_granite(p: vec3<f32>) -> f32 {
+fn v57_granite(p: vec3<f32>) -> V57Substrate {
     // Interlocking coarse mineral grains. A 3D cellular partition
     // defines hard-ish grain domains; secondary within-grain speckle
     // reads as feldspar/quartz/mica instead of broad cloudy noise.
@@ -169,9 +168,9 @@ fn v57_granite(p: vec3<f32>) -> f32 {
     let micro = v5_noise(p * 15.0 + vec3<f32>(2.0, 17.0, 4.0));
     let grain = 0.45 + 0.33 * feldspar - 0.28 * mica
         + (micro - 0.5) * 0.20 - boundary * 0.075;
-    return clamp(grain, 0.0, 1.0);
+    return V57Substrate(clamp(grain, 0.0, 1.0), mineral_id, micro);
 }
-fn v57_shale(p: vec3<f32>) -> f32 {
+fn v57_shale(p: vec3<f32>) -> V57Substrate {
     // Laminated and interrupted sediment planes, with short secondary
     // cleavage. Unlike granite, the dominant feature is *direction*.
     let warp = v5_noise(p * 0.62 + vec3<f32>(7.0, 3.0, 12.0)) - 0.5;
@@ -183,10 +182,11 @@ fn v57_shale(p: vec3<f32>) -> f32 {
     let fine_lamination = smoothstep(0.42, 0.92, minor) * (0.35 + disruption * 0.65);
     let cleavage = smoothstep(0.57, 0.79,
         v5_noise(p * vec3<f32>(1.9, 7.0, 2.1) + vec3<f32>(3.0, 8.0, 6.0)));
-    return clamp(0.31 + strata * 0.38 + fine_lamination * 0.14
-        - cleavage * 0.14 + (disruption - 0.5) * 0.06, 0.0, 1.0);
+    return V57Substrate(clamp(0.31 + strata * 0.38 + fine_lamination * 0.14
+        - cleavage * 0.14 + (disruption - 0.5) * 0.06, 0.0, 1.0),
+        strata, fine_lamination);
 }
-fn v57_basalt(p: vec3<f32>) -> f32 {
+fn v57_basalt(p: vec3<f32>) -> V57Substrate {
     // Dense fine groundmass and genuinely dark sparse round-ish vesicles,
     // not shale stripes or granite's contrasting grain domains.
     let ground = v5_noise(p * 13.0 + vec3<f32>(7.0, 4.0, 2.0));
@@ -215,31 +215,32 @@ fn v57_basalt(p: vec3<f32>) -> f32 {
         }
     }
     let mottling = v5_noise(p * 2.2 + vec3<f32>(2.0, 6.0, 9.0));
-    return clamp(0.49 + (ground - 0.5) * 0.18
-        + (mottling - 0.5) * 0.11 - pore * 0.44, 0.0, 1.0);
+    return V57Substrate(clamp(0.49 + (ground - 0.5) * 0.18
+        + (mottling - 0.5) * 0.11 - pore * 0.44, 0.0, 1.0),
+        pore, ground);
 }
 
-fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
+fn v5_color(material: u32, position: vec3<f32>) -> V58RockColor {
     let pad = material / 3u;
     let rock = pad / 4u;
     let stage = pad % 4u;
     // Same local coordinates on A/B/C/D pads: meaningful visual comparison.
     let p = position - vec3<f32>(12.0 * f32(stage), 0.0, 0.0);
-    var gray = 0.5;
+    var substrate: V57Substrate;
     var dark = 0.31;
     var light = 0.64;
     if rock == 0u {
-        gray = v57_granite(p);
+        substrate = v57_granite(p);
     } else if rock == 1u {
-        gray = v57_shale(p);
+        substrate = v57_shale(p);
         dark = 0.25;
         light = 0.56;
     } else {
-        gray = v57_basalt(p);
+        substrate = v57_basalt(p);
         dark = 0.17;
         light = 0.39;
     }
-    var value = mix(dark, light, gray);
+    var value = mix(dark, light, substrate.gray);
     if stage >= 2u {
         // Original V5.3 structures remain separate from rock identity.
         if rock == 0u {
@@ -304,7 +305,7 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
             color = mix(color, vec3<f32>(0.29), oxidation);
         }
     }
-    return color;
+    return V58RockColor(color, vec2<f32>(substrate.main_feature, substrate.fine_feature));
 }
 
 @fragment fn fs_main(v: VertexOut) -> @location(0) vec4<f32> {
@@ -315,8 +316,13 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
     let scale = select(1.0, camera.options.y, checker);
     let albedo = textureSample(material_tiles, tile_sampler, v.uv * scale, i32(layer));
     var color = albedo.rgb;
-    if v5 && !checker {
-        color = select(v5_color(v.material, v.world_position), vec3<f32>(0.48), v.material == 69u);
+    var rock_features = vec2<f32>(0.5);
+    if v5 && !checker && v.material != 69u {
+        let rock_sample = v5_color(v.material, v.world_position);
+        color = rock_sample.albedo;
+        rock_features = rock_sample.features;
+    } else if v5 && !checker {
+        color = vec3<f32>(0.48);
     }
     // In V4 gallery mode, the UV checker is procedural: layer 11 is a rock,
     // not the legacy checker image. Magenta/green reveals UV discontinuities.
@@ -326,13 +332,13 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
         color = select(vec3<f32>(0.10, 0.65, 0.24), vec3<f32>(0.83, 0.12, 0.58), alternating);
     }
 
-    // V5.7 retains the V5.6 related-tone per-hexel pigment and the
-    // V5.5 edge fade. No bump height, derivatives or normal perturbation.
+    // V5.8 ties sibling tones directly to the already-evaluated rock
+    // structure: no extra procedural noise and no shader bump mapping.
+    // A stays an uncolored grayscale control; B/C/D use per-hexel palettes.
     if v5 && !checker && v.material != 69u && (v.material / 3u) % 4u != 0u {
-        let pad = v.material / 3u;
-        let p = v.world_position - vec3<f32>(12.0 * f32(pad % 4u), 0.0, 0.0);
-        let micro = v56_micro(v.material, v.pattern_seed, p);
-        color *= mix(vec3<f32>(1.0), micro.pigment,
+        let pigment = v58_pigment((v.material / 3u) / 4u,
+            v.palette_id, rock_features);
+        color *= mix(vec3<f32>(1.0), pigment,
             clamp(v.micro_mask, 0.0, 1.0));
     }
     let dx = dpdx(v.world_position);
