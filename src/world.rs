@@ -109,6 +109,8 @@ pub enum Block {
     Grass,
     Soil,
     Rock,
+    Shale,
+    Gravel,
 }
 
 impl Block {
