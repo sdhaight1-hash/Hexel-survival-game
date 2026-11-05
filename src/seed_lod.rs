@@ -14,7 +14,7 @@ use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
 
 /// Square grids use aligned boundaries: no spatial holes between bands.
 /// Outer edge lies beyond the 1000m far plane for an anchor within 32m.
-pub const BANDS: [(i32, i32, i32); 4] = [(1, 0, 64), (4, 64, 192), (8, 192, 448), (16, 448, 1152)];
+pub const BANDS: [(i32, i32, i32); 4] = [(1, 0, 64), (2, 64, 192), (4, 192, 448), (8, 448, 1152)];
 const ANCHOR_STEP: i32 = 32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -239,6 +239,25 @@ pub fn build_band(
             let b = points[r * width + q + 1];
             let c = points[(r + 1) * width + q];
             let d = points[(r + 1) * width + q + 1];
+            // A coarse diagonal can completely erase a ridge or valley
+            // whose peak falls between the corners. Compare against the
+            // exact deterministic surface at this square's centre.
+            // Refinement changes only internal triangles: shared grid edges
+            // remain identical, including between adjacent LOD cells.
+            if spacing >= 2 {
+                let mx = (a.x + d.x) * 0.5;
+                let mz = (a.z + d.z) * 0.5;
+                let actual = height(source, key.frame, mx, mz);
+                let flat = (a.y + b.y + c.y + d.y) * 0.25;
+                if (actual - flat).abs() > 1.5 {
+                    let m = Vec3::new(mx, actual, mz);
+                    emit_triangle(&mut out, a, c, m);
+                    emit_triangle(&mut out, c, d, m);
+                    emit_triangle(&mut out, d, b, m);
+                    emit_triangle(&mut out, b, a, m);
+                    continue;
+                }
+            }
             emit_triangle(&mut out, a, c, b);
             emit_triangle(&mut out, b, c, d);
         }
@@ -260,6 +279,11 @@ mod tests {
     }
 
     #[test]
+    fn band_resolution_never_coarser_than_eight_metres() {
+        assert!(BANDS.iter().all(|band| band.0 <= 8));
+    }
+
+    #[test]
     fn bands_have_expected_triangle_counts_and_are_finite() {
         let source = PeriodicTerrainCandidate::new(123);
         let key = Key {
@@ -271,7 +295,9 @@ mod tests {
             let vertices = build_band(source, key, spacing, inner, outer, next_spacing);
             let expected =
                 ((2 * outer / spacing).pow(2) - (2 * inner / spacing).pow(2)) as usize * 6;
-            assert_eq!(vertices.len(), expected);
+            assert!(vertices.len() >= expected);
+            assert!(vertices.len() <= expected * 2);
+            assert_eq!(vertices.len() % 3, 0);
             assert!(vertices
                 .iter()
                 .all(|v| v.position.iter().all(|c| c.is_finite())));
