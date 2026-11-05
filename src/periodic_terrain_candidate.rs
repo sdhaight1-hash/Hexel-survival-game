@@ -120,7 +120,8 @@ impl PeriodicTerrainCandidate {
         } else if pos.y >= i64::from(top - 3) {
             Block::Soil
         } else {
-            if (pos.q.div_euclid(96) ^ pos.r.div_euclid(96)).rem_euclid(4) <= 1 {
+            let canonical = Axial64::new(pos.q, pos.r).candidate_wrap();
+            if (canonical.q.div_euclid(96) ^ canonical.r.div_euclid(96)).rem_euclid(4) <= 1 {
                 Block::Rock
             } else {
                 Block::Shale
