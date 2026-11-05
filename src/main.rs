@@ -522,9 +522,6 @@ impl ApplicationHandler for Game {
                     let menu = self
                         .menu_open
                         .then(|| (renderer.menu_snapshot(self.frame_stats), self.menu_hover));
-                    let console = self
-                        .console_open
-                        .then(|| (self.console_log.lines(), self.console_log.generation()));
                     let torus_hud = self.world.torus_cell(self.player.feet.x, self.player.feet.z).map(|position| {
                         let f = self.player.forward();
                         let facing = if f.x.abs() > f.z.abs() {
@@ -546,6 +543,9 @@ impl ApplicationHandler for Game {
                     {
                         self.console_log.record(report);
                     }
+                    let console = self
+                        .console_open
+                        .then(|| (self.console_log.lines(), self.console_log.generation()));
                     match renderer.draw(&self.player, menu, console, torus_hud.as_deref()) {
                         Ok(timings) => {
                             self.frame_pacer.record_draw(Instant::now());
