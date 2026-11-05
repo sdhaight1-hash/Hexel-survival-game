@@ -243,7 +243,6 @@ impl World {
                 torus_frame: Some(frame),
                 stream_center: None,
                 horizontal_radius: STREAM_HORIZONTAL_RADIUS,
-            horizontal_radius: STREAM_HORIZONTAL_RADIUS,
             },
             position,
         )
