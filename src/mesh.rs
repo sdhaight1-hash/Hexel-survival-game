@@ -15,13 +15,13 @@ pub struct Vertex {
     pub uv: [f32; 2],
     pub material: u32,
     pub palette_id: u32,
-    pub pattern_seed: u32,
-    pub micro_mask: f32,
+    pub family_weights: [f32; 4],
+    pub family_weight_4: f32,
 }
 
 impl Vertex {
     const ATTRIBUTES: [wgpu::VertexAttribute; 7] =
-        wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3, 2 => Float32x2, 3 => Uint32, 4 => Uint32, 5 => Uint32, 6 => Float32];
+        wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3, 2 => Float32x2, 3 => Uint32, 4 => Uint32, 5 => Float32x4, 6 => Float32];
 
     pub fn layout() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
@@ -48,8 +48,8 @@ fn triangle(
             uv,
             material,
             palette_id: 0,
-            pattern_seed: 0,
-            micro_mask: 1.0,
+            family_weights: [0.0; 4],
+            family_weight_4: 0.0,
         });
     }
 }
@@ -77,8 +77,8 @@ pub fn torus_guides(frame: hexel_survival_game::torus_frame::TorusFrame) -> Vec<
                 uv: [v.x * 0.06, v.y * 0.06],
                 material: marker,
                 palette_id: 0,
-                pattern_seed: 0,
-                micro_mask: 1.0,
+                family_weights: [0.0; 4],
+                family_weight_4: 0.0,
             });
         }
     };
@@ -122,17 +122,16 @@ fn v55_triangle(
     material: u32,
 ) {
     let palette_id = rock_palette_edges::raw_id(world, cell);
-    let pattern_seed = rock_palette_edges::pattern_seed(world, cell);
     for (position, uv) in points {
-        let (color, micro_mask) = rock_palette_edges::tint_and_pattern_weight_at(world, cell, position);
+        let family = rock_palette_edges::family_weights_at(world, cell, position);
         out.push(Vertex {
             position: position.to_array(),
-            color,
+            color: [1.0; 3],
             uv,
             material,
             palette_id,
-            pattern_seed,
-            micro_mask,
+            family_weights: [family[0], family[1], family[2], family[3]],
+            family_weight_4: family[4],
         });
     }
 }
