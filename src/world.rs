@@ -278,6 +278,7 @@ impl World {
         let frame = self.torus_frame.as_mut()?;
         let shift = frame.rebase_if_needed(&mut feet.x, &mut feet.z)?;
         self.chunks.clear();
+        self.surface_bounds.clear();
         self.stream_center = None;
         Some(shift)
     }
@@ -552,6 +553,28 @@ fn demo_surface(seed: u32, q: i32, r: i32) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mountain_surface_residency_includes_high_and_low_columns() {
+        let (mut world, _) = World::torus(42, Axial64::new(432_776, 1_182_375));
+        world.set_surface_following(true);
+        let q = 0;
+        let r = 0;
+        let (bottom, top) = world.surface_section_bounds(q, r);
+        assert!(top >= bottom);
+        let source = world.periodic.expect("torus terrain");
+        let frame = world.torus_frame.expect("torus frame");
+        for dr in 0..CHUNK_SIDE {
+            for dq in 0..CHUNK_SIDE {
+                let local = CellPos::new(dq, dr, 0);
+                let global = frame.cell(local).canonical;
+                let section = source.surface_y(global).div_euclid(CHUNK_SIDE);
+                assert!((bottom..=top).contains(&section));
+            }
+        }
+        world.set_surface_following(false);
+        assert!(world.surface_bounds.is_empty());
+    }
 
     #[test]
     fn chunk_holds_exactly_4096_cells() {
