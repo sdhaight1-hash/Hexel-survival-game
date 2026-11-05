@@ -235,7 +235,11 @@ mod tests {
                 highest = highest.max(y);
             }
         }
-        assert!(highest - lowest >= 120, "mountain belt too flat: {}m", highest - lowest);
+        assert!(
+            highest - lowest >= 120,
+            "mountain belt too flat: {}m",
+            highest - lowest
+        );
         assert!(highest > 320, "no substantial highland peak: {highest}m");
     }
 
