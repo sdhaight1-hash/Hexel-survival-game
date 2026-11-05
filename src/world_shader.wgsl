@@ -59,6 +59,13 @@ fn patch_noise(p: vec2<f32>) -> f32 {
     let scale = select(1.0, camera.options.y, checker);
     let albedo = textureSample(material_tiles, tile_sampler, v.uv * scale, i32(layer));
     var color = albedo.rgb;
+    // In V4 gallery mode, the UV checker is procedural: layer 11 is a rock,
+    // not the legacy checker image. Magenta/green reveals UV discontinuities.
+    if (checker && camera.options.w > 0.5) {
+        let grid = floor(v.uv * 8.0 * camera.options.y);
+        let alternating = (i32(grid.x) + i32(grid.y)) % 2 == 0;
+        color = select(vec3<f32>(0.10, 0.65, 0.24), vec3<f32>(0.83, 0.12, 0.58), alternating);
+    }
 
     // Derivatives are calculated unconditionally for uniformity in WGSL.
     let dx = dpdx(v.world_position);
