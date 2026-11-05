@@ -350,7 +350,10 @@ mod tests {
         let source = PeriodicTerrainCandidate::new(42);
         let center = Axial64::new(432_776, 1_182_375);
         let survey = source.survey_region(center, 512, 32);
-        assert!(survey.materials[4] > 0, "expected some bare soil among sampled ground");
+        assert!(
+            survey.materials[4] > 0,
+            "expected some bare soil among sampled ground"
+        );
         assert!(survey.materials[0] > 0, "expected some vegetated ground");
         assert_eq!(
             survey,
