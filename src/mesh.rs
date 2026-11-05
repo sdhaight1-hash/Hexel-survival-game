@@ -1,7 +1,7 @@
 //! Mesh hexagonal-prism caps and sides with per-face physically scaled material UVs.
 //! This derived geometry does not own world/material resource state.
 
-use crate::materials_p0;
+use crate::{materials_p0, rock_palette_edges};
 use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
 use hexel_survival_game::material_contract::HexFace;
@@ -14,11 +14,12 @@ pub struct Vertex {
     pub color: [f32; 3],
     pub uv: [f32; 2],
     pub material: u32,
+    pub palette_id: u32,
 }
 
 impl Vertex {
-    const ATTRIBUTES: [wgpu::VertexAttribute; 4] =
-        wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3, 2 => Float32x2, 3 => Uint32];
+    const ATTRIBUTES: [wgpu::VertexAttribute; 5] =
+        wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3, 2 => Float32x2, 3 => Uint32, 4 => Uint32];
 
     pub fn layout() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
@@ -44,6 +45,7 @@ fn triangle(
             color,
             uv,
             material,
+            palette_id: 0,
         });
     }
 }
@@ -70,6 +72,7 @@ pub fn torus_guides(frame: hexel_survival_game::torus_frame::TorusFrame) -> Vec<
                 color: tint,
                 uv: [v.x * 0.06, v.y * 0.06],
                 material: marker,
+                palette_id: 0,
             });
         }
     };
@@ -100,6 +103,88 @@ pub fn torus_guides(frame: hexel_survival_game::torus_frame::TorusFrame) -> Vec<
         );
     }
     out
+}
+
+
+// V5.5 only: extra geometry is confined to a ~14cm boundary strip.
+// Original world meshes and UVs remain untouched.
+fn v55_triangle(
+    out: &mut Vec<Vertex>,
+    world: &World,
+    cell: CellPos,
+    points: [(Vec3, [f32; 2]); 3],
+    material: u32,
+) {
+    let palette_id = rock_palette_edges::raw_id(world, cell);
+    for (position, uv) in points {
+        out.push(Vertex {
+            position: position.to_array(),
+            color: rock_palette_edges::tint_at(world, cell, position),
+            uv,
+            material,
+            palette_id,
+        });
+    }
+}
+
+fn v55_cap(
+    out: &mut Vec<Vertex>, world: &World, cell: CellPos,
+    center: Vec3, ring: &[Vec3; 6], y: f32, material: u32, upper: bool,
+) {
+    let middle = Vec3::new(center.x, y, center.z);
+    // The interior ring lies outside the blend strip: the cap's center
+    // visibly retains its own palette. Rim samples carry neighbor weights.
+    let inner: [Vec3; 6] = std::array::from_fn(|i| {
+        Vec3::new(center.x + (ring[i].x - center.x) * 0.70,
+                  y, center.z + (ring[i].z - center.z) * 0.70)
+    });
+    for i in 0..6 {
+        let j = (i + 1) % 6;
+        let a = Vec3::new(ring[i].x, y, ring[i].z);
+        let b = Vec3::new(ring[j].x, y, ring[j].z);
+        let i0 = inner[i];
+        let i1 = inner[j];
+        let tris = if upper {
+            [[middle, i0, i1], [i0, a, b], [i0, b, i1]]
+        } else {
+            [[middle, i1, i0], [i0, b, a], [i0, i1, b]]
+        };
+        for tri in tris {
+            v55_triangle(out, world, cell,
+                [(tri[0], cap_uv(tri[0])), (tri[1], cap_uv(tri[1])),
+                 (tri[2], cap_uv(tri[2]))], material);
+        }
+    }
+}
+
+fn v55_side(
+    out: &mut Vec<Vertex>, world: &World, cell: CellPos,
+    a: Vec3, b: Vec3, bottom: f32, top: f32,
+    material: u32, u0: f32, u1: f32,
+    bottom_v: f32, top_v: f32,
+) {
+    // The side is 0.577m wide x 1m high. Interior vertices ~14cm
+    // from either lateral/vertical boundary retain own-cell palette.
+    let along = [0.0_f32, 0.25, 0.75, 1.0];
+    let up = [0.0_f32, 0.15, 0.85, 1.0];
+    let vertex = |i: usize, j: usize| {
+        let t = along[i];
+        let h = up[j];
+        let pos = Vec3::new(a.x + (b.x - a.x) * t,
+            bottom + (top - bottom) * h, a.z + (b.z - a.z) * t);
+        let uv = [u0 + (u1 - u0) * t, bottom_v + (top_v - bottom_v) * h];
+        (pos, uv)
+    };
+    for j in 0..3 {
+        for i in 0..3 {
+            let p00 = vertex(i, j);
+            let p10 = vertex(i + 1, j);
+            let p11 = vertex(i + 1, j + 1);
+            let p01 = vertex(i, j + 1);
+            v55_triangle(out, world, cell, [p00, p10, p11], material);
+            v55_triangle(out, world, cell, [p00, p11, p01], material);
+        }
+    }
 }
 
 pub fn build_chunk_mesh(world: &World, chunk: ChunkPos) -> Vec<Vertex> {
@@ -158,6 +243,11 @@ pub fn build_chunk_mesh_relative(
                     .get(CellPos::new(cell.q, cell.r, cell.y + 1))
                     .is_solid()
                 {
+                    if world.is_rock_v5() {
+                        let material = world.gallery_rock_index(cell)
+                            .map(|i| i * 3).unwrap_or(69);
+                        v55_cap(&mut vertices, world, cell, center, &ring, top, material, true);
+                    } else {
                     let cap = Vec3::new(center.x, top, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -170,11 +260,17 @@ pub fn build_chunk_mesh_relative(
                             [1.0, 1.0, 1.0],
                         );
                     }
+                    }
                 }
                 if !world
                     .get(CellPos::new(cell.q, cell.r, cell.y - 1))
                     .is_solid()
                 {
+                    if world.is_rock_v5() {
+                        let material = world.gallery_rock_index(cell)
+                            .map(|i| i * 3 + 2).unwrap_or(69);
+                        v55_cap(&mut vertices, world, cell, center, &ring, bottom, material, false);
+                    } else {
                     let cap = Vec3::new(center.x, bottom, center.z);
                     for i in 0..6 {
                         let j = (i + 1) % 6;
@@ -186,6 +282,7 @@ pub fn build_chunk_mesh_relative(
                             world.gallery_rock_index(cell).map(|i| i * 3 + 2).unwrap_or_else(|| if world.is_rock_gallery() { 69 } else { materials_p0::for_face(block, cell, HexFace::Bottom) as u32 }),
                             [0.77, 0.77, 0.77],
                         );
+                    }
                     }
                 }
                 for (side, &(dq, dr)) in SIDE_NEIGHBORS.iter().enumerate() {
@@ -213,6 +310,10 @@ pub fn build_chunk_mesh_relative(
                     let half_texel = 0.5 / materials_p0::TEXTURE_SIZE as f32;
                     let top_v = half_texel;
                     let bottom_v = 1.0 - half_texel;
+                    if world.is_rock_v5() {
+                        v55_side(&mut vertices, world, cell, a, b, bottom, top,
+                            material, u0, u1, bottom_v, top_v);
+                    } else {
                     triangle(
                         &mut vertices,
                         [(a, [u0, bottom_v]), (b, [u1, bottom_v]), (c, [u1, top_v])],
@@ -225,6 +326,7 @@ pub fn build_chunk_mesh_relative(
                         material,
                         tint,
                     );
+                    }
                 }
             }
         }
