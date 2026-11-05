@@ -241,8 +241,11 @@ mod tests {
     fn render_benchmark_is_opt_in_and_requires_periodic_world() {
         assert!(PresentationOptions::parse(["--render-benchmark".to_string()]).is_err());
         let (_, settings) = PresentationOptions::parse(
-            ["--torus-test-ne", "--render-benchmark"].into_iter().map(str::to_owned)
-        ).unwrap();
+            ["--torus-test-ne", "--render-benchmark"]
+                .into_iter()
+                .map(str::to_owned),
+        )
+        .unwrap();
         assert!(settings.render_benchmark);
         assert_eq!(settings.torus_spawn, Some((432_776, 1_182_375)));
         assert!(!PresentationOptions::default().render_benchmark);
