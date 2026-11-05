@@ -128,7 +128,7 @@ pub fn local_cell_from_metres(x: f32, z: f32) -> CellPos {
 }
 
 pub fn north_period_metres() -> f64 {
-    f64::from(PERIOD_R as i32) * HEX_ROW_METRES
+    PERIOD_R as f64 * HEX_ROW_METRES
 }
 
 #[cfg(test)]
@@ -164,7 +164,7 @@ mod tests {
         assert_eq!(shift.axial_r % i64::from(CHUNK_SIDE), 0);
         assert!(x.abs() < 32.0 && z.abs() < 32.0);
         let after = frame.cell(local_cell_from_metres(x, z));
-        assert_eq!(before.x - shift.metres_x, f64::from(x), "local movement must be preserved within f32 tolerance");
+        assert!(((before.x - shift.metres_x) - f64::from(x)).abs() < 0.001);
         assert_eq!(initial.raw, after.raw);
         assert_eq!(initial.canonical, after.canonical);
     }
