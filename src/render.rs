@@ -34,6 +34,7 @@ struct CameraUniform {
     surface: [f32; 4],
     lod_near: [f32; 4],
     lod_covered: [[f32; 4]; 128],
+    sky: [f32; 4],
 }
 
 #[repr(C)]
@@ -85,6 +86,7 @@ pub struct Renderer {
     presentation_report: String,
     pipeline: wgpu::RenderPipeline,
     lod_pipeline: wgpu::RenderPipeline,
+    sky_pipeline: wgpu::RenderPipeline,
     lod_near: [f32; 4],
     lod_covered: [[f32; 4]; 128],
     sun_started: Instant,
@@ -220,6 +222,7 @@ impl Renderer {
                 surface: [0.0, 0.0, 0.0, 1.0],
                 lod_near: [0.0, 0.0, 0.0, 0.0],
                 lod_covered: [[0.0; 4]; 128],
+                sky: [0.0; 4],
             }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
@@ -502,6 +505,46 @@ impl Renderer {
             cache: None,
         });
 
+        let sky_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Terrain day/night sky"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("sky_shader.wgsl").into()),
+        });
+        let sky_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Sky and visible diagnostic sun"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState {
+                module: &sky_shader,
+                entry_point: Some("vs_main"),
+                buffers: &[],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: Some("fs_main"),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                cull_mode: None,
+                ..Default::default()
+            },
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth24Plus,
+                depth_write_enabled: false,
+                depth_compare: wgpu::CompareFunction::Always,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            multisample: wgpu::MultisampleState::default(),
+            multiview: None,
+            cache: None,
+        });
+
         let lod_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Seed terrain LOD with near-footprint mask"),
             layout: Some(&layout),
@@ -698,6 +741,7 @@ impl Renderer {
             presentation_report,
             pipeline,
             lod_pipeline,
+            sky_pipeline,
             lod_near: [0.0, 0.0, world.horizontal_radius() as f32, 0.0],
             lod_covered: [[0.0; 4]; 128],
             sun_started: Instant::now(),
@@ -1091,6 +1135,13 @@ impl Renderer {
             },
         ) * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
         let conditions = self.surface_preset.conditions();
+        let phase = (self.sun_started.elapsed().as_secs_f32() / 180.0)
+            * std::f32::consts::TAU
+            + std::f32::consts::FRAC_PI_3;
+        let sun_dir = Vec3::new(phase.cos() * 0.75, phase.sin(), 0.35).normalize();
+        let sunlight = ((sun_dir.y + 0.08) / 0.42).clamp(0.0, 1.0);
+        let sun_screen = view_proj.project_point3(eye + sun_dir * 400.0);
+        let sun_visible = sun_dir.dot(player.forward()) > 0.0 && sun_dir.y > -0.04;
         self.queue.write_buffer(
             &self.camera_buffer,
             0,
@@ -1110,8 +1161,7 @@ impl Renderer {
                     eye.x,
                     eye.y,
                     eye.z,
-                    (self.sun_started.elapsed().as_secs_f32() / 180.0) * std::f32::consts::TAU
-                        + std::f32::consts::FRAC_PI_3,
+                    phase,
                 ],
                 surface: [
                     conditions.wetness,
@@ -1121,6 +1171,12 @@ impl Renderer {
                 ],
                 lod_near: self.lod_near,
                 lod_covered: self.lod_covered,
+                sky: [
+                    sun_screen.x,
+                    sun_screen.y,
+                    sunlight,
+                    if sun_visible { 1.0 } else { 0.0 },
+                ],
             }),
         );
         let acquire_start = Instant::now();
@@ -1161,8 +1217,10 @@ impl Renderer {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
-            pass.set_pipeline(&self.pipeline);
+            pass.set_pipeline(&self.sky_pipeline);
             pass.set_bind_group(0, &self.camera_bind_group, &[]);
+            pass.draw(0..3, 0..1);
+            pass.set_pipeline(&self.pipeline);
             let material_group = if self.v2_preview_enabled {
                 self.v2_materials
                     .as_ref()
