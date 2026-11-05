@@ -33,12 +33,12 @@ pub struct ColumnProfile {
 }
 
 /// Seed-derived local terrain diagnostics. Material slots are
-/// Grass, Rock, Shale, Gravel (surface only).
+/// Grass, Rock, Shale, Gravel, Bare Soil (surface only).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TerrainSurvey {
     pub min_height: i32,
     pub max_height: i32,
-    pub materials: [u32; 4],
+    pub materials: [u32; 5],
 }
 
 impl ColumnProfile {
@@ -149,10 +149,25 @@ impl PeriodicTerrainCandidate {
             } else {
                 Block::Rock
             }
-        } else if top >= 265 && geology < 0.36 {
-            Block::Gravel
         } else {
-            Block::Grass
+            // Grass is a covering, not the identity of all exposed ground.
+            // A slow regional field controls moisture; finer periodic patches
+            // create connected bare earth, dry/sparse cover, and stony soil.
+            // All coordinates use the canonical torus raster, so unloaded
+            // cells and distant geometry agree with resident sections.
+            let (x, z) = Self::raster_coords(pos);
+            let moisture = self.periodic_noise_at(x, z, 4096, 0xE2A0_0021);
+            let patch = self.periodic_noise_at(x, z, 32768, 0xE2A0_0022);
+            let detail = self.periodic_noise_at(x, z, 65536, 0xE2A0_0023);
+            let cover = moisture * 0.48 + patch * 0.40 + detail * 0.12;
+            let thin_soil = geology < 0.39 || (top >= 265 && geology < 0.46);
+            if thin_soil && cover < 0.48 {
+                Block::Gravel
+            } else if cover < 0.46 {
+                Block::Soil
+            } else {
+                Block::Grass
+            }
         }
     }
 
@@ -171,7 +186,7 @@ impl PeriodicTerrainCandidate {
         let mut result = TerrainSurvey {
             min_height: i32::MAX,
             max_height: i32::MIN,
-            materials: [0; 4],
+            materials: [0; 5],
         };
         let mut dr = -radius;
         while dr <= radius {
@@ -186,7 +201,8 @@ impl PeriodicTerrainCandidate {
                     Block::Rock => 1,
                     Block::Shale => 2,
                     Block::Gravel => 3,
-                    Block::Air | Block::Soil => unreachable!("surface must be solid"),
+                    Block::Soil => 4,
+                    Block::Air => unreachable!("surface must be solid"),
                 };
                 result.materials[slot] += 1;
                 dq += step;
@@ -327,6 +343,19 @@ mod tests {
             p.q + east * PERIOD_Q + north * R_PERIOD_Q_OFFSET,
             p.r + north * PERIOD_R,
         )
+    }
+
+    #[test]
+    fn surface_cover_includes_natural_bare_soil_patches() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let center = Axial64::new(432_776, 1_182_375);
+        let survey = source.survey_region(center, 512, 32);
+        assert!(survey.materials[4] > 0, "expected some bare soil among sampled ground");
+        assert!(survey.materials[0] > 0, "expected some vegetated ground");
+        assert_eq!(
+            survey,
+            source.survey_region(Axial64::new(center.q + PERIOD_Q, center.r), 512, 32)
+        );
     }
 
     #[test]
