@@ -28,10 +28,36 @@ impl PeriodicTerrainCandidate {
     }
 
     pub fn surface_y(&self, pos: Axial64) -> i32 {
-        let sample = CandidateProjection::raster_sample(pos);
-        let regional = self.periodic_noise(sample.x, sample.z, 64, 0xB1A0_0001);
-        let local = self.periodic_noise(sample.x, sample.z, 256, 0xB1A0_0002);
-        220 + ((regional - 0.5) * 48.0 + (local - 0.5) * 12.0).round() as i32
+        // Continuous periodic raster coordinates, not a floor-snapped 31m
+        // sample: adjacent 1m hexels must not inherit 31m elevation steps.
+        let canonical = pos.candidate_wrap();
+        let axis = f64::from(crate::geography::ELEVATION_SAMPLES_PER_AXIS);
+        let x = ((canonical.q as f64 + canonical.r as f64 * 0.5)
+            / crate::hex_torus_candidate::PERIOD_Q as f64
+            * axis)
+            .rem_euclid(axis);
+        let z = (canonical.r as f64 / crate::hex_torus_candidate::PERIOD_R as f64
+            * axis)
+            .rem_euclid(axis);
+
+        // Broad plains are maintained by a regional relief mask rather than
+        // applying equally strong bumps everywhere. All layers tile exactly
+        // on the torus and are seed-deterministic.
+        let plains = self.periodic_noise_at(x, z, 128, 0xD1A0_0001);
+        let relief = smoothstep(0.30, 0.78, plains);
+        let amplitude = 0.20 + 0.80 * relief;
+        let continent = self.periodic_noise_at(x, z, 32, 0xD1A0_0002);
+        let regional = self.periodic_noise_at(x, z, 256, 0xD1A0_0003);
+        let hills = self.periodic_noise_at(x, z, 1024, 0xD1A0_0004);
+        let slopes = self.periodic_noise_at(x, z, 2048, 0xD1A0_0005);
+        let fine = self.periodic_noise_at(x, z, 4096, 0xD1A0_0006);
+        (220.0
+            + (continent - 0.5) * 180.0
+            + (regional - 0.5) * 85.0
+            + (hills - 0.5) * 105.0 * amplitude
+            + (slopes - 0.5) * 28.0 * amplitude
+            + (fine - 0.5) * 7.0 * amplitude)
+            .round() as i32
     }
 
     /// Unloaded cells are derived from the same periodic surface, not air.
@@ -96,6 +122,24 @@ impl PeriodicTerrainCandidate {
         Ok(heights)
     }
 
+    fn periodic_noise_at(&self, x: f64, z: f64, grid_side: u32, domain: u64) -> f64 {
+        let span = f64::from(crate::geography::ELEVATION_SAMPLES_PER_AXIS)
+            / f64::from(grid_side);
+        let gx = (x / span).floor() as u32 % grid_side;
+        let gz = (z / span).floor() as u32 % grid_side;
+        let tx = (x / span).fract();
+        let tz = (z / span).fract();
+        let u = tx * tx * (3.0 - 2.0 * tx);
+        let v = tz * tz * (3.0 - 2.0 * tz);
+        let x1 = (gx + 1) % grid_side;
+        let z1 = (gz + 1) % grid_side;
+        lerp(
+            lerp(self.lattice(gx, gz, domain), self.lattice(x1, gz, domain), u),
+            lerp(self.lattice(gx, z1, domain), self.lattice(x1, z1, domain), u),
+            v,
+        )
+    }
+
     fn periodic_noise(&self, x: u32, z: u32, grid_side: u32, domain: u64) -> f64 {
         // Both selected grids divide 32,768 exactly. Interpolate across the
         // last lattice square into cell zero instead of clamping the edge.
@@ -132,6 +176,11 @@ impl PeriodicTerrainCandidate {
         bits ^= bits >> 31;
         (bits >> 11) as f64 / (1_u64 << 53) as f64
     }
+}
+
+fn smoothstep(low: f64, high: f64, value: f64) -> f64 {
+    let t = ((value - low) / (high - low)).clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
 }
 
 fn lerp(a: f64, b: f64, t: f64) -> f64 {
