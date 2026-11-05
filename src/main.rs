@@ -121,7 +121,9 @@ impl Game {
         }
         let now = Instant::now();
         let previous_torus = world.torus_cell(player.feet.x, player.feet.z);
-        let distance_benchmark = presentation.render_benchmark.then(|| RenderDistanceBenchmark::new(now));
+        let distance_benchmark = presentation
+            .render_benchmark
+            .then(|| RenderDistanceBenchmark::new(now));
         let mut console_log = ConsoleLog::new();
         if let Some(benchmark) = distance_benchmark.as_ref() {
             console_log.record(benchmark.introduction());
@@ -587,7 +589,10 @@ impl ApplicationHandler for Game {
         }
         self.last_frame = now;
         if let Some(benchmark) = self.distance_benchmark.as_mut() {
-            let (meshes, vertices) = self.renderer.as_ref().map_or((0, 0), Renderer::terrain_counts);
+            let (meshes, vertices) = self
+                .renderer
+                .as_ref()
+                .map_or((0, 0), Renderer::terrain_counts);
             for message in benchmark.advance(now, self.world.chunk_count(), meshes, vertices) {
                 self.console_log.record(message);
             }
@@ -659,9 +664,15 @@ impl ApplicationHandler for Game {
             }
             if let Some(benchmark) = self.distance_benchmark.as_mut() {
                 benchmark.record_tick(
-                    now, f64::from(dt) * 1000.0, is_moving, delta.pending,
-                    delta.added.len(), delta.generation_cpu_ms, benchmark_mesh_ms,
-                    benchmark_uploaded_bytes, travelled_m,
+                    now,
+                    f64::from(dt) * 1000.0,
+                    is_moving,
+                    delta.pending,
+                    delta.added.len(),
+                    delta.generation_cpu_ms,
+                    benchmark_mesh_ms,
+                    benchmark_uploaded_bytes,
+                    travelled_m,
                 );
             }
             if now.duration_since(self.last_stream_report).as_secs_f64() >= 3.0 {
