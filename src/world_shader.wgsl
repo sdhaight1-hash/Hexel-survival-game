@@ -14,6 +14,9 @@ struct Camera {
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var material_tiles: texture_2d_array<f32>;
 @group(1) @binding(1) var tile_sampler: sampler;
+@group(2) @binding(0) var shadow_depth: texture_depth_2d;
+@group(2) @binding(1) var shadow_compare: sampler_comparison;
+@group(2) @binding(2) var<uniform> sun_view_proj: mat4x4<f32>;
 
 struct VertexIn {
     @location(0) position: vec3<f32>,
@@ -151,7 +154,22 @@ fn shade(v: VertexOut) -> vec4<f32> {
     let sun_factor = max(dot(normal, sun_direction), 0.0);
     let ambient = 0.34 + 0.18 * daylight;
     let direct = 0.70 * daylight * sun_factor;
-    let lit = ambient + direct;
+    var lit = ambient + direct;
+    if camera.options.w > 0.5 && daylight > 0.01 {
+        // Real cast shadows for the bounded near cascade. Shadow texture is
+        // rendered from the directional sun each frame. Distant terrain
+        // outside this cascade retains diffuse lighting.
+        let light_clip = sun_view_proj * vec4<f32>(v.world_position + normal * 0.04, 1.0);
+        let light_ndc = light_clip.xyz / light_clip.w;
+        if abs(light_ndc.x) < 1.0 && abs(light_ndc.y) < 1.0
+            && light_ndc.z > 0.0 && light_ndc.z < 1.0 {
+            let uv = vec2<f32>(light_ndc.x * 0.5 + 0.5, 0.5 - light_ndc.y * 0.5);
+            let visible = textureSampleCompareLevel(
+                shadow_depth, shadow_compare, uv, light_ndc.z - 0.0015
+            );
+            lit = ambient + direct * visible;
+        }
+    }
     return vec4<f32>(clamp(color * v.color * lit, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }
 
