@@ -167,13 +167,26 @@ fn vertex(position: Vec3, material: Material, tint: [f32; 3]) -> Vertex {
 }
 
 fn emit_triangle(out: &mut Vec<Vertex>, a: Vec3, b: Vec3, c: Vec3) {
-    let rise = (a.y - b.y).abs().max((a.y - c.y).abs()).max((b.y - c.y).abs());
-    let run = (a.x - b.x).abs().max((a.z - b.z).abs())
+    let rise = (a.y - b.y)
+        .abs()
+        .max((a.y - c.y).abs())
+        .max((b.y - c.y).abs());
+    let run = (a.x - b.x)
+        .abs()
+        .max((a.z - b.z).abs())
         .max((a.x - c.x).abs().max((a.z - c.z).abs()))
         .max(1.0);
     let rocky = (a.y + b.y + c.y) / 3.0 >= 271.0 || rise / run > 0.55;
-    let material = if rocky { Material::Granite } else { Material::SoilTopFull };
-    let tint = if rocky { [0.90, 0.89, 0.86] } else { [0.88, 0.94, 0.84] };
+    let material = if rocky {
+        Material::Granite
+    } else {
+        Material::SoilTopFull
+    };
+    let tint = if rocky {
+        [0.90, 0.89, 0.86]
+    } else {
+        [0.88, 0.94, 0.84]
+    };
     out.extend([
         vertex(a, material, tint),
         vertex(b, material, tint),
