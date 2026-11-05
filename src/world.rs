@@ -384,7 +384,7 @@ impl World {
             return None;
         }
         let index = cell.q / 12;
-        (index < if self.rock_v5 { 12 } else { 23 } && cell.q % 12 < 10).then_some(index as u32)
+        (index < (if self.rock_v5 { 12 } else { 23 }) && cell.q % 12 < 10).then_some(index as u32)
     }
 
     pub fn chunk_positions(&self) -> impl Iterator<Item = ChunkPos> + '_ {
@@ -557,6 +557,23 @@ fn demo_surface(seed: u32, q: i32, r: i32) -> i32 {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn v5_gallery_is_twelve_isolated_pads_without_materials_on_walkway() {
+        let world = World::rock_v5_gallery();
+        assert!(world.is_rock_v5());
+        for i in 0..12 {
+            let q = i * 12;
+            assert_eq!(world.gallery_rock_index(CellPos::new(q, 0, 0)), Some(i as u32));
+            assert_eq!(world.gallery_rock_index(CellPos::new(q + 9, 9, 2)), Some(i as u32));
+            assert_eq!(world.get(CellPos::new(q + 9, 9, 2)), Block::Rock);
+            assert_eq!(world.get(CellPos::new(q + 10, 5, 2)), Block::Air);
+        }
+        assert_eq!(world.gallery_rock_index(CellPos::new(12 * 12, 5, 2)), None);
+        assert_eq!(world.get(CellPos::new(5, 13, 0)), Block::Soil);
+        assert_eq!(world.gallery_rock_index(CellPos::new(5, 13, 0)), None);
+        assert!(!World::rock_gallery().is_rock_v5());
+    }
+
     #[test]
     fn rock_gallery_pads_have_correct_width_height_and_gaps() {
         let world = World::rock_gallery();
