@@ -256,6 +256,10 @@ impl Game {
             ));
             return;
         }
+        if self.presentation.rock_gallery && matches!(action, MenuAction::V2Materials | MenuAction::SurfacePreset | MenuAction::MetalGlints) {
+            self.console_log.record("V4 rock gallery: F8/F9/F10 disabled for unbiased texture review");
+            return;
+        }
         let Some(renderer) = self.renderer.as_mut() else {
             return;
         };
