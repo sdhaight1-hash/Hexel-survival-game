@@ -137,7 +137,7 @@ impl Game {
                 .canonical;
             let survey = source.survey_region(center, 512, 64);
             let message = format!(
-                "TERRAIN V4: 1024m regional survey height {}..{} ({}m relief) | grass {} granite {} shale {} gravel {} | seed 42",
+                "TERRAIN V4: 1024m regional survey height {}..{} ({}m relief) | grass {} granite {} shale {} gravel {} bare soil {} | seed 42",
                 survey.min_height,
                 survey.max_height,
                 survey.max_height - survey.min_height,
@@ -145,6 +145,7 @@ impl Game {
                 survey.materials[1],
                 survey.materials[2],
                 survey.materials[3],
+                survey.materials[4],
             );
             println!("{message}");
             console_log.record(message);
