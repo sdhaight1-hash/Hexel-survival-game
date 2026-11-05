@@ -38,14 +38,25 @@ impl PresentationOptions {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--streamed-world" => streamed = true,
-                "--torus-test-ne" => { streamed = true; torus_mode = true; },
+                "--torus-test-ne" => {
+                    streamed = true;
+                    torus_mode = true;
+                }
                 "--torus-spawn-q" => {
                     let value = args.next().ok_or("--torus-spawn-q needs i64")?;
-                    torus_q = Some(value.parse::<i64>().map_err(|_| "Invalid --torus-spawn-q".to_string())?);
+                    torus_q = Some(
+                        value
+                            .parse::<i64>()
+                            .map_err(|_| "Invalid --torus-spawn-q".to_string())?,
+                    );
                 }
                 "--torus-spawn-r" => {
                     let value = args.next().ok_or("--torus-spawn-r needs i64")?;
-                    torus_r = Some(value.parse::<i64>().map_err(|_| "Invalid --torus-spawn-r".to_string())?);
+                    torus_r = Some(
+                        value
+                            .parse::<i64>()
+                            .map_err(|_| "Invalid --torus-spawn-r".to_string())?,
+                    );
                 }
                 "--spawn-q" => {
                     let value = args.next().ok_or("--spawn-q needs a signed integer")?;
@@ -128,7 +139,11 @@ impl PresentationOptions {
             }
             options.torus_spawn = match (torus_q, torus_r) {
                 (None, None) => Some((432_776, 1_182_375)),
-                (Some(q), Some(r)) if q.abs() < 9_000_000_000_000_i64 && r.abs() < 9_000_000_000_000_i64 => Some((q, r)),
+                (Some(q), Some(r))
+                    if q.abs() < 9_000_000_000_000_i64 && r.abs() < 9_000_000_000_000_i64 =>
+                {
+                    Some((q, r))
+                }
                 (Some(_), Some(_)) => return Err("Torus spawn is outside supported range".into()),
                 _ => return Err("Both --torus-spawn-q and --torus-spawn-r are required".into()),
             };
@@ -216,11 +231,19 @@ mod tests {
 
     #[test]
     fn arbitrary_global_torus_spawn_is_opt_in_and_paired() {
-        let parse = |args: &[&str]| PresentationOptions::parse(args.iter().map(|s| (*s).to_owned()));
+        let parse =
+            |args: &[&str]| PresentationOptions::parse(args.iter().map(|s| (*s).to_owned()));
         let (streamed, ne) = parse(&["--torus-test-ne"]).unwrap();
         assert!(streamed);
         assert_eq!(ne.torus_spawn, Some((432_776, 1_182_375)));
-        let (_, far) = parse(&["--torus-test-ne", "--torus-spawn-q", "-8192000000", "--torus-spawn-r", "1182400"]).unwrap();
+        let (_, far) = parse(&[
+            "--torus-test-ne",
+            "--torus-spawn-q",
+            "-8192000000",
+            "--torus-spawn-r",
+            "1182400",
+        ])
+        .unwrap();
         assert_eq!(far.torus_spawn, Some((-8_192_000_000, 1_182_400)));
         assert!(parse(&["--torus-test-ne", "--torus-spawn-q", "12"]).is_err());
         assert!(parse(&["--torus-spawn-q", "1", "--torus-spawn-r", "2"]).is_err());
