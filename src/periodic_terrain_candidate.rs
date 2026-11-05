@@ -177,6 +177,7 @@ fn lerp(a: f64, b: f64, t: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::axial_geography_candidate::CandidateProjection;
     use crate::hex_torus_candidate::{PERIOD_Q, PERIOD_R, R_PERIOD_Q_OFFSET};
 
     fn translated(p: Axial64, east: i64, north: i64) -> Axial64 {
