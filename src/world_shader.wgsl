@@ -177,27 +177,15 @@ fn shade(v: VertexOut) -> vec4<f32> {
 }
 
 // Distant terrain never draws inside the live full-resolution streaming
-// footprint. Pixel-accurate axial rounding avoids the square-grid overlay
-// piling up against nearby hex-prism cliffs.
+// footprint. Cube-rounded column ownership avoids masking an incomplete
+// near chunk while retaining the distant surface as a fallback.
 @fragment fn fs_lod(v: VertexOut) -> @location(0) vec4<f32> {
     // Evaluate implicit texture derivatives before the divergent discard.
     let shaded = shade(v);
-    let rf = v.world_position.z / 0.8660254;
-    let qf = v.world_position.x - rf * 0.5;
-    let yf = -qf - rf;
-    var q = round(qf);
-    var r = round(rf);
-    let ry = round(yf);
-    let dq = abs(q - qf);
-    let dr = abs(r - rf);
-    let dy = abs(ry - yf);
-    if dq > dy && dq > dr {
-        q = -ry - r;
-    } else if dr > dy {
-        r = -q - ry;
-    }
-    let cq = floor(q / 16.0);
-    let cr = floor(r / 16.0);
+    // Orthogonal cube grid: nearest integer metre is the exact surface
+    // column. The previous cube-rounding algorithm was hex-specific.
+    let cq = floor((v.world_position.x + 0.5) / 16.0);
+    let cr = floor((v.world_position.z + 0.5) / 16.0);
     let oq = cq - camera.lod_near.x;
     let orr = cr - camera.lod_near.y;
     let dist = max(abs(oq), max(abs(orr), abs(oq + orr)));
