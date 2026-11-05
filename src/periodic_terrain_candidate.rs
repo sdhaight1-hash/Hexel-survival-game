@@ -31,14 +31,8 @@ impl PeriodicTerrainCandidate {
     /// with coherent lowland, plateau and mountain domains instead of a
     /// globally uniform stack of noise amplitudes.
     pub fn surface_y(&self, pos: Axial64) -> i32 {
-        let canonical = pos.candidate_wrap();
+        let (x, z) = Self::raster_coords(pos);
         let axis = f64::from(crate::geography::ELEVATION_SAMPLES_PER_AXIS);
-        let x = ((canonical.q as f64 + canonical.r as f64 * 0.5)
-            / crate::hex_torus_candidate::PERIOD_Q as f64
-            * axis)
-            .rem_euclid(axis);
-        let z = (canonical.r as f64 / crate::hex_torus_candidate::PERIOD_R as f64 * axis)
-            .rem_euclid(axis);
         let macro_height = self.periodic_noise_at(x, z, 64, 0xE2A0_0001);
         let uplift = self.periodic_noise_at(x, z, 256, 0xE2A0_0002);
         let plateau_mask = self.periodic_noise_at(x, z, 128, 0xE2A0_0003);
@@ -76,6 +70,24 @@ impl PeriodicTerrainCandidate {
         lerp(elevation, plateau_level + hills * 0.12, plateau * 0.85).round() as i32
     }
 
+    fn raster_coords(pos: Axial64) -> (f64, f64) {
+        let canonical = pos.candidate_wrap();
+        let axis = f64::from(crate::geography::ELEVATION_SAMPLES_PER_AXIS);
+        let x = ((canonical.q as f64 + canonical.r as f64 * 0.5)
+            / crate::hex_torus_candidate::PERIOD_Q as f64
+            * axis)
+            .rem_euclid(axis);
+        let z = (canonical.r as f64 / crate::hex_torus_candidate::PERIOD_R as f64 * axis)
+            .rem_euclid(axis);
+        (x, z)
+    }
+
+    fn geology_at(&self, pos: Axial64) -> f64 {
+        let (x, z) = Self::raster_coords(pos);
+        0.65 * self.periodic_noise_at(x, z, 512, 0xE2A0_0011)
+            + 0.35 * self.periodic_noise_at(x, z, 4096, 0xE2A0_0012)
+    }
+
     /// Near blocks and distant LOD use the same region-aware geology.
     /// Distinct rock hosts and gravel deposits make terrain transitions
     /// visible without adding permanent art assets.
@@ -86,23 +98,22 @@ impl PeriodicTerrainCandidate {
             let neighbor = self.surface_y(Axial64::new(pos.q + dq, pos.r + dr));
             steepest = steepest.max((top - neighbor).abs());
         }
-        let canonical = pos.candidate_wrap();
-        let stripe = (canonical.q.div_euclid(96) ^ canonical.r.div_euclid(96)).rem_euclid(4);
+        let geology = self.geology_at(pos);
         if top >= 355 || steepest >= 5 {
-            if stripe <= 1 {
-                Block::Rock
-            } else {
+            if geology > 0.51 {
                 Block::Shale
+            } else {
+                Block::Rock
             }
         } else if top >= 305 || steepest >= 3 {
-            if stripe == 0 {
+            if geology < 0.38 {
                 Block::Gravel
-            } else if stripe == 1 {
+            } else if geology > 0.57 {
                 Block::Shale
             } else {
                 Block::Rock
             }
-        } else if top >= 265 && stripe == 0 {
+        } else if top >= 265 && geology < 0.36 {
             Block::Gravel
         } else {
             Block::Grass
@@ -120,8 +131,7 @@ impl PeriodicTerrainCandidate {
         } else if pos.y >= i64::from(top - 3) {
             Block::Soil
         } else {
-            let canonical = Axial64::new(pos.q, pos.r).candidate_wrap();
-            if (canonical.q.div_euclid(96) ^ canonical.r.div_euclid(96)).rem_euclid(4) <= 1 {
+            if self.geology_at(Axial64::new(pos.q, pos.r)) <= 0.52 {
                 Block::Rock
             } else {
                 Block::Shale
