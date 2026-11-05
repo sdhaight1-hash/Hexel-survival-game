@@ -301,11 +301,7 @@ impl World {
         // blocks from one coherent height/geology/material classification.
         for r in 0..CHUNK_SIDE {
             for q in 0..CHUNK_SIDE {
-                let local = CellPos::new(
-                    section.q * CHUNK_SIDE + q,
-                    section.r * CHUNK_SIDE + r,
-                    0,
-                );
+                let local = CellPos::new(section.q * CHUNK_SIDE + q, section.r * CHUNK_SIDE + r, 0);
                 let global = frame.cell(local).canonical;
                 let profile = source.column_profile(global);
                 for y in 0..CHUNK_SIDE {
