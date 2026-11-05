@@ -2,7 +2,6 @@
 
 mod benchmark_log;
 mod debug_menu;
-mod distant_terrain;
 mod frame_pacing;
 mod materials_p0;
 mod materials_v2;
@@ -11,6 +10,7 @@ mod presentation;
 mod render;
 mod render_cpu_metrics;
 mod render_distance_benchmark;
+mod seed_lod;
 mod stream_metrics;
 mod texture_codec;
 mod texture_pack;
@@ -380,7 +380,9 @@ impl ApplicationHandler for Game {
                 println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
                 println!("F10: toggle native-copper metallic highlights (F8).");
-                println!("F12: toggle magenta resident-section perimeter markers (diagnostic only).");
+                println!(
+                    "F12: toggle magenta resident-section perimeter markers (diagnostic only)."
+                );
             }
             Err(error) => {
                 eprintln!("Failed to initialize the first-person renderer: {error}");

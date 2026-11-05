@@ -3,10 +3,10 @@
 
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
-    distant_terrain,
     materials_p0, materials_v2,
     mesh::{build_chunk_mesh_relative, resident_boundary_markers, torus_guides, Vertex},
     presentation::PresentationOptions,
+    seed_lod,
     texture_pack::TexturePack,
 };
 use bytemuck::{Pod, Zeroable};
@@ -101,10 +101,9 @@ pub struct Renderer {
     surface_preset: SurfacePreset,
     metallic_glints: bool,
     terrain_meshes: HashMap<ChunkPos, TerrainGpuMesh>,
-    distant_terrain_enabled: bool,
-    distant_terrain_anchor: Option<(i32, i32)>,
-    distant_terrain_buffer: Option<wgpu::Buffer>,
-    distant_terrain_vertices: u32,
+    seed_lod_worker: Option<seed_lod::Worker>,
+    seed_lod_key: Option<seed_lod::Key>,
+    seed_lod_buffers: Vec<(wgpu::Buffer, u32)>,
     boundary_markers_enabled: bool,
     boundary_marker_buffer: Option<wgpu::Buffer>,
     boundary_marker_vertices: u32,
@@ -673,10 +672,15 @@ impl Renderer {
             surface_preset: SurfacePreset::Dry,
             metallic_glints: true,
             terrain_meshes,
-            distant_terrain_enabled: presentation.distant_terrain,
-            distant_terrain_anchor: None,
-            distant_terrain_buffer: None,
-            distant_terrain_vertices: 0,
+            seed_lod_worker: if presentation.distant_terrain {
+                world
+                    .distant_surface_source()
+                    .map(|(source, _)| seed_lod::Worker::spawn(source))
+            } else {
+                None
+            },
+            seed_lod_key: None,
+            seed_lod_buffers: Vec::new(),
             boundary_markers_enabled: false,
             boundary_marker_buffer: None,
             boundary_marker_vertices: 0,
@@ -790,38 +794,52 @@ impl Renderer {
         let vertices = resident_boundary_markers(world, self.render_origin, eye_y);
         self.boundary_marker_vertices = vertices.len() as u32;
         self.boundary_marker_buffer = (!vertices.is_empty()).then(|| {
-            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("F12 resident boundary diagnostic markers"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            })
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("F12 resident boundary diagnostic markers"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                })
         });
     }
 
-    /// Called before drawing; generate coarse world-source geometry only on a
-    /// new 16m anchor. Never update collision or authoritative chunk data.
+    /// Non-blocking mesh delivery: seed sampling and meshing run on a worker.
     pub fn refresh_distant_terrain(&mut self, world: &World, feet: Vec3) {
-        if !self.distant_terrain_enabled {
+        let Some(worker) = self.seed_lod_worker.as_mut() else {
+            return;
+        };
+        let Some((_, frame)) = world.distant_surface_source() else {
+            return;
+        };
+        let desired = seed_lod::Key::at(feet, frame);
+        if self.seed_lod_key == Some(desired) {
             return;
         }
-        let anchor = distant_terrain::anchor(feet);
-        if self.distant_terrain_anchor == Some(anchor) {
-            return;
+        if let Some(completed) = worker.poll(desired) {
+            self.seed_lod_buffers = completed
+                .bands
+                .into_iter()
+                .map(|vertices| {
+                    let buffer =
+                        self.device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: Some("Seed-first distant LOD band"),
+                                contents: bytemuck::cast_slice(&vertices),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            });
+                    (buffer, vertices.len() as u32)
+                })
+                .collect();
+            self.seed_lod_key = Some(desired);
         }
-        let vertices = distant_terrain::build(world, anchor);
-        self.distant_terrain_vertices = vertices.len() as u32;
-        self.distant_terrain_buffer = Some(
-            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Experimental visual-only distant terrain underlay"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            })
-        );
-        self.distant_terrain_anchor = Some(anchor);
     }
 
     pub fn invalidate_distant_terrain(&mut self) {
-        self.distant_terrain_anchor = None;
+        self.seed_lod_key = None;
+        self.seed_lod_buffers.clear();
+        if let Some(worker) = self.seed_lod_worker.as_mut() {
+            worker.invalidate();
+        }
     }
 
     pub fn presentation_report(&self) -> &str {
@@ -988,8 +1006,16 @@ impl Renderer {
         } else {
             absolute_eye
         };
-        let view_proj = Mat4::perspective_rh(70.0_f32.to_radians(), aspect, 0.05, 200.0)
-            * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
+        let view_proj = Mat4::perspective_rh(
+            70.0_f32.to_radians(),
+            aspect,
+            0.05,
+            if self.seed_lod_worker.is_some() {
+                1000.0
+            } else {
+                200.0
+            },
+        ) * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
         let conditions = self.surface_preset.conditions();
         self.queue.write_buffer(
             &self.camera_buffer,
@@ -1060,9 +1086,9 @@ impl Renderer {
                 &self.material_bind_group
             };
             pass.set_bind_group(1, material_group, &[]);
-            if let Some(buffer) = &self.distant_terrain_buffer {
+            for (buffer, vertices) in &self.seed_lod_buffers {
                 pass.set_vertex_buffer(0, buffer.slice(..));
-                pass.draw(0..self.distant_terrain_vertices, 0..1);
+                pass.draw(0..*vertices, 0..1);
             }
             for mesh in self.terrain_meshes.values() {
                 pass.set_vertex_buffer(0, mesh.buffer.slice(..));
