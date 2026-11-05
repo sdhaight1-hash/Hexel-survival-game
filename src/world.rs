@@ -107,6 +107,8 @@ pub enum Block {
     #[default]
     Air,
     Grass,
+    GrassDry,
+    GrassSparse,
     Soil,
     Rock,
     Shale,
