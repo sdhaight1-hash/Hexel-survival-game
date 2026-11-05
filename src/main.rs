@@ -811,6 +811,21 @@ mod shader_tests {
     }
 
     #[test]
+    fn v58_pigment_tracks_geology_without_new_noise_or_bump() {
+        let shader = include_str!("world_shader.wgsl");
+        let start = shader.find("fn v58_pigment(").expect("V5.8 pigment function");
+        let end = shader[start..].find("\nstruct V57Substrate")
+            .expect("V5.8 pigment function boundary") + start;
+        let body = &shader[start..end];
+        assert!(body.contains("feature.x") && body.contains("feature.y"));
+        assert!(!body.contains("v5_noise("));
+        assert!(!body.contains("height"));
+        assert!(shader.contains("substrate.main_feature"));
+        assert!(shader.contains("substrate.fine_feature"));
+        assert!(shader.contains("clamp(v.micro_mask, 0.0, 1.0)"));
+    }
+
+    #[test]
     fn p2_surface_shader_parses_and_validates() {
         let source = include_str!("world_shader.wgsl");
         let module =
