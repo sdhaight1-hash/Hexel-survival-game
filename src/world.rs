@@ -3,11 +3,11 @@
 //! This is a locally flat chunk. Geographic torus periods and playable
 //! hex-lattice seam translations have NOT been chosen or implemented.
 
-use crate::generated_terrain::PrototypeTerrain;
-use crate::periodic_terrain_candidate::PeriodicTerrainCandidate;
 use crate::axial_geography_candidate::CandidateCellId;
+use crate::generated_terrain::PrototypeTerrain;
 use crate::hex_torus_candidate::Axial64;
-use crate::torus_frame::{FrameShift, GlobalCell, TorusFrame, local_cell_from_metres};
+use crate::periodic_terrain_candidate::PeriodicTerrainCandidate;
+use crate::torus_frame::{local_cell_from_metres, FrameShift, GlobalCell, TorusFrame};
 use glam::Vec3;
 use std::{
     collections::{HashMap, HashSet},
@@ -265,7 +265,11 @@ impl World {
 
     fn periodic_sample(&self, source: PeriodicTerrainCandidate, cell: CellPos) -> Block {
         let global = self.torus_frame.expect("torus frame").cell(cell);
-        source.sample(CandidateCellId::new(global.canonical.q, global.canonical.r, i64::from(cell.y)))
+        source.sample(CandidateCellId::new(
+            global.canonical.q,
+            global.canonical.r,
+            i64::from(cell.y),
+        ))
     }
 
     fn periodic_chunk(&self, source: PeriodicTerrainCandidate, section: ChunkPos) -> Chunk {
@@ -278,7 +282,10 @@ impl World {
                         section.r * CHUNK_SIDE + r,
                         section.y * CHUNK_SIDE + y,
                     );
-                    chunk.set([q as usize, r as usize, y as usize], self.periodic_sample(source, cell));
+                    chunk.set(
+                        [q as usize, r as usize, y as usize],
+                        self.periodic_sample(source, cell),
+                    );
                 }
             }
         }
