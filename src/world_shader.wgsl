@@ -16,6 +16,8 @@ struct VertexIn {
     @location(2) uv: vec2<f32>,
     @location(3) material: u32,
     @location(4) palette_id: u32,
+    @location(5) pattern_seed: u32,
+    @location(6) micro_mask: f32,
 }
 struct VertexOut {
     @builtin(position) clip_position: vec4<f32>,
@@ -24,6 +26,8 @@ struct VertexOut {
     @location(2) @interpolate(flat) material: u32,
     @location(3) world_position: vec3<f32>,
     @location(4) @interpolate(flat) palette_id: u32,
+    @location(5) @interpolate(flat) pattern_seed: u32,
+    @location(6) micro_mask: f32,
 }
 @vertex fn vs_main(v: VertexIn) -> VertexOut {
     var out: VertexOut;
@@ -32,6 +36,8 @@ struct VertexOut {
     out.uv = v.uv;
     out.material = v.material;
     out.palette_id = v.palette_id;
+    out.pattern_seed = v.pattern_seed;
+    out.micro_mask = v.micro_mask;
     out.world_position = v.position;
     return out;
 }
@@ -74,6 +80,58 @@ fn v5_noise(p: vec3<f32>) -> f32 {
 
 // V5.5 per-hexel palette choices and edge blends come from CPU mesh colors.
 // Geological structures below remain world-space 3D fields.
+
+// V5.6: four close tones per assigned palette family, composed from two
+// related 3D signals. The same signals also create shallow relief.
+// The per-hexel seed changes the internal pattern while the V5.5 mesh
+// keeps the parent palette tint and 14cm solid-contact blending.
+struct RockMicro {
+    pigment: vec3<f32>,
+    height: f32,
+}
+fn v56_micro(material: u32, seed: u32, position: vec3<f32>) -> RockMicro {
+    let rock = (material / 3u) / 4u;
+    let offset = vec3<f32>(
+        f32(seed & 1023u),
+        f32((seed >> 10u) & 1023u),
+        f32((seed >> 20u) & 1023u)
+    ) * 0.037;
+    var basis = position * 2.25 + offset;
+    if rock == 1u {
+        // Shale: compressed lamination, not isotropic granite speckles.
+        basis = position * vec3<f32>(2.4, 5.0, 2.3) + offset;
+    } else if rock == 2u {
+        // Basalt: dense volcanic groundmass with restrained breakup.
+        basis = position * 3.0 + offset;
+    }
+    let coarse = v5_noise(basis);
+    let small = v5_noise(basis * 2.1 + vec3<f32>(4.0, 7.0, 2.0));
+    let a = smoothstep(0.22, 0.78, coarse);
+    let b = smoothstep(0.28, 0.72, small);
+    var t0 = vec3<f32>(0.976, 0.981, 0.987);
+    var t1 = vec3<f32>(1.021, 0.992, 0.975);
+    var t2 = vec3<f32>(0.989, 1.014, 1.025);
+    var t3 = vec3<f32>(1.028, 1.018, 0.993);
+    var height_strength = 0.024;
+    if rock == 1u {
+        t0 = vec3<f32>(0.973, 0.979, 0.989);
+        t1 = vec3<f32>(1.016, 1.008, 0.989);
+        t2 = vec3<f32>(0.984, 1.002, 1.016);
+        t3 = vec3<f32>(1.027, 1.020, 1.011);
+        height_strength = 0.014;
+    } else if rock == 2u {
+        t0 = vec3<f32>(0.972, 0.982, 0.986);
+        t1 = vec3<f32>(1.008, 1.004, 0.992);
+        t2 = vec3<f32>(0.992, 1.008, 1.014);
+        t3 = vec3<f32>(1.025, 1.017, 1.011);
+        height_strength = 0.018;
+    }
+    var result: RockMicro;
+    result.pigment = mix(mix(t0, t1, a), mix(t2, t3, a), b);
+    result.height = ((coarse - 0.5) * 0.85 + (small - 0.5) * 0.30)
+        * height_strength;
+    return result;
+}
 
 fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
     let pad = material / 3u;
@@ -210,13 +268,50 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
         color = select(vec3<f32>(0.10, 0.65, 0.24), vec3<f32>(0.83, 0.12, 0.58), alternating);
     }
 
-    // Derivatives are calculated unconditionally for uniformity in WGSL.
+    // V5.6 internal pattern is hexel-owned, unlike the V5.4 world-space
+    // fault/bedding overlays. Attenuate pigment and height at solid joins,
+    // where the V5.5 mesh already interpolates neighboring palette colors.
+    var micro_pigment = vec3<f32>(1.0);
+    var micro_height = 0.0;
+    if v5 && !checker && v.material != 69u {
+        let pad = v.material / 3u;
+        let p = v.world_position - vec3<f32>(12.0 * f32(pad % 4u), 0.0, 0.0);
+        let micro = v56_micro(v.material, v.pattern_seed, p);
+        let coverage = clamp(v.micro_mask, 0.0, 1.0);
+        micro_pigment = mix(vec3<f32>(1.0), micro.pigment, coverage);
+        micro_height = micro.height * coverage * coverage;
+    }
+
+    // Screen-space height gradients use the SAME field as the pigment.
+    // Compute derivatives unconditionally to keep WGSL derivative uniformity.
     let dx = dpdx(v.world_position);
     let dy = dpdy(v.world_position);
+    let height_dx = dpdx(micro_height);
+    let height_dy = dpdy(micro_height);
     let view_dir = normalize(camera.eye_position.xyz - v.world_position);
     var normal = normalize(cross(dx, dy));
-    if (dot(normal, view_dir) < 0.0) {
+    if dot(normal, view_dir) < 0.0 {
         normal = -normal;
+    }
+    var rock_normal = normal;
+    // camera.surface.z is reused only in the opt-in V5 rock gallery;
+    // it retains its frost-preview semantics in existing P0/V2 modes.
+    if v5 && camera.surface.z > 0.5 && !checker && v.material != 69u {
+        let r1 = cross(dy, normal);
+        let r2 = cross(normal, dx);
+        let determinant = dot(dx, r1);
+        let stable_det = select(-max(abs(determinant), 1e-6),
+            max(abs(determinant), 1e-6), determinant >= 0.0);
+        let gradient = (r1 * height_dx + r2 * height_dy) / stable_det;
+        rock_normal = normalize(normal - gradient);
+    }
+    // Flat and bumped modes have IDENTICAL colors and key lighting;
+    // only the normal perturbation changes when F4 is toggled.
+    if v5 && !checker && v.material != 69u {
+        color *= micro_pigment;
+        let sun = normalize(vec3<f32>(0.39, 0.78, 0.48));
+        let diffuse = max(dot(rock_normal, sun), 0.0);
+        color *= 0.72 + 0.28 * diffuse;
     }
 
     // P0 and F6 checker remain byte-for-byte the same visual path.
