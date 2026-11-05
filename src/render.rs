@@ -729,25 +729,33 @@ impl Renderer {
         self.terrain_meshes.clear();
         for pos in world.chunk_positions() {
             let vertices = build_chunk_mesh_relative(world, pos, self.render_origin);
-            if vertices.is_empty() { continue; }
-            let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Rebased periodic terrain mesh"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
-            self.terrain_meshes.insert(pos, TerrainGpuMesh {
-                buffer,
-                vertices: vertices.len() as u32,
-            });
+            if vertices.is_empty() {
+                continue;
+            }
+            let buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Rebased periodic terrain mesh"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
+            self.terrain_meshes.insert(
+                pos,
+                TerrainGpuMesh {
+                    buffer,
+                    vertices: vertices.len() as u32,
+                },
+            );
         }
         let guides = world.torus_frame().map(torus_guides).unwrap_or_default();
         self.torus_guide_vertices = guides.len() as u32;
         self.torus_guide_buffer = (!guides.is_empty()).then(|| {
-            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Rebased global torus guides"),
-                contents: bytemuck::cast_slice(&guides),
-                usage: wgpu::BufferUsages::VERTEX,
-            })
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Rebased global torus guides"),
+                    contents: bytemuck::cast_slice(&guides),
+                    usage: wgpu::BufferUsages::VERTEX,
+                })
         });
     }
 
@@ -893,11 +901,12 @@ impl Renderer {
             });
             self.torus_hud_vertices = vertices.len() as u32;
             self.torus_hud_buffer = (!vertices.is_empty()).then(|| {
-                self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Global torus HUD"),
-                    contents: bytemuck::cast_slice(&vertices),
-                    usage: wgpu::BufferUsages::VERTEX,
-                })
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Global torus HUD"),
+                        contents: bytemuck::cast_slice(&vertices),
+                        usage: wgpu::BufferUsages::VERTEX,
+                    })
             });
         }
         let aspect = self.config.width as f32 / self.config.height as f32;
