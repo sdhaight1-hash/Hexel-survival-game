@@ -17,7 +17,9 @@ use benchmark_log::ConsoleLog;
 use debug_menu::{console_copy_hit_test, hit_test, MenuAction};
 use frame_pacing::FramePacer;
 use hexel_survival_game::{
+    hex_torus_candidate::Axial64,
     player::{MoveInput, Player},
+    torus_frame::{self, CrossingCounts, GlobalCell},
     world::{CellPos, World},
 };
 use presentation::PresentationOptions;
@@ -67,6 +69,8 @@ struct Game {
     menu_hover: Option<MenuAction>,
     frame_stats: bool,
     console_log: ConsoleLog,
+    previous_torus: Option<GlobalCell>,
+    torus_crossings: CrossingCounts,
 }
 
 impl Default for Game {
@@ -77,12 +81,22 @@ impl Default for Game {
 
 impl Game {
     fn new(streamed: bool, presentation: PresentationOptions) -> Self {
-        let mut world = if streamed {
-            World::streamed(42)
+        let (mut world, torus_position) = if let Some((q, r)) = presentation.torus_spawn {
+            let (world, local) = World::torus(42, Axial64::new(q, r));
+            (world, Some(local))
+        } else if streamed {
+            (World::streamed(42), None)
         } else {
-            World::demo(42)
+            (World::demo(42), None)
         };
         let mut player = Player::spawn(&world);
+        if let Some(local) = torus_position {
+            let x = local.x as f32;
+            let z = local.y as f32;
+            let ground = world.support_top(x, z).expect("periodic terrain surface");
+            player.feet = glam::Vec3::new(x, ground, z);
+            println!("TORUS global spawn: canonical {:?}, frame {:?}; periodic terrain, local player f32", world.torus_cell(x, z).expect("torus identity").canonical, world.torus_frame().expect("torus frame").origin);
+        }
         if let Some((q, r)) = presentation.spawn_cell {
             let center = CellPos::new(q, r, 0).center();
             let ground = world
@@ -103,6 +117,7 @@ impl Game {
             );
         }
         let now = Instant::now();
+        let previous_torus = world.torus_cell(player.feet.x, player.feet.z);
         Self {
             window: None,
             renderer: None,
@@ -136,6 +151,8 @@ impl Game {
             menu_hover: None,
             frame_stats: false,
             console_log: ConsoleLog::new(),
+            previous_torus,
+            torus_crossings: CrossingCounts::default(),
         }
     }
 
@@ -480,7 +497,23 @@ impl ApplicationHandler for Game {
                     let console = self
                         .console_open
                         .then(|| (self.console_log.lines(), self.console_log.generation()));
-                    match renderer.draw(&self.player, menu, console) {
+                    let torus_hud = self.world.torus_cell(self.player.feet.x, self.player.feet.z).map(|position| {
+                        let f = self.player.forward();
+                        let facing = if f.x.abs() > f.z.abs() {
+                            if f.x > 0.0 { "E" } else { "W" }
+                        } else if f.z > 0.0 { "N" } else { "S" };
+                        let (east_x, north_z) = torus_frame::nearest_seams(self.world.torus_frame().expect("torus frame"));
+                        format!(
+                            "TORUS FACE {} YAW {:.0} CANON Q {} R {} SECTOR E {} N {} | EAST {:.1}M NORTH {:.1}M WRAPS E{} W{} N{} S{}",
+                            facing, self.player.yaw.to_degrees().rem_euclid(360.0),
+                            position.canonical.q, position.canonical.r,
+                            position.period.east, position.period.north,
+                            east_x - self.player.feet.x, north_z - self.player.feet.z,
+                            self.torus_crossings.east, self.torus_crossings.west,
+                            self.torus_crossings.north, self.torus_crossings.south
+                        )
+                    });
+                    match renderer.draw(&self.player, menu, console, torus_hud.as_deref()) {
                         Ok(timings) => {
                             self.frame_pacer.record_draw(Instant::now());
                             if self.world.is_streamed() {
@@ -545,6 +578,32 @@ impl ApplicationHandler for Game {
         }
         self.last_frame = now;
         self.player.step(&self.world, self.input(), dt);
+        if self.world.torus_frame().is_some() {
+            if let Some(shift) = self.world.rebase_torus(&mut self.player.feet) {
+                let replacement = self.world.stream_around(self.player.feet);
+                if let Some(renderer) = self.renderer.as_mut() {
+                    renderer.rebuild_torus_world(&self.world);
+                }
+                self.console_log.record(format!(
+                    "TORUS REBASE | axial shift ({},{}) local metres ({:.2},{:.2}) | new global origin {:?} | rebuilt {} resident sections",
+                    shift.axial_q, shift.axial_r, shift.metres_x, shift.metres_z,
+                    self.world.torus_frame().expect("torus frame").origin,
+                    replacement.added.len()
+                ));
+            }
+            let current = self
+                .world
+                .torus_cell(self.player.feet.x, self.player.feet.z)
+                .expect("torus position");
+            if let Some(before) = self.previous_torus {
+                if let Some(message) =
+                    torus_frame::crossing_report(before, current, &mut self.torus_crossings)
+                {
+                    self.console_log.record(message);
+                }
+            }
+            self.previous_torus = Some(current);
+        }
         if self.world.is_streamed() {
             let delta = self.world.stream_around_budgeted(
                 self.player.feet,
