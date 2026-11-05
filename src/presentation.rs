@@ -14,6 +14,8 @@ pub struct PresentationOptions {
     pub render_benchmark: bool,
     /// Isolated V4 rock texture review fixture.
     pub rock_gallery: bool,
+    /// Separate material-composition A/B test (no art ZIP required).
+    pub rock_v5: bool,
 }
 
 impl Default for PresentationOptions {
@@ -27,6 +29,7 @@ impl Default for PresentationOptions {
             torus_spawn: None,
             render_benchmark: false,
             rock_gallery: false,
+            rock_v5: false,
         }
     }
 }
@@ -45,6 +48,7 @@ impl PresentationOptions {
             match arg.as_str() {
                 "--streamed-world" => streamed = true,
                 "--rock-cluster-gallery" => options.rock_gallery = true,
+                "--rock-v5-gallery" => options.rock_v5 = true,
                 "--render-benchmark" => options.render_benchmark = true,
                 "--torus-test-ne" => {
                     streamed = true;
@@ -126,8 +130,8 @@ impl PresentationOptions {
                 _ => return Err(format!("Unknown argument '{arg}'")),
             }
         }
-        if options.rock_gallery && (streamed || torus_mode || spawn_q.is_some() || spawn_r.is_some() || options.render_benchmark) {
-            return Err("--rock-cluster-gallery cannot be combined with streamed, torus, spawn, or benchmark modes".into());
+        if (options.rock_gallery || options.rock_v5) && (streamed || torus_mode || spawn_q.is_some() || spawn_r.is_some() || options.render_benchmark || (options.rock_gallery && options.rock_v5)) {
+            return Err("Gallery modes cannot be combined with each other or with streamed, torus, spawn, or benchmark modes".into());
         }
         options.spawn_cell = match (spawn_q, spawn_r) {
             (None, None) => None,
