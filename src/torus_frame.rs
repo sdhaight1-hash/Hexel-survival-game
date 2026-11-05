@@ -51,7 +51,10 @@ impl TorusFrame {
             spawn.r.div_euclid(side) * side,
         );
         let local = Axial64::new(spawn.q - anchor.q, spawn.r - anchor.r);
-        (Self::new(anchor), DVec2::new(local.q as f64, local.r as f64))
+        (
+            Self::new(anchor),
+            DVec2::new(local.q as f64, local.r as f64),
+        )
     }
 
     pub fn cell(&self, local: CellPos) -> GlobalCell {
@@ -154,10 +157,10 @@ pub fn crossing_report(
 pub fn nearest_seams(frame: TorusFrame) -> (f32, f32) {
     // Debug markers for the square lattice; periodic topology still has
     // the original north-direction Q offset from the toroidal generator.
-    let east = (frame.origin.q as f64 / PERIOD_Q as f64).round() * PERIOD_Q as f64
-        - frame.origin.q as f64;
-    let north = (frame.origin.r as f64 / PERIOD_R as f64).round() * PERIOD_R as f64
-        - frame.origin.r as f64;
+    let east =
+        (frame.origin.q as f64 / PERIOD_Q as f64).round() * PERIOD_Q as f64 - frame.origin.q as f64;
+    let north =
+        (frame.origin.r as f64 / PERIOD_R as f64).round() * PERIOD_R as f64 - frame.origin.r as f64;
     (east as f32, north as f32)
 }
 
