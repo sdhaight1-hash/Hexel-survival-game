@@ -15,6 +15,7 @@ struct VertexIn {
     @location(1) color: vec3<f32>,
     @location(2) uv: vec2<f32>,
     @location(3) material: u32,
+    @location(4) palette_id: u32,
 }
 struct VertexOut {
     @builtin(position) clip_position: vec4<f32>,
@@ -22,6 +23,7 @@ struct VertexOut {
     @location(1) uv: vec2<f32>,
     @location(2) @interpolate(flat) material: u32,
     @location(3) world_position: vec3<f32>,
+    @location(4) @interpolate(flat) palette_id: u32,
 }
 @vertex fn vs_main(v: VertexIn) -> VertexOut {
     var out: VertexOut;
@@ -29,6 +31,7 @@ struct VertexOut {
     out.color = v.color;
     out.uv = v.uv;
     out.material = v.material;
+    out.palette_id = v.palette_id;
     out.world_position = v.position;
     return out;
 }
@@ -159,8 +162,10 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
     var color = mix(dark, light, tone);
 
     if stage >= 1u {
-        // Same V5.2 five-palette field; do NOT randomize per hexel.
-        color *= palette_region(p, rock);
+        // V5.5 color is supplied by the mesher per hexel and blended only
+        // within narrow solid-rock contact strips. Do not apply the old
+        // broad world-space palette field here (fragment exit multiplies
+        // by the interpolated vertex tint once).
     }
     if stage >= 2u {
         if rock == 0u {
@@ -328,14 +333,19 @@ fn v5_color(material: u32, position: vec3<f32>) -> vec3<f32> {
         if pad % 4u == 0u {
             return vec4<f32>(vec3<f32>(0.5), 1.0);
         }
-        let rock = pad / 4u;
-        let p = v.world_position - vec3<f32>(12.0 * f32(pad % 4u), 0.0, 0.0);
-        // F5 stage 1 = raw five-color region IDs, stage 2 = blended weights.
+        // F5 ID view shows each hexel's deterministic palette assignment.
+        // F5 blend view reads the *actual* meshed edge interpolation.
         if camera.options.w < 3.5 {
-            return vec4<f32>(palette_id_debug(p, rock), 1.0);
+            switch (v.palette_id) {
+                case 0u: { return vec4<f32>(0.93, 0.20, 0.22, 1.0); }
+                case 1u: { return vec4<f32>(0.19, 0.81, 0.27, 1.0); }
+                case 2u: { return vec4<f32>(0.18, 0.46, 0.97, 1.0); }
+                case 3u: { return vec4<f32>(0.95, 0.80, 0.12, 1.0); }
+                default: { return vec4<f32>(0.80, 0.21, 0.86, 1.0); }
+            }
         }
-        let blended = palette_region(p, rock);
-        return vec4<f32>(clamp((blended - vec3<f32>(1.0)) * 2.4 + vec3<f32>(0.5), vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
+        return vec4<f32>(clamp((v.color - vec3<f32>(1.0)) * 2.4
+            + vec3<f32>(0.5), vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
     }
     return vec4<f32>(clamp(color * v.color, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }
