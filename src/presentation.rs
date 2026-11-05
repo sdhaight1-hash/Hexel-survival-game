@@ -10,6 +10,8 @@ pub struct PresentationOptions {
     pub spawn_cell: Option<(i32, i32)>,
     /// Explicit opt-in periodic torus runtime with global i64 spawn.
     pub torus_spawn: Option<(i64, i64)>,
+    /// Opt-in, reproducible R2/R3/R4 full-resolution distance benchmark.
+    pub render_benchmark: bool,
 }
 
 impl Default for PresentationOptions {
@@ -21,6 +23,7 @@ impl Default for PresentationOptions {
             stream_budget: Some(1),
             spawn_cell: None,
             torus_spawn: None,
+            render_benchmark: false,
         }
     }
 }
@@ -38,6 +41,7 @@ impl PresentationOptions {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--streamed-world" => streamed = true,
+                "--render-benchmark" => options.render_benchmark = true,
                 "--torus-test-ne" => {
                     streamed = true;
                     torus_mode = true;
@@ -151,6 +155,9 @@ impl PresentationOptions {
         } else if torus_q.is_some() || torus_r.is_some() {
             return Err("Torus spawn coordinates require --torus-test-ne".into());
         }
+        if options.render_benchmark && !torus_mode {
+            return Err("--render-benchmark requires --torus-test-ne".into());
+        }
         Ok((streamed, options))
     }
 
@@ -228,6 +235,20 @@ mod tests {
         ] {
             assert!(PresentationOptions::parse(args.into_iter().map(str::to_owned)).is_err());
         }
+    }
+
+    #[test]
+    fn render_benchmark_is_opt_in_and_requires_periodic_world() {
+        assert!(PresentationOptions::parse(["--render-benchmark".to_string()]).is_err());
+        let (_, settings) = PresentationOptions::parse(
+            ["--torus-test-ne", "--render-benchmark"]
+                .into_iter()
+                .map(str::to_owned),
+        )
+        .unwrap();
+        assert!(settings.render_benchmark);
+        assert_eq!(settings.torus_spawn, Some((432_776, 1_182_375)));
+        assert!(!PresentationOptions::default().render_benchmark);
     }
 
     #[test]
