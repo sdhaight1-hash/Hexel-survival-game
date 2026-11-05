@@ -13,7 +13,7 @@ use crate::{
 
 /// New experimental algorithm: deliberately distinct from live terrain revision 1.
 /// This is NOT a persistence or world-save generator version.
-pub const PERIODIC_TERRAIN_CANDIDATE_REVISION: u32 = 2;
+pub const PERIODIC_TERRAIN_CANDIDATE_REVISION: u32 = 3;
 
 /// Elevation is sampled from the same periodic raster at either near or
 /// coarse resolution. The 32,768² raster is addressed but never allocated.
@@ -54,6 +54,13 @@ impl PeriodicTerrainCandidate {
         let fine = self.periodic_noise_at(x, z, 4096, 0xD1A0_0006);
         let undulation = self.periodic_noise_at(x, z, 8192, 0xD1A0_0007);
         let micro_relief = self.periodic_noise_at(x, z, 16384, 0xD1A0_0008);
+        // Mountains are a regionally controlled landform, not amplified
+        // static. Wide uplift belts frame narrower ridges, with guaranteed
+        // periodicity inherited from the same lattice domain.
+        let belt = smoothstep(0.48, 0.73, self.periodic_noise_at(x, z, 256, 0xD1A0_0009));
+        let ridge_noise = self.periodic_noise_at(x, z, 1024, 0xD1A0_000A);
+        let ridge = 1.0 - (ridge_noise * 2.0 - 1.0).abs();
+        let mountain = belt * ridge.powi(3) * 250.0;
         (220.0
             + (continent - 0.5) * 180.0
             + (regional - 0.5) * 85.0
@@ -61,7 +68,8 @@ impl PeriodicTerrainCandidate {
             + (slopes - 0.5) * 50.0 * amplitude
             + (fine - 0.5) * 72.0 * amplitude
             + (undulation - 0.5) * 24.0 * amplitude
-            + (micro_relief - 0.5) * 6.0 * amplitude)
+            + (micro_relief - 0.5) * 6.0 * amplitude
+            + mountain)
             .round() as i32
     }
 
@@ -212,6 +220,23 @@ mod tests {
             source.sample(CandidateCellId::new(p.q, p.r, y as i64)),
             source.surface_cover(p)
         );
+    }
+
+    #[test]
+    fn mountain_belts_reach_substantial_relief_without_a_height_cap() {
+        let source = PeriodicTerrainCandidate::new(42);
+        let start = Axial64::new(432_776, 1_182_375);
+        let mut lowest = i32::MAX;
+        let mut highest = i32::MIN;
+        for dq in (-8_192..=8_192).step_by(256) {
+            for dr in (-8_192..=8_192).step_by(256) {
+                let y = source.surface_y(Axial64::new(start.q + dq, start.r + dr));
+                lowest = lowest.min(y);
+                highest = highest.max(y);
+            }
+        }
+        assert!(highest - lowest >= 120, "mountain belt too flat: {}m", highest - lowest);
+        assert!(highest > 320, "no substantial highland peak: {highest}m");
     }
 
     #[test]
