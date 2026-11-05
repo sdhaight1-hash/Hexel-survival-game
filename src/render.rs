@@ -3,10 +3,10 @@
 
 use crate::{
     debug_menu::{self, MenuAction, MenuSnapshot, MenuVertex},
-    seed_lod,
     materials_p0, materials_v2,
     mesh::{build_chunk_mesh_relative, resident_boundary_markers, torus_guides, Vertex},
     presentation::PresentationOptions,
+    seed_lod,
     texture_pack::TexturePack,
 };
 use bytemuck::{Pod, Zeroable};
@@ -673,7 +673,9 @@ impl Renderer {
             metallic_glints: true,
             terrain_meshes,
             seed_lod_worker: if presentation.distant_terrain {
-                world.distant_surface_source().map(|(source, _)| seed_lod::Worker::spawn(source))
+                world
+                    .distant_surface_source()
+                    .map(|(source, _)| seed_lod::Worker::spawn(source))
             } else {
                 None
             },
@@ -792,11 +794,12 @@ impl Renderer {
         let vertices = resident_boundary_markers(world, self.render_origin, eye_y);
         self.boundary_marker_vertices = vertices.len() as u32;
         self.boundary_marker_buffer = (!vertices.is_empty()).then(|| {
-            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("F12 resident boundary diagnostic markers"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            })
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("F12 resident boundary diagnostic markers"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                })
         });
     }
 
@@ -813,14 +816,20 @@ impl Renderer {
             return;
         }
         if let Some(completed) = worker.poll(desired) {
-            self.seed_lod_buffers = completed.bands.into_iter().map(|vertices| {
-                let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Seed-first distant LOD band"),
-                    contents: bytemuck::cast_slice(&vertices),
-                    usage: wgpu::BufferUsages::VERTEX,
-                });
-                (buffer, vertices.len() as u32)
-            }).collect();
+            self.seed_lod_buffers = completed
+                .bands
+                .into_iter()
+                .map(|vertices| {
+                    let buffer =
+                        self.device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: Some("Seed-first distant LOD band"),
+                                contents: bytemuck::cast_slice(&vertices),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            });
+                    (buffer, vertices.len() as u32)
+                })
+                .collect();
             self.seed_lod_key = Some(desired);
         }
     }
@@ -997,8 +1006,16 @@ impl Renderer {
         } else {
             absolute_eye
         };
-        let view_proj = Mat4::perspective_rh(70.0_f32.to_radians(), aspect, 0.05, if self.seed_lod_worker.is_some() { 1000.0 } else { 200.0 })
-            * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
+        let view_proj = Mat4::perspective_rh(
+            70.0_f32.to_radians(),
+            aspect,
+            0.05,
+            if self.seed_lod_worker.is_some() {
+                1000.0
+            } else {
+                200.0
+            },
+        ) * Mat4::look_to_rh(eye, player.forward(), Vec3::Y);
         let conditions = self.surface_preset.conditions();
         self.queue.write_buffer(
             &self.camera_buffer,
