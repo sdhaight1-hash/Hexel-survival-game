@@ -88,6 +88,8 @@ impl Game {
         let (mut world, torus_position) = if let Some((q, r)) = presentation.torus_spawn {
             let (world, local) = World::torus(42, Axial64::new(q, r));
             (world, Some(local))
+        } else if presentation.rock_v5 {
+            (World::rock_v5_gallery(), None)
         } else if presentation.rock_gallery {
             (World::rock_gallery(), None)
         } else if streamed {
@@ -96,7 +98,7 @@ impl Game {
             (World::demo(42), None)
         };
         let mut player = Player::spawn(&world);
-        if presentation.rock_gallery {
+        if presentation.rock_gallery || presentation.rock_v5 {
             let center = CellPos::new(5, 13, 0).center();
             player.feet = glam::Vec3::new(center.x, 1.0, center.z);
             player.yaw = std::f32::consts::FRAC_PI_2;
@@ -256,7 +258,7 @@ impl Game {
             ));
             return;
         }
-        if self.presentation.rock_gallery && matches!(action, MenuAction::V2Materials | MenuAction::SurfacePreset | MenuAction::MetalGlints) {
+        if (self.presentation.rock_gallery || self.presentation.rock_v5) && matches!(action, MenuAction::V2Materials | MenuAction::SurfacePreset | MenuAction::MetalGlints) {
             self.console_log.record("V4 rock gallery: F8/F9/F10 disabled for unbiased texture review");
             return;
         }
@@ -368,6 +370,12 @@ impl ApplicationHandler for Game {
                 ));
                 self.console_log
                     .record("F1 menu | F2 console + Ctrl+C | F3 streamed frame metrics");
+                if self.presentation.rock_v5 {
+                    println!("V5 WORLDSPACE MATERIAL GALLERY: 12 pads (10x10x3), four variants per rock; no PNG pack needed.");
+                    println!("Pads 01-04 granite, 05-08 shale, 09-12 basalt.");
+                    println!("Each group: base / +regional palette / +worldspace structure / +sparse accents.");
+                    println!("F6 checker | F7 checker density | F2 session log | F3 CPU metrics.");
+                }
                 if self.presentation.rock_gallery {
                     println!("ROCK GALLERY V4: 23 pads, each 10x10x3, gaps 2; walkway on r=12..14. Ordered west-to-east:");
                     for (index, (_, rock)) in rock_gallery::ROCKS.iter().enumerate() {
@@ -395,7 +403,7 @@ impl ApplicationHandler for Game {
                 );
                 println!("Esc release/recapture mouse | Click window to recapture.");
                 println!("F6: toggle six-face UV checker | F7: cycle checker at 64 / 128 / 256 texels/m.");
-                if !self.presentation.rock_gallery {
+                if !self.presentation.rock_gallery && !self.presentation.rock_v5 {
                     println!("F8: toggle optional v2 candidate rock/copper gallery vs P0.");
                 }
                 println!("F9: cycle surface preview Dry / Wet / Moss / Frost / Combined (F8).");
